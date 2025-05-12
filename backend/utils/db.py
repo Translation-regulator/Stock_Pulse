@@ -13,6 +13,7 @@ def get_connection():
             database = os.getenv("DB_NAME"),
             charset = "utf8mb4"
         )
+        return con
     except mysql.connector.Error as e:
         print(f"MySQL connection fail: {e}")
         raise
