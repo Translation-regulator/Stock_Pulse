@@ -140,3 +140,11 @@ cython_debug/
 
 # macOS
 .DS_Store
+
+# test
+playground/
+
+# .csv
+daily_price.csv
+weekly_price.csv
+monthly_price.csv
