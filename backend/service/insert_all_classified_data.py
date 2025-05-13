@@ -1,5 +1,3 @@
-# backend/service/insert_all_classified_data.py
-
 from utils.db import get_connection
 from utils.finmind_client import FinMindClient
 from utils.stock_classifier import StockCategory
