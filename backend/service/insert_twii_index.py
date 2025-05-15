@@ -5,6 +5,7 @@ from utils.db import get_connection
 import urllib3
 import time
 import random
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
@@ -16,18 +17,28 @@ def convert_to_ad_date(date_str):
         return None
 
 
+def retry_request(url, headers=None, params=None, max_retries=2, sleep_range=(0.5, 1.0)):
+    for attempt in range(max_retries):
+        try:
+            time.sleep(random.uniform(*sleep_range))
+            res = requests.get(url, headers=headers, params=params, verify=False)
+            res.encoding = "utf-8"
+            return res
+        except Exception as e:
+            print(f"⚠️ 第 {attempt+1} 次嘗試失敗：{e}")
+            if attempt == max_retries - 1:
+                raise e
+
+
 def fetch_summary_by_date(date):
     date_str = date.strftime("%Y%m%d")
     headers = {"User-Agent": "Mozilla/5.0"}
     volume = trade_count = 0
     weighted_index = change_point = 0.0
 
-    # 第一段：抓成交量（afterTrading/MI_INDEX）
     url_volume = f"https://www.twse.com.tw/rwd/zh/afterTrading/MI_INDEX?date={date_str}&type=MS&response=html"
     try:
-        time.sleep(1.0)
-        res = requests.get(url_volume, headers=headers, verify=False)
-        res.encoding = "utf-8"
+        res = retry_request(url_volume, headers=headers)
         soup = BeautifulSoup(res.text, "html.parser")
         tables = soup.find_all("table")
         for table in tables:
@@ -38,23 +49,19 @@ def fetch_summary_by_date(date):
                     volume = int(cols[2].text.replace(",", ""))
                     trade_count = int(cols[3].text.replace(",", ""))
                     break
-
     except Exception as e:
         print(f"❌ 抓成交量失敗 {date_str}: {e}")
 
-    # 第二段：抓加權指數（TAIEX/MI_5MINS_HIST）
     url_index = "https://www.twse.com.tw/rwd/zh/TAIEX/MI_5MINS_HIST"
     params = {"response": "html", "date": date_str}
     try:
-        time.sleep(1.0)
-        res = requests.get(url_index, headers=headers, params=params, verify=False)
-        res.encoding = "utf-8"
+        res = retry_request(url_index, headers=headers, params=params)
         soup = BeautifulSoup(res.text, "html.parser")
         table = soup.find("table")
         if table:
             rows = table.find_all("tr")
             for row in rows[2:]:
-                time.sleep(random.uniform(1.0, 1.5))  # 每日資料間隔避免被鎖
+                time.sleep(random.uniform(0.5, 1.0))
                 cols = row.find_all("td")
                 if len(cols) >= 5:
                     html_date = cols[0].text.strip()
@@ -79,10 +86,13 @@ def fetch_twii_by_month(year, month):
     headers = {"User-Agent": "Mozilla/5.0"}
     print(f"🔗 抓取網址: {url}?response=html&date={params['date']}")
 
-    res = requests.get(url, params=params, headers=headers, verify=False)
-    res.encoding = "utf-8"
-    soup = BeautifulSoup(res.text, "html.parser")
-    table = soup.find("table")
+    try:
+        res = retry_request(url, headers=headers, params=params)
+        soup = BeautifulSoup(res.text, "html.parser")
+        table = soup.find("table")
+    except Exception as e:
+        print(f"❌ 主資料抓取失敗：{e}")
+        return []
 
     if not table:
         print(f"⚠️ 找不到 {params['date']} 的表格")
@@ -91,7 +101,7 @@ def fetch_twii_by_month(year, month):
     result = []
     rows = table.find_all("tr")
     for row in rows[2:]:
-        time.sleep(1.5)  # 加入延遲以避免頻繁請求被封鎖
+        time.sleep(random.uniform(0.5, 1.0))  # 避免頻繁請求被封鎖
         cols = row.find_all("td")
         if len(cols) < 5:
             continue
@@ -99,13 +109,13 @@ def fetch_twii_by_month(year, month):
             ad_date = convert_to_ad_date(cols[0].text.strip())
             if ad_date.month != month or ad_date.year != year:
                 continue  # 避免抓到非該月份資料
+
             open_price = float(cols[1].text.replace(",", ""))
             high_price = float(cols[2].text.replace(",", ""))
             low_price = float(cols[3].text.replace(",", ""))
             close_price = float(cols[4].text.replace(",", ""))
 
             volume, trade_count, weighted_index, change_point = fetch_summary_by_date(ad_date)
-            
 
             result.append({
                 "date": ad_date,
@@ -162,6 +172,7 @@ def insert_twii_data(data):
             print(f"❌ 寫入失敗 {item['date']} -> {e}")
     conn.commit()
     conn.close()
+
 
 def get_twii_daily_data():
     conn = get_connection()

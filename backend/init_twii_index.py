@@ -52,4 +52,4 @@ def fetch_twii_last_n_years(n_years=10):
 
 if __name__ == "__main__":
     create_twii_table()
-    fetch_twii_last_n_years(n_years=10)
+    fetch_twii_last_n_years(n_years=20)
