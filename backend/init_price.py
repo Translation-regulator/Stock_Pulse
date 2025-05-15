@@ -15,6 +15,6 @@ if __name__ == "__main__":
     partition = int(sys.argv[1]) if len(sys.argv) > 1 else 1
     total = int(sys.argv[2]) if len(sys.argv) > 2 else 1
 
-    run_daily_price_init(years=10, partition=partition, total_partitions=total)
+    run_daily_price_init(years=20, partition=partition, total_partitions=total)
 
 
