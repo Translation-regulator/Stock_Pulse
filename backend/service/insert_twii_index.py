@@ -162,3 +162,15 @@ def insert_twii_data(data):
             print(f"❌ 寫入失敗 {item['date']} -> {e}")
     conn.commit()
     conn.close()
+
+def get_twii_daily_data():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT date, open, high, low, close
+        FROM twii_index
+        ORDER BY date ASC
+    """)
+    result = cursor.fetchall()
+    conn.close()
+    return result
