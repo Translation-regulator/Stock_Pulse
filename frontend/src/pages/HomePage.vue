@@ -6,11 +6,15 @@ import TwiChart from '../components/TwiiChart.vue'
 
 <template>
   <NavBar/>
-
+  <main>
+    <TwiChart/>
+  </main>
 </template>
 
 <style scoped>
-
+  main {
+    padding-top: 70px;
+  }
 </style>
 
 

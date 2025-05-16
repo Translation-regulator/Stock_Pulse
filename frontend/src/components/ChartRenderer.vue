@@ -1,12 +1,11 @@
 <template>
-  <div ref="chartContainer" class="chart-container"></div>
+  <div ref="chartContainer"></div>
 </template>
 
 <script setup>
 import { onMounted, ref, watch } from 'vue'
 import { createChart } from 'lightweight-charts'
 
-// 接收外部傳入的 K 線資料
 const props = defineProps({
   candles: {
     type: Array,
@@ -24,12 +23,12 @@ onMounted(() => {
       width: chartContainer.value.clientWidth || 800,
       height: 400,
       layout: {
-        background: { color: '#ffffff' },
-        textColor: '#000000',
+        background: { color: '#f4f4f4' },   // 淡灰色背景
+        textColor: '#333333',              // 深灰文字
       },
       grid: {
-        vertLines: { color: '#e1e1e1' },
-        horzLines: { color: '#e1e1e1' },
+        vertLines: { color: '#e0e0e0' },    // 垂直格線 - 更淡
+        horzLines: { color: '#e0e0e0' },    // 水平格線
       },
       timeScale: {
         timeVisible: true,
@@ -37,24 +36,21 @@ onMounted(() => {
       },
     })
 
-    series = chart.addCandlestickSeries()
+    series = chart.addCandlestickSeries({
+      upColor: '#ef5350',        // 紅色漲
+      downColor: '#26a69a',      // 綠色跌
+      borderVisible: false,
+      wickUpColor: '#ef5350',
+      wickDownColor: '#26a69a',
+    })
+
     series.setData(props.candles)
   }, 0)
 })
 
-// 如果資料有變化就更新圖表
 watch(() => props.candles, (newData) => {
   if (series) {
     series.setData(newData)
   }
 })
 </script>
-
-<style scoped>
-.chart-container {
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-  height: 400px;
-}
-</style>
