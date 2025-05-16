@@ -3,7 +3,7 @@ import random
 from datetime import datetime
 from utils.db import get_connection
 from utils.twse_price_client import get_monthly_daily_price
-from tqdm import tqdm
+from tqdm import tqdm  
 
 # ✅ 民國轉西元
 def convert_to_ad_date(date_str):

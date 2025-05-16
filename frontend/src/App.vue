@@ -1,7 +1,9 @@
 <script setup>
-import TwiiChart from './components/TwiiChart.vue'
+import HomePage from './pages/HomePage.vue'
 </script>
 
 <template>
-  <TwiiChart />
+  <div id="app">
+    <HomePage />
+  </div>
 </template>

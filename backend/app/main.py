@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.router import twii  # 引入大盤的路由
+from app.router import twii_ws
 
 app = FastAPI()
 
@@ -15,3 +16,4 @@ app.add_middleware(
 
 # 註冊路由
 app.include_router(twii.router, prefix="/api/twii", tags=["twii"])
+app.include_router(twii_ws.router)
