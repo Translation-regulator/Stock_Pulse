@@ -12,6 +12,7 @@
     "axios": "^1.9.0",
     "frontend": "file:",
     "lightweight-charts": "^3.8.0",
+    "resize-observer-polyfill": "^1.5.1",
     "vue": "^3.5.13"
   },
   "devDependencies": {

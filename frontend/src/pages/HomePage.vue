@@ -1,20 +1,19 @@
 <script setup>
-import NavBar from '../components/NavBar.vue';
-import TwiiRealtime from '../components/TwiiRealtime.vue'
-import TwiChart from '../components/TwiiChart.vue'
+import NavBar from '../components/NavBar.vue'
+import TwiiChartSwitcher from '../components/TwiiChartSwitcher.vue'
 </script>
 
 <template>
-  <NavBar/>
+  <NavBar />
   <main>
-    <TwiChart/>
+    <TwiiChartSwitcher />
   </main>
 </template>
 
 <style scoped>
-  main {
-    padding-top: 70px;
-  }
+main {
+  padding-top: 70px;
+  width: 1200px;
+  margin: 0 auto;
+}
 </style>
-
-
