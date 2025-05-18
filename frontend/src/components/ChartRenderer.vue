@@ -2,7 +2,7 @@
   <div class="chart-container">
     <div ref="chartContainer" class="chart"></div>
     <div v-if="hoverData" class="hover-panel">
-      <p>📅 {{ hoverData.date }}</p>
+      <p>{{ hoverData.date }}</p>
       <p>開盤：{{ hoverData.open }}</p>
       <p>最高：{{ hoverData.high }}</p>
       <p>最低：{{ hoverData.low }}</p>
@@ -12,26 +12,29 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch, nextTick } from 'vue'
-import { createChart } from 'lightweight-charts'
+import { onMounted, ref, watch, onUnmounted } from 'vue'
+import { createChart, CandlestickSeries } from 'lightweight-charts'
 
 const props = defineProps({
   candles: {
     type: Array,
-    required: true
-  }
+    required: true,
+  },
 })
 
 const chartContainer = ref(null)
 const hoverData = ref(null)
 let chart = null
 let series = null
+let resizeObserver = null
 
-onMounted(async () => {
-  await nextTick()  // 等待 DOM 完全載入
+const initChart = () => {
+  if (!chartContainer.value) return
+
+  const width = chartContainer.value.clientWidth || 800
 
   chart = createChart(chartContainer.value, {
-    width: chartContainer.value.clientWidth || 800,
+    width,
     height: 400,
     layout: {
       background: { color: '#f4f4f4' },
@@ -44,10 +47,13 @@ onMounted(async () => {
     timeScale: {
       timeVisible: true,
       secondsVisible: false,
+      rightOffset: 0,
+      rightBarStaysOnScroll: true,
+      fixRightEdge: true,
     },
   })
 
-  series = chart.addCandlestickSeries({
+  series = chart.addSeries(CandlestickSeries, {
     upColor: '#ef5350',
     downColor: '#26a69a',
     borderVisible: false,
@@ -56,48 +62,59 @@ onMounted(async () => {
   })
 
   series.setData(props.candles)
+  chart.timeScale().scrollToPosition(props.candles.length - 1, false)
 
-chart.subscribeCrosshairMove(param => {
-  if (!param || !param.time || !param.seriesData) {
-    hoverData.value = null
-    return
-  }
-
-  const ohlc = param.seriesData.get(series)
-  console.log('🎯 ohlc:', ohlc)  // ← 看這個有沒有
-
-  if (ohlc) {
-    const dt = new Date(param.time * 1000)
-    hoverData.value = {
-      date: dt.toLocaleDateString('zh-TW'),
-      open: ohlc.open,
-      high: ohlc.high,
-      low: ohlc.low,
-      close: ohlc.close
+  chart.subscribeCrosshairMove((param) => {
+    if (!param || !param.time || !param.seriesData) {
+      hoverData.value = null
+      return
     }
-  } else {
-    hoverData.value = null
-  }
-})
 
+    const ohlc = param.seriesData.get(series)
+    if (ohlc) {
+      const dt =
+        typeof param.time === 'object' && 'timestamp' in param.time
+          ? new Date(param.time.timestamp * 1000)
+          : new Date(param.time * 1000)
 
-  window.addEventListener('resize', () => {
-    chart.resize(chartContainer.value.clientWidth, 400)
+      hoverData.value = {
+        date: dt.toLocaleDateString('zh-TW'),
+        open: ohlc.open,
+        high: ohlc.high,
+        low: ohlc.low,
+        close: ohlc.close,
+      }
+    } else {
+      hoverData.value = null
+    }
   })
+}
+
+onMounted(() => {
+  resizeObserver = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.contentRect.width > 0 && !chart) {
+        initChart()
+      }
+      chart?.resize(entry.contentRect.width, 400)
+    }
+  })
+  resizeObserver.observe(chartContainer.value)
 })
 
-watch(() => props.candles, (newData) => {
-  if (series) {
-    series.setData(newData)
-  }
+onUnmounted(() => {
+  if (resizeObserver) resizeObserver.disconnect()
 })
-console.log('🧪 實際資料內容：', props.candles.slice(0, 5).map(item => ({
-  time: item.time,
-  open: item.open,
-  close: item.close
-})))
-
-
+watch(
+  () => props.candles,
+  (newData) => {
+    if (series && chart) {
+      series.setData(newData)
+      chart.timeScale().scrollToPosition(newData.length - 1, false)
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>

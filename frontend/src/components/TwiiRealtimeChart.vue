@@ -1,9 +1,5 @@
 <template>
   <div class="twii-realtime-chart">
-    <div class="info-panel" v-if="latest">
-      <p>📈 加權指數：{{ latest.value.toFixed(2) }}</p>
-      <p>🕒 時間：{{ latest.raw_time }}</p>
-    </div>
     <TwiiRealtimeChartRenderer v-if="data.length" :data="data.map(d => ({ ...d }))" />
   </div>
 </template>

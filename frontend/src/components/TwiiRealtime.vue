@@ -1,11 +1,11 @@
 <template>
   <div class="twii-realtime">
     <p>
-      🧾 <strong>加權指數：</strong>
+      <strong>加權指數：</strong>
       <span :class="isUp ? 'up' : 'down'">{{ twii !== null ? twii.toFixed(2) : '載入中...' }}</span>
     </p>
     <p>
-      ⏰ <strong>時間：</strong>
+      <strong>時間：</strong>
       <span>{{ time || '載入中...' }}</span>
     </p>
   </div>

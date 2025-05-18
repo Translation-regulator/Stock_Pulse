@@ -4,7 +4,7 @@
 
 <script setup>
 import { onMounted, ref, watch, nextTick } from 'vue'
-import { createChart } from 'lightweight-charts'
+import { createChart, LineSeries } from 'lightweight-charts'
 
 const props = defineProps({
   data: {
@@ -20,11 +20,10 @@ let series = null
 onMounted(async () => {
   await nextTick()
 
-  const containerWidth = chartContainer.value.clientWidth || 800
-  console.log('📏 容器寬度:', containerWidth)
+  const width = chartContainer.value.clientWidth || 800
 
   chart = createChart(chartContainer.value, {
-    width: containerWidth,
+    width,
     height: 300,
     layout: {
       backgroundColor: '#ffffff',
@@ -53,7 +52,8 @@ onMounted(async () => {
     },
   })
 
-  series = chart.addLineSeries({
+  // ✅ v5 新寫法：加上 LineSeries 類別
+  series = chart.addSeries(LineSeries, {
     priceLineVisible: false,
     lastValueVisible: false,
   })
@@ -61,8 +61,7 @@ onMounted(async () => {
   chart.timeScale().scrollToRealTime()
   chart.timeScale().fitContent()
 
-  // ➕ 補一次 resize 保險
-  chart.resize(containerWidth, 300)
+  chart.resize(width, 300)
 
   window.addEventListener('resize', () => {
     chart.resize(chartContainer.value.clientWidth, 300)
@@ -72,7 +71,6 @@ onMounted(async () => {
 watch(
   () => props.data,
   (newData) => {
-    console.log('📈 renderer 收到資料:', newData.length, newData.slice(-1)) // ⬅️ 加這行
     if (series && chart && newData.length > 0) {
       series.setData(newData)
       chart.timeScale().scrollToRealTime()
@@ -80,7 +78,6 @@ watch(
   },
   { immediate: true }
 )
-
 </script>
 
 <style scoped>
