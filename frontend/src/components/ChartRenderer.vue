@@ -115,6 +115,9 @@ watch(
   },
   { immediate: true }
 )
+
+console.log("✅ 前端收到資料", props.candles)
+
 </script>
 
 <style scoped>

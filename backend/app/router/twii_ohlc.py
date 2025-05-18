@@ -1,6 +1,6 @@
 from fastapi import APIRouter
+from datetime import datetime, time as dt_time
 from utils.db import get_connection
-from datetime import datetime, time
 
 router = APIRouter()
 
@@ -18,13 +18,13 @@ def fetch_ohlc(table: str):
 
     result = []
     for row in rows:
-        dt = datetime.combine(row['date'], time.min)
+        dt = datetime.combine(row['date'], dt_time.min)
         result.append({
-            "time": int(dt.timestamp()),  # ✅ 直接給前端合法 UNIX timestamp
-            "open": row["open"],
-            "high": row["high"],
-            "low": row["low"],
-            "close": row["close"],
+            "time": int(dt.timestamp()),
+            "open": float(row["open"]),
+            "high": float(row["high"]),
+            "low": float(row["low"]),
+            "close": float(row["close"]),
         })
     return result
 

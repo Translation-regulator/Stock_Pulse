@@ -9,7 +9,7 @@ app = FastAPI()
 # CORS（允許前端請求）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 可指定 Vue 網域
+    allow_origins=["http://localhost:5173"],  # 可指定 Vue 網域
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
