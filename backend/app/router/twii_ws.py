@@ -5,7 +5,7 @@ import asyncio
 router = APIRouter()
 start_fugle_stream()
 
-@router.websocket("/ws/twii")
+@router.websocket("/twii")
 async def twii_ws(websocket: WebSocket):
     await websocket.accept()
     queue = asyncio.Queue()

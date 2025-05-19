@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.router import twii  # 引入大盤的路由
 from app.router import twii_ws
 from app.router import twii_ohlc
 
@@ -15,7 +14,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 註冊路由
-app.include_router(twii.router, prefix="/api/twii", tags=["twii"])
-app.include_router(twii_ws.router)
-app.include_router(twii_ohlc.router)
+# 測試路由
+@app.get("/")
+def read_root():
+    return {"message": "FastAPI backend is running"}
+
+# REST API：統一掛在 /api/twii 下（大盤用）
+app.include_router(twii_ohlc.router, prefix="/api/twii", tags=["twii_ohlc"])
+
+# WebSocket 路由：掛在 /ws 下（即時資料）
+app.include_router(twii_ws.router, prefix="/ws", tags=["websocket"])

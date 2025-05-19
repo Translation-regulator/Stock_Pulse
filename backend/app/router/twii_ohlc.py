@@ -4,6 +4,7 @@ from utils.db import get_connection
 
 router = APIRouter()
 
+# ✅ 通用函式
 def fetch_ohlc(table: str):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -28,10 +29,17 @@ def fetch_ohlc(table: str):
         })
     return result
 
-@router.get("/api/twii/weekly")
+# ✅ 大盤日線
+@router.get("/daily")
+async def get_twii_daily():
+    return fetch_ohlc("twii_index")
+
+# ✅ 大盤週線
+@router.get("/weekly")
 async def get_twii_weekly():
     return fetch_ohlc("twii_weekly")
 
-@router.get("/api/twii/monthly")
+# ✅ 大盤月線
+@router.get("/monthly")
 async def get_twii_monthly():
     return fetch_ohlc("twii_monthly")
