@@ -47,6 +47,7 @@ def start_fugle_stream():
 
 
     def real_worker():
+        print("正在使用 Fugle 真實即時資料串流")
         client = WebSocketClient(api_key=FUGLE_API_KEY)
 
         def handle_message(message):
