@@ -1,22 +1,27 @@
 <script setup>
 import logo from '@/assets/StockPulse.png'
+import { RouterLink } from 'vue-router'
 </script>
 
 <template>
   <nav class="navbar">
     <!-- 左邊 Logo -->
-    <div class="left">
+    <RouterLink to="/" class="left" >
       <img :src="logo" alt="StockPulse Logo" class="logo" />
-    </div>
+    </RouterLink>
+
+    <!-- 中間選單 -->
     <div class="center">
-      <div class="menu">大盤指數</div>
-      <div class="menu">個股資訊</div>
-      <div class="menu">投資組合</div>
-      <div class="menu more">聊天室</div>
+      <RouterLink to="/twii" class="menu">大盤指數</RouterLink>
+      <RouterLink to="#" class="menu">個股資訊</RouterLink>
+      <RouterLink to="#" class="menu">投資組合</RouterLink>
+      <RouterLink to="#" class="menu more">聊天室</RouterLink>
     </div>
-    <div>     
-    <button class="signinup">登入/註冊</button>
-    </div> 
+
+    <!-- 右邊登入 -->
+    <div>
+      <button class="signinup">登入/註冊</button>
+    </div>
   </nav>
 </template>
 
@@ -34,7 +39,9 @@ import logo from '@/assets/StockPulse.png'
   font-family: 'Segoe UI', sans-serif;
   padding-left: 5%;
   padding-right: 5%;
+
 }
+
 
 .left .logo {
   height: 40px;
@@ -45,30 +52,17 @@ import logo from '@/assets/StockPulse.png'
   flex: 1;
   display: flex;
   justify-content: center;
-  gap: 3rem; /* 調整間距大小 */
+  gap: 3rem;
   font-size: 26px;
-}
-
-.search {
-  background-color: #222;
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  border: none;
-  width: 250px;
-  outline: none;
-  font-size: 0.9rem;
-}
-
-.right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
 }
 
 .menu {
   color: white;
   text-decoration: none;
+}
+
+.menu.router-link-exact-active {
+  font-weight: bold;
 }
 
 .signinup {

@@ -1,3 +1,9 @@
 body {
   font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif;
+  background-color: #0d1117;  
+  color: #e6edf3;             
+  font-family: 'Segoe UI', 'Noto Sans TC', sans-serif;
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
 }

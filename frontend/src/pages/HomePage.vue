@@ -8,8 +8,6 @@ import Footer from '../components/Footer.vue'
 
 <template>
   <div class="home-page">
-    <NavBar />
-
     <div class="content">
       <HeroSection />
       <HomepageVideo />
