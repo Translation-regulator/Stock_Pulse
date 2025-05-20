@@ -32,7 +32,7 @@ def get_existing_months(stock_id):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT DATE_FORMAT(date, '%%Y-%%m') FROM daily_price
+        SELECT DATE_FORMAT(date, '%%Y-%%m') FROM stock_daily_price
         WHERE stock_id = %s
     """, (stock_id,))
     rows = cursor.fetchall()
@@ -76,7 +76,7 @@ def insert_monthly_data(stock_id, year, month, cursor):
         for attempt in range(2):  # 最多 retry 1 次
             try:
                 cursor.executemany("""
-                    INSERT IGNORE INTO daily_price
+                    INSERT IGNORE INTO stock_daily_price
                     (stock_id, date, open, high, low, close, volume, amount, change_price, transaction_count)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, data_to_insert)
