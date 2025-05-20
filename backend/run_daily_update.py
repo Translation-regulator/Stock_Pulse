@@ -1,7 +1,8 @@
 from datetime import datetime
 from service.fetch_twii_latest import main as fetch_twii
 from service.fetch_recent_price import fetch_recent_prices
-from service.generate_stock_ohlc_latest import main as generate_ohlc
+from service.generate_stock_ohlc_latest import main as generate_stock_ohlc
+from service.generate_twii_ohlc import generate_twii_ohlc
 
 def main():
     print("\n🔁 開始執行每日更新作業")
@@ -21,10 +22,17 @@ def main():
     except Exception as e:
         print(f"❌ 個股補抓失敗：{e}")
 
+    # 大盤轉換週/月線
+    print("\n===== ⬇️ TWII 週/月線轉換開始 =====")
+    try:
+        generate_twii_ohlc()
+    except Exception as e:
+        print(f"❌ TWII 轉換失敗：{e}")
+
     # 個股日線 → 週/月線轉換
     print("\n===== ⬇️ 個股週/月線轉換開始 =====")
     try:
-        generate_ohlc()
+        generate_stock_ohlc()
     except Exception as e:
         print(f"❌ 個股週/月線轉換失敗：{e}")
 
