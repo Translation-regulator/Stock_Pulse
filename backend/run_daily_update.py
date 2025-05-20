@@ -1,7 +1,7 @@
 from datetime import datetime
 from service.fetch_twii_latest import main as fetch_twii
 from service.fetch_recent_price import fetch_recent_prices
-from service.generate_stock_ohlc_latest import main as generate_stock_ohlc
+from service.generate_stock_ohlc import main as generate_stock_ohlc
 from service.generate_twii_ohlc import generate_twii_ohlc
 
 def main():

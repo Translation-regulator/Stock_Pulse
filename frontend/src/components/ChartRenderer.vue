@@ -88,12 +88,18 @@ const initChart = () => {
       vertLines: { color: '#30363d' },
       horzLines: { color: '#30363d' },
     },
-    timeScale: {
-      timeVisible: true,
-      rightOffset: 5,
-      barSpacing: 14,
-      fixRightEdge: true,
-    },
+timeScale: {
+  timeVisible: false,
+  secondsVisible: false,  // ✅ 加上這行！
+  rightOffset: 5,
+  barSpacing: 14,
+  fixRightEdge: true,
+  tickMarkFormatter: (time) => {
+    const ts = typeof time === 'object' && 'timestamp' in time ? time.timestamp : time
+    return new Date(ts * 1000).toLocaleDateString('zh-TW')
+  }
+},
+
     priceScale: {
       visible: false,
     },

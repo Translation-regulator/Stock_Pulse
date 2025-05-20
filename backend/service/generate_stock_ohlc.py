@@ -1,14 +1,9 @@
 import pandas as pd
-from tqdm import tqdm # type: ignore
+from datetime import timedelta
+from tqdm import tqdm # type:ignore
 from utils.db import get_connection
-import warnings
 
-# 忽略 Pandas 使用非 SQLAlchemy 連線的警告
-warnings.filterwarnings("ignore", category=UserWarning)
-
-# 忽略 "M" 被棄用的未來警告
-warnings.filterwarnings("ignore", category=FutureWarning)
-
+# 取得所有股票 ID
 def get_all_stock_ids():
     conn = get_connection()
     cursor = conn.cursor()
@@ -17,15 +12,25 @@ def get_all_stock_ids():
     conn.close()
     return [row[0] for row in rows]
 
-def get_daily_data(stock_id):
+# 取最後一筆已轉換的日期
+def get_last_converted_date(conn, table_name, stock_id):
+    cursor = conn.cursor()
+    cursor.execute(f"SELECT MAX(date) FROM {table_name} WHERE stock_id = %s", (stock_id,))
+    row = cursor.fetchone()
+    return row[0]  # may be None
+
+# 取得該股的日線資料
+def get_daily_data(stock_id, start_date):
     conn = get_connection()
     query = """
         SELECT date, open, high, low, close, volume, amount
         FROM stock_daily_price
-        WHERE stock_id = %s
+        WHERE stock_id = %s AND date >= %s
         ORDER BY date ASC
     """
-    df = pd.read_sql(query, conn, params=(stock_id,))
+    # ✅ 確保 start_date 是 Python datetime.date
+    start_date = pd.to_datetime(start_date).to_pydatetime().date()
+    df = pd.read_sql(query, conn, params=(stock_id, start_date))
     conn.close()
     if df.empty:
         return None
@@ -33,69 +38,89 @@ def get_daily_data(stock_id):
     df.set_index("date", inplace=True)
     return df
 
-def insert_ohlc(conn, table_name, stock_id, df, date_col):
+# 寫入週／月線資料（UPSERT）
+def insert_ohlc(conn, table_name, stock_id, df):
     df = df.dropna().reset_index()
     cursor = conn.cursor()
     for _, row in df.iterrows():
         cursor.execute(f"""
-            INSERT IGNORE INTO {table_name}
-            (stock_id, {date_col}, open, high, low, close, volume, amount)
+            INSERT INTO {table_name}
+            (stock_id, date, open, high, low, close, volume, amount)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                open = VALUES(open),
+                high = VALUES(high),
+                low = VALUES(low),
+                close = VALUES(close),
+                volume = VALUES(volume),
+                amount = VALUES(amount)
         """, (
             stock_id,
-            row["date"].date(),  # 週五或月底
-            row["open"],
-            row["high"],
-            row["low"],
-            row["close"],
-            row["volume"],
-            row["amount"]
+            row["date"].date(),
+            row["open"], row["high"], row["low"], row["close"],
+            row["volume"], row["amount"]
         ))
     conn.commit()
 
+# 處理單一股票
 def process_stock(stock_id, conn):
-    df = get_daily_data(stock_id)
+    last_weekly = get_last_converted_date(conn, "stock_weekly_price", stock_id)
+    last_monthly = get_last_converted_date(conn, "stock_monthly_price", stock_id)
+
+    start_date = min(
+        d - timedelta(days=7) if d else pd.Timestamp("2000-01-01")
+        for d in [last_weekly, last_monthly]
+    )
+
+    df = get_daily_data(stock_id, start_date)
     if df is None or df.empty:
-        print(f"⚠️ 無日線資料：{stock_id}")
         return
 
-    # 使用結束日為代表日期（週五、月底）
-    df_weekly = df.resample("W-FRI").agg({
-        "open": "first",
-        "high": "max",
-        "low": "min",
-        "close": "last",
-        "volume": "sum",
-        "amount": "sum"
-    })
+    # === 週線處理 ===
+    df['week_id'] = df.index.to_series().dt.to_period("W").apply(lambda r: r.start_time)
+    weekly_rows = []
+    for _, group in df.groupby("week_id"):
+        last_date = group.index.max()
+        weekly_rows.append({
+            "date": last_date,
+            "open": group.iloc[0]["open"],
+            "high": group["high"].max(),
+            "low": group["low"].min(),
+            "close": group.iloc[-1]["close"],
+            "volume": group["volume"].sum(),
+            "amount": group["amount"].sum()
+        })
+    df_weekly = pd.DataFrame(weekly_rows)
 
-    df_monthly = df.resample("M").agg({
-        "open": "first",
-        "high": "max",
-        "low": "min",
-        "close": "last",
-        "volume": "sum",
-        "amount": "sum"
-    })
+    # === 月線處理 ===
+    df['month_id'] = df.index.to_series().dt.to_period("M")
+    monthly_rows = []
+    for _, group in df.groupby("month_id"):
+        last_date = group.index.max()
+        monthly_rows.append({
+            "date": last_date,
+            "open": group.iloc[0]["open"],
+            "high": group["high"].max(),
+            "low": group["low"].min(),
+            "close": group.iloc[-1]["close"],
+            "volume": group["volume"].sum(),
+            "amount": group["amount"].sum()
+        })
+    df_monthly = pd.DataFrame(monthly_rows)
 
-    insert_ohlc(conn, "stock_weekly_price", stock_id, df_weekly, "date")
-    insert_ohlc(conn, "stock_monthly_price", stock_id, df_monthly, "date")
+    insert_ohlc(conn, "stock_weekly_price", stock_id, df_weekly)
+    insert_ohlc(conn, "stock_monthly_price", stock_id, df_monthly)
 
+# 主程式
 def main():
     stock_ids = get_all_stock_ids()
     conn = get_connection()
 
-    # ✅ 清空舊資料
-    cursor = conn.cursor()
-    cursor.execute("TRUNCATE TABLE stock_weekly_price")
-    cursor.execute("TRUNCATE TABLE stock_monthly_price")
-    conn.commit()
-
-    for stock_id in tqdm(stock_ids, desc="📊 個股週/月線轉換中"):
+    for stock_id in tqdm(stock_ids, desc="📈 計算個股週/月線"):
         process_stock(stock_id, conn)
 
     conn.close()
-    print("✅ 所有個股週線與月線轉換完成")
+    print("✅ 所有個股資料已轉換為週線與月線")
 
 if __name__ == "__main__":
     main()
