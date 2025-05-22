@@ -11,9 +11,15 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      // WebSocket 代理
       '/ws': {
         target: 'http://localhost:8000',
         ws: true,
+        changeOrigin: true,
+      },
+      // API 路由代理
+      '/api': {
+        target: 'http://localhost:8000',
         changeOrigin: true,
       },
     },

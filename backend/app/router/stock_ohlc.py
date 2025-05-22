@@ -1,35 +1,51 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from datetime import datetime, time as dt_time
 from utils.db import get_connection
 import pandas as pd
 
 router = APIRouter()
 
-# ✅ 通用函式：處理日、週、月線 OHLC + 成交金額 + 漲跌點數/幅度 + MA
-def fetch_ohlc(table: str):
+# ✅ 查詢個股基本資料（提供 stock_id 與 stock_name 給前端）
+@router.get("/stocks/info/{query}")
+async def get_stock_info(query: str):
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT stock_id, stock_name
+        FROM stock_info
+        WHERE stock_id = %s OR stock_name LIKE %s
+        LIMIT 1
+    """, (query, f"%{query}%"))
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="查無此股票")
+    return row
+# ✅ 通用函式
+def fetch_stock_ohlc(table: str, stock_id: str):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(f"""
         SELECT date, open, high, low, close, volume
         FROM {table}
+        WHERE stock_id = %s
         ORDER BY date ASC
-    """)
+    """, (stock_id,))
     rows = cursor.fetchall()
     cursor.close()
     conn.close()
 
+    if not rows:
+        raise HTTPException(status_code=404, detail="查無資料")
+
     df = pd.DataFrame(rows)
-
-    # ➤ 計算移動平均
-    df["ma5"] = df["close"].rolling(window=5).mean()
-    df["ma20"] = df["close"].rolling(window=20).mean()
-    df["ma60"] = df["close"].rolling(window=60).mean()
-
-    # ➤ 成交金額（平均價 × 成交量）
+    df["ma5"] = df["close"].rolling(5).mean()
+    df["ma20"] = df["close"].rolling(20).mean()
+    df["ma60"] = df["close"].rolling(60).mean()
     df["avg_price"] = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
     df["turnover"] = (df["avg_price"] * df["volume"]).round()
-
-    # ➤ 漲跌點數與漲跌幅（第一筆為 None）
     df["prev_close"] = df["close"].shift(1)
     df["change_point"] = (df["close"] - df["prev_close"]).round(2)
     df["change_percent"] = ((df["change_point"] / df["prev_close"]) * 100).round(2)
@@ -53,17 +69,15 @@ def fetch_ohlc(table: str):
         })
     return result
 
-# 大盤日線
-@router.get("/daily")
-async def get_twii_daily():
-    return fetch_ohlc("twii_index")
+# ✅ 路由：個股日/週/月線
+@router.get("/stocks/{stock_id}/daily")
+async def get_stock_daily(stock_id: str):
+    return fetch_stock_ohlc("stock_daily_price", stock_id)
 
-# 大盤週線
-@router.get("/weekly")
-async def get_twii_weekly():
-    return fetch_ohlc("twii_weekly")
+@router.get("/stocks/{stock_id}/weekly")
+async def get_stock_weekly(stock_id: str):
+    return fetch_stock_ohlc("stock_weekly_price", stock_id)
 
-# 大盤月線
-@router.get("/monthly")
-async def get_twii_monthly():
-    return fetch_ohlc("twii_monthly")
+@router.get("/stocks/{stock_id}/monthly")
+async def get_stock_monthly(stock_id: str):
+    return fetch_stock_ohlc("stock_monthly_price", stock_id)
