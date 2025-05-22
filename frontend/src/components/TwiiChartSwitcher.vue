@@ -37,12 +37,15 @@ const mode = ref('daily')
 
 <style scoped>
 .twii-switcher {
-  padding: 20px;
+  box-sizing: border-box;
+  margin-left: 5%;
+  margin-right: 5%;
 }
 .switch-buttons {
   display: flex;
   gap: 10px;
   margin-bottom: 1rem;
+  margin-top: 1rem;
 }
 button {
   padding: 0.5rem 1rem;
