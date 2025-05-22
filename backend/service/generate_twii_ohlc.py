@@ -12,12 +12,9 @@ def generate_twii_ohlc():
 
     # ========== ✅ 週線處理：以週五為週期結束 ========== #
     weekly_rows = []
-    latest_date = df['date'].max()
-
     for _, group in df.groupby(pd.Grouper(key='date', freq='W-FRI')):
 
-        # 如果這週沒有任何資料（週五還沒到），跳過
-        if group.empty or group['date'].max() >= latest_date:
+        if group.empty:
             continue
 
         last_date = group['date'].max()
@@ -31,7 +28,7 @@ def generate_twii_ohlc():
         """, (week_start.date(), week_end.date()))
 
         weekly_rows.append({
-            'date': last_date,  # ✅ 使用該週最後交易日（通常是週五）
+            'date': last_date,  # ✅ 使用目前週內的最後交易日（滾動式更新）
             'open': float(group.iloc[0]['open']),
             'high': float(group['high'].max()),
             'low': float(group['low'].min()),
@@ -88,7 +85,7 @@ def generate_twii_ohlc():
     conn.commit()
     cursor.close()
     conn.close()
-    print("✅ 週線（週五為代表日）與月線已成功寫入")
+    print("✅ 週線（滾動更新）與月線已成功寫入")
 
 if __name__ == "__main__":
     generate_twii_ohlc()
