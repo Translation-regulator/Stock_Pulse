@@ -1,12 +1,17 @@
 <template>
   <div class="twii-switcher">
-    <div class="switch-buttons">
-      <button @click="mode = 'daily'" :class="{ active: mode === 'daily' }">日線</button>
-      <button @click="mode = 'weekly'" :class="{ active: mode === 'weekly' }">週線</button>
-      <button @click="mode = 'monthly'" :class="{ active: mode === 'monthly' }">月線</button>
-      <button @click="mode = 'realtime'" :class="{ active: mode === 'realtime' }">即時</button>
+    <!-- 按鈕與即時指數在同一排 -->
+    <div class="switch-bar">
+      <div class="switch-buttons">
+        <button @click="mode = 'daily'" :class="{ active: mode === 'daily' }">日線</button>
+        <button @click="mode = 'weekly'" :class="{ active: mode === 'weekly' }">週線</button>
+        <button @click="mode = 'monthly'" :class="{ active: mode === 'monthly' }">月線</button>
+      </div>
+      <!-- 即時加權指數 -->
+      <TwiiRealtime />
     </div>
 
+    <!-- 圖表顯示 -->
     <div v-show="mode === 'daily'">
       <TwiiDailyChart />
     </div>
@@ -15,10 +20,6 @@
     </div>
     <div v-show="mode === 'monthly'">
       <TwiiMonthlyChart />
-    </div>
-    <div v-show="mode === 'realtime'">
-      <TwiiRealtime />
-      <TwiiRealtimeChart />
     </div>
   </div>
 </template>
@@ -41,23 +42,32 @@ const mode = ref('daily')
   margin-left: 5%;
   margin-right: 5%;
 }
+
+/* 上方按鈕與即時股價一排 */
+.switch-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
 .switch-buttons {
   display: flex;
   gap: 10px;
-  margin-bottom: 1rem;
-  margin-top: 1rem;
 }
+
 button {
   padding: 0.5rem 1rem;
   font-size: 1rem;
   cursor: pointer;
-  background: #f0f0f0;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  background: #1f2937;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 6px;
 }
 button.active {
-  background-color: #007bff;
-  color: white;
-  border-color: #007bff;
+  background-color: #6366f1;
+  border-color: #6366f1;
 }
 </style>

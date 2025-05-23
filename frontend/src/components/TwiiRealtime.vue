@@ -1,13 +1,9 @@
 <template>
   <div class="twii-realtime">
-    <p>
       <strong>加權指數：</strong>
       <span :class="isUp ? 'up' : 'down'">{{ twii !== null ? twii.toFixed(2) : '載入中...' }}</span>
-    </p>
-    <p>
-      <strong>時間：</strong>
+      <strong>  更新時間：</strong>
       <span>{{ time || '載入中...' }}</span>
-    </p>
   </div>
 </template>
 
@@ -25,7 +21,7 @@ onMounted(() => {
     const payload = JSON.parse(event.data)
     if (payload?.value !== undefined) {
       if (twii.value !== null) {
-        isUp.value = payload.value >= twii.value
+        isUp.value = payload.value >= twii.value 
       }
       twii.value = payload.value
       time.value = payload.raw_time
@@ -44,7 +40,7 @@ onBeforeUnmount(() => {
   padding: 0.5rem 1rem;
   background-color: #2a2a2b;
   border-radius: 8px;
-  max-width: 300px;
+  max-width: 400px;
 }
 .up {
   color: #e53935;

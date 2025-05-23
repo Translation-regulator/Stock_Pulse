@@ -1,34 +1,58 @@
 <template>
   <div class="chart-view-wrapper">
     <div class="chart-container-outer">
-      <!-- 點擊圖例切換 MA -->
-      <div class="ma-toggle">
-        <span @click="showMA5 = !showMA5" :class="['ma-label', showMA5 ? 'active' : '']" style="color: #3b82f6;">MA5</span>
-        <span @click="showMA20 = !showMA20" :class="['ma-label', showMA20 ? 'active' : '']" style="color: #a855f7;">MA20</span>
-        <span @click="showMA60 = !showMA60" :class="['ma-label', showMA60 ? 'active' : '']" style="color: #f97316;">MA60</span>
-      </div>
-
       <!-- Hover 資訊 -->
       <div class="hover-display" v-if="hoverData">
         <div class="ohlc">
           <div>{{ hoverData.date }}</div>
-          <div>開盤：{{ hoverData.open }}</div>
-          <div>最高：{{ hoverData.high }}</div>
-          <div>最低：{{ hoverData.low }}</div>
-          <div>收盤：<span :class="hoverData.close > hoverData.open ? 'up' : 'down'">{{ hoverData.close }}</span></div>
+          <div>開盤：{{ hoverData.open.toFixed(2) }}</div>
+          <div>最高：{{ hoverData.high.toFixed(2) }}</div>
+          <div>最低：{{ hoverData.low.toFixed(2) }}</div>
+          <div>收盤：
+            <span :class="hoverData.close > hoverData.open ? 'up' : 'down'">
+              {{ hoverData.close.toFixed(2) }}
+            </span>
+          </div>
         </div>
 
         <div class="extra-info">
-          <div>成交量：{{ (hoverData.volume / 1000).toLocaleString() }} 張</div>
-          <div>成交金額：{{ hoverData.turnover?.toLocaleString() }} 元</div>
-          <div>漲跌點數：<span :class="hoverData.change_point > 0 ? 'up' : 'down'">{{ hoverData.change_point }}</span></div>
-          <div>漲跌幅：<span :class="hoverData.change_percent > 0 ? 'up' : 'down'">{{ hoverData.change_percent }}%</span></div>
+          <div>成交量：{{ (hoverData.volume / 1e6).toFixed(2) }} 張</div>
+          <div>成交金額：{{ (hoverData.turnover / 1e3).toFixed(2) }} 千元</div>
+          <div>漲跌點數：
+            <span :class="hoverData.change_point > 0 ? 'up' : 'down'">
+              {{ hoverData.change_point.toFixed(2) }}
+            </span>
+          </div>
+          <div>漲跌幅：
+            <span :class="hoverData.change_percent > 0 ? 'up' : 'down'">
+              {{ hoverData.change_percent.toFixed(2) }}%
+            </span>
+          </div>
         </div>
 
+        <!-- MA 數值 + 按下切換顯示 -->
         <div class="ma-values">
-          <div v-if="hoverData.ma5 !== undefined"><span style="color: #3b82f6;">MA5：</span><span :class="hoverData.ma5Color">{{ hoverData.ma5 }}</span></div>
-          <div v-if="hoverData.ma20 !== undefined"><span style="color: #a855f7;">MA20：</span><span :class="hoverData.ma20Color">{{ hoverData.ma20 }}</span></div>
-          <div v-if="hoverData.ma60 !== undefined"><span style="color: #f97316;">MA60：</span><span :class="hoverData.ma60Color">{{ hoverData.ma60 }}</span></div>
+          <span
+            :class="['ma-toggle-label', showMA5 ? 'active' : 'inactive']"
+            style="color: #3b82f6"
+            @click="showMA5 = !showMA5"
+          >
+            MA5：{{ hoverData.ma5?.toFixed(2) ?? '-' }}
+          </span>
+          <span
+            :class="['ma-toggle-label', showMA20 ? 'active' : 'inactive']"
+            style="color: #a855f7"
+            @click="showMA20 = !showMA20"
+          >
+            MA20：{{ hoverData.ma20?.toFixed(2) ?? '-' }}
+          </span>
+          <span
+            :class="['ma-toggle-label', showMA60 ? 'active' : 'inactive']"
+            style="color: #f97316"
+            @click="showMA60 = !showMA60"
+          >
+            MA60：{{ hoverData.ma60?.toFixed(2) ?? '-' }}
+          </span>
         </div>
       </div>
 
@@ -83,25 +107,15 @@ const initChart = () => {
     },
     timeScale: {
       timeVisible: true,
-      secondsVisible: false,
-      overlay: true,
       rightOffset: 5,
       barSpacing: 14,
       fixRightEdge: true,
-      tickMarkFormatter: (time) => {
-        const ts = typeof time === 'object' && 'timestamp' in time ? time.timestamp : time
-        const date = new Date(ts * 1000)
-        const y = date.getFullYear()
-        const m = (date.getMonth() + 1).toString().padStart(2, '0')
-        const d = date.getDate().toString().padStart(2, '0')
-        return `${y}/${m}/${d}`
-      }
     },
     crosshair: {
       mode: 0,
       vertLine: { visible: true, labelVisible: false },
-      horzLine: { visible: true }
-    }
+      horzLine: { visible: true },
+    },
   })
 
   candleSeries = chart.addSeries(CandlestickSeries, {
@@ -118,16 +132,18 @@ const initChart = () => {
     priceFormat: { type: 'volume' },
     scaleMargins: { top: 0.8, bottom: 0 },
   })
-  volumeSeries.setData(props.candles.map(c => ({
-    time: c.time,
-    value: c.volume || 0,
-    color: c.close >= c.open ? '#ef5350' : '#26a69a',
-  })))
+  volumeSeries.setData(
+    props.candles.map(c => ({
+      time: c.time,
+      value: c.volume || 0,
+      color: c.close >= c.open ? '#ef5350' : '#26a69a',
+    }))
+  )
 
   chart.priceScale('volume').applyOptions({
     scaleMargins: { top: 0.84, bottom: 0 },
     borderVisible: false,
-    tickMarkFormatter: (val) => `${val.toFixed(0)} 張`,
+    tickMarkFormatter: val => `${val.toFixed(0)} 張`,
   })
 
   chart.priceScale('right').applyOptions({
@@ -150,17 +166,14 @@ const initChart = () => {
 
   chart.timeScale().scrollToPosition(props.candles.length - 1, false)
 
-  chart.subscribeCrosshairMove((param) => {
+  chart.subscribeCrosshairMove(param => {
     const ohlc = param?.seriesData?.get(candleSeries)
     const index = props.candles.findIndex(c => c.time === param?.time)
     const current = props.candles[index]
     const prev = props.candles[index - 1] ?? {}
 
     if (ohlc && current) {
-      const dt = typeof param.time === 'object' && 'timestamp' in param.time
-        ? new Date(param.time.timestamp * 1000)
-        : new Date(param.time * 1000)
-
+      const dt = new Date(typeof param.time === 'object' && 'timestamp' in param.time ? param.time.timestamp * 1000 : param.time * 1000)
       hoverData.value = {
         date: dt.toLocaleDateString('zh-TW'),
         open: ohlc.open,
@@ -174,16 +187,13 @@ const initChart = () => {
         ma5: current.ma5 ?? undefined,
         ma20: current.ma20 ?? undefined,
         ma60: current.ma60 ?? undefined,
-        ma5Color: current.ma5 !== undefined && prev.ma5 !== undefined ? (current.ma5 > prev.ma5 ? 'up' : 'down') : '',
-        ma20Color: current.ma20 !== undefined && prev.ma20 !== undefined ? (current.ma20 > prev.ma20 ? 'up' : 'down') : '',
-        ma60Color: current.ma60 !== undefined && prev.ma60 !== undefined ? (current.ma60 > prev.ma60 ? 'up' : 'down') : '',
       }
     }
   })
 }
 
 onMounted(() => {
-  resizeObserver = new ResizeObserver((entries) => {
+  resizeObserver = new ResizeObserver(entries => {
     for (const entry of entries) {
       if (entry.contentRect.width > 0 && !chart) initChart()
       chart?.resize(entry.contentRect.width, chartContainer.value.clientHeight)
@@ -200,11 +210,10 @@ onUnmounted(() => {
 
 <style scoped>
 .chart-view-wrapper {
-  height: calc(100vh - 60px - 40px);
+  height: calc(100vh - 140px);
   display: flex;
   flex-direction: column;
 }
-
 .chart-container-outer {
   background-color: #0d1117;
   padding: 1.5rem;
@@ -219,7 +228,6 @@ onUnmounted(() => {
   overflow: hidden;
   position: relative;
 }
-
 .chart {
   width: 100%;
   flex: 1;
@@ -227,49 +235,43 @@ onUnmounted(() => {
   box-shadow: inset 0 0 0 1px #2c313a;
   overflow: hidden;
 }
-
-.chart-contained canvas {
-  max-width: 100% !important;
-  height: auto !important;
-  object-fit: contain;
-}
-
 .hover-display {
   font-size: 1.2rem;
   color: #e6edf3;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.4rem;
   align-items: flex-start;
   margin-left: 0.2rem;
 }
-
 .extra-info, .ohlc, .ma-values {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.8rem;
+  gap: 1.2rem;
 }
-
 .hover-display span.up {
   color: #ef5350;
 }
 .hover-display span.down {
   color: #26a69a;
 }
-
-.ma-toggle {
+.ma-values {
+  display: flex;
   gap: 1.5rem;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   user-select: none;
 }
-.ma-label {
-  padding-right: 20px;
+.ma-toggle-label {
   cursor: pointer;
-  opacity: 0.7;
+  opacity: 0.6;
+  transition: all 0.2s ease;
 }
-.ma-label.active {
-  font-weight: bold;
-  text-decoration: underline;
+.ma-toggle-label.active {
   opacity: 1;
+  text-decoration: none;
+}
+.ma-toggle-label.inactive {
+  opacity: 0.3;
+  text-decoration: line-through;
 }
 </style>
