@@ -16,7 +16,7 @@ clients = set()
 
 def start_fugle_stream():
     def broadcast(obj):
-        message = json.dumps(obj)  # ✅ 在這裡統一轉為 JSON 字串
+        message = json.dumps(obj)  # 在這裡統一轉為 JSON 字串
         print("📤 廣播給所有客戶端:", message)
         for callback in clients.copy():
             try:
@@ -32,7 +32,7 @@ def start_fugle_stream():
             now = time.time()
             ts = int(now)
 
-            # ✅ 每次更新 value，模擬波動
+            # 每次更新 value，模擬波動
             value += random.uniform(-5, 5)
 
             fake_data = {
@@ -43,7 +43,7 @@ def start_fugle_stream():
             }
 
             broadcast(fake_data)
-            time.sleep(1)
+            time.sleep(5)
 
 
     def real_worker():

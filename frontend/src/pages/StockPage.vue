@@ -1,13 +1,11 @@
 <template>
   <div class="stock-page">
-    <h2>個股資訊</h2>
-
-    <div class="search-group">
+    <div class="input-group">
       <input
         v-model="searchQuery"
         @keyup.enter="fetchStockInfo"
         placeholder="輸入股號或股名"
-        class="search-input"
+        class="input"
       />
       <button class="search-btn" @click="fetchStockInfo">搜尋</button>
     </div>
@@ -63,29 +61,37 @@ async function fetchStockInfo() {
   color: white;
 }
 
-.search-group {
+.input-group {
+  margin-top: 2rem;
   display: flex;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
 }
 
-.search-input {
-  flex: 1;
-  padding: 0.75rem 1rem;
+.input {
+  padding: 0.8rem 1.5rem;
+  width: 300px;
   font-size: 1rem;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  border-radius: 8px;
+  border: none;
+  background: #222;
+  color: white;
+  outline: none;
 }
 
 .search-btn {
-  padding: 0.75rem 1.25rem;
-  font-size: 1rem;
-  background: linear-gradient(to right, #6366f1, #9333ea);
+  font-size: 1.2rem;
+  background: #1f6feb;
   color: white;
   border: none;
-  border-radius: 6px;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: background 0.2s ease;
+}
+.search-btn:hover {
+  background: #3b82f6;
 }
 .search-btn:hover {
   background: linear-gradient(to right, #4f46e5, #7e22ce);
