@@ -52,8 +52,10 @@ import { RouterLink } from 'vue-router'
   flex: 1;
   display: flex;
   justify-content: center;
-  gap: 3rem;
-  font-size: 26px;
+  gap: clamp(1rem, 4vw, 3rem);
+  font-size: clamp(16px, 2vw, 26px);
+  width: 100%;
+  max-width: 800px;
 }
 
 .menu {

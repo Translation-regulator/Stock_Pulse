@@ -1,66 +1,40 @@
 <template>
-  <div class="chart-container-outer">
-    <!-- 點擊圖例切換 MA -->
-    <div class="ma-toggle">
-      <span @click="showMA5 = !showMA5" :class="['ma-label', showMA5 ? 'active' : '']" style="color: #3b82f6;">MA5</span>
-      <span @click="showMA20 = !showMA20" :class="['ma-label', showMA20 ? 'active' : '']" style="color: #a855f7;">MA20</span>
-      <span @click="showMA60 = !showMA60" :class="['ma-label', showMA60 ? 'active' : '']" style="color: #f97316;">MA60</span>
-
-
-    <!-- Hover 資訊 -->
-<div class="hover-display" v-if="hoverData">
-  <div class="ohlc">
-    <p>{{ hoverData.date }}</p>
-    <p>開盤：{{ hoverData.open }}</p>
-    <p>最高：{{ hoverData.high }}</p>
-    <p>最低：{{ hoverData.low }}</p>
-    <p>
-      收盤：
-      <span :class="hoverData.close > hoverData.open ? 'up' : 'down'">
-        {{ hoverData.close }}
-      </span>
-    </p>
-  </div>
-
-  <!-- ✅ 新增一行，顯示 成交量、成交金額、漲跌點數、漲跌幅 -->
-  <div class="extra-info">
-    <p>成交量：{{ (hoverData.volume / 1000).toLocaleString() }} 張</p>
-    <p>成交金額：{{ hoverData.turnover?.toLocaleString() }} 元</p>
-    <p>
-      漲跌點數：
-      <span :class="hoverData.change_point > 0 ? 'up' : 'down'">
-        {{ hoverData.change_point }}
-      </span>
-    </p>
-    <p>
-      漲跌幅：
-      <span :class="hoverData.change_percent > 0 ? 'up' : 'down'">
-        {{ hoverData.change_percent }}%
-      </span>
-    </p>
-  </div>
-
-
-
-
-      <div class="ma-values">
-        <p v-if="hoverData.ma5 !== undefined">
-          <span style="color: #3b82f6;">MA5：</span>
-          <span :class="hoverData.ma5Color">{{ hoverData.ma5 }}</span>
-        </p>
-        <p v-if="hoverData.ma20 !== undefined">
-          <span style="color: #a855f7;">MA20：</span>
-          <span :class="hoverData.ma20Color">{{ hoverData.ma20 }}</span>
-        </p>
-        <p v-if="hoverData.ma60 !== undefined">
-          <span style="color: #f97316;">MA60：</span>
-          <span :class="hoverData.ma60Color">{{ hoverData.ma60 }}</span>
-        </p>
+  <div class="chart-view-wrapper">
+    <div class="chart-container-outer">
+      <!-- 點擊圖例切換 MA -->
+      <div class="ma-toggle">
+        <span @click="showMA5 = !showMA5" :class="['ma-label', showMA5 ? 'active' : '']" style="color: #3b82f6;">MA5</span>
+        <span @click="showMA20 = !showMA20" :class="['ma-label', showMA20 ? 'active' : '']" style="color: #a855f7;">MA20</span>
+        <span @click="showMA60 = !showMA60" :class="['ma-label', showMA60 ? 'active' : '']" style="color: #f97316;">MA60</span>
       </div>
+
+      <!-- Hover 資訊 -->
+      <div class="hover-display" v-if="hoverData">
+        <div class="ohlc">
+          <div>{{ hoverData.date }}</div>
+          <div>開盤：{{ hoverData.open }}</div>
+          <div>最高：{{ hoverData.high }}</div>
+          <div>最低：{{ hoverData.low }}</div>
+          <div>收盤：<span :class="hoverData.close > hoverData.open ? 'up' : 'down'">{{ hoverData.close }}</span></div>
+        </div>
+
+        <div class="extra-info">
+          <div>成交量：{{ (hoverData.volume / 1000).toLocaleString() }} 張</div>
+          <div>成交金額：{{ hoverData.turnover?.toLocaleString() }} 元</div>
+          <div>漲跌點數：<span :class="hoverData.change_point > 0 ? 'up' : 'down'">{{ hoverData.change_point }}</span></div>
+          <div>漲跌幅：<span :class="hoverData.change_percent > 0 ? 'up' : 'down'">{{ hoverData.change_percent }}%</span></div>
+        </div>
+
+        <div class="ma-values">
+          <div v-if="hoverData.ma5 !== undefined"><span style="color: #3b82f6;">MA5：</span><span :class="hoverData.ma5Color">{{ hoverData.ma5 }}</span></div>
+          <div v-if="hoverData.ma20 !== undefined"><span style="color: #a855f7;">MA20：</span><span :class="hoverData.ma20Color">{{ hoverData.ma20 }}</span></div>
+          <div v-if="hoverData.ma60 !== undefined"><span style="color: #f97316;">MA60：</span><span :class="hoverData.ma60Color">{{ hoverData.ma60 }}</span></div>
+        </div>
+      </div>
+
+      <div ref="chartContainer" class="chart"></div>
     </div>
-</div>
-    <div ref="chartContainer" class="chart"></div>
-    </div>
+  </div>
 </template>
 
 <script setup>
@@ -94,10 +68,11 @@ const updateMAVisibility = () => {
 
 const initChart = () => {
   const width = chartContainer.value.clientWidth || 800
+  const height = chartContainer.value.clientHeight || 500
 
   chart = createChart(chartContainer.value, {
     width,
-    height: 600,
+    height,
     layout: {
       background: { color: '#0d1117' },
       textColor: '#e6edf3',
@@ -106,36 +81,29 @@ const initChart = () => {
       vertLines: { color: '#30363d' },
       horzLines: { color: '#30363d' },
     },
-timeScale: {
-  timeVisible: true,         // ✅ 要打開，這樣 hover 才會觸發
-  secondsVisible: false,
-  overlay: true,             // ✅ 保留，用來關掉底部時間提示
-  rightOffset: 5,
-  barSpacing: 14,
-  fixRightEdge: true,
-  tickMarkFormatter: (time) => {
-    const ts = typeof time === 'object' && 'timestamp' in time ? time.timestamp : time
-    const date = new Date(ts * 1000)
-    const y = date.getFullYear()
-    const m = (date.getMonth() + 1).toString().padStart(2, '0')
-    const d = date.getDate().toString().padStart(2, '0')
-    return `${y}/${m}/${d}`
-  }
-},
-crosshair: {
-  mode: 0,
-  vertLine: {
-    visible: true,
-    labelVisible: false   // ✅ 關掉 Y 軸與 X 軸上的 label（最重要）
-  },
-  horzLine: {
-    visible: true
-  }
-}
-
+    timeScale: {
+      timeVisible: true,
+      secondsVisible: false,
+      overlay: true,
+      rightOffset: 5,
+      barSpacing: 14,
+      fixRightEdge: true,
+      tickMarkFormatter: (time) => {
+        const ts = typeof time === 'object' && 'timestamp' in time ? time.timestamp : time
+        const date = new Date(ts * 1000)
+        const y = date.getFullYear()
+        const m = (date.getMonth() + 1).toString().padStart(2, '0')
+        const d = date.getDate().toString().padStart(2, '0')
+        return `${y}/${m}/${d}`
+      }
+    },
+    crosshair: {
+      mode: 0,
+      vertLine: { visible: true, labelVisible: false },
+      horzLine: { visible: true }
+    }
   })
 
-  // ➤ Candle K 線
   candleSeries = chart.addSeries(CandlestickSeries, {
     upColor: '#ef5350',
     downColor: '#26a69a',
@@ -145,53 +113,36 @@ crosshair: {
   })
   candleSeries.setData(props.candles)
 
-  // ➤ 成交量圖表（Histogram）
   volumeSeries = chart.addSeries(HistogramSeries, {
     priceScaleId: 'volume',
     priceFormat: { type: 'volume' },
     scaleMargins: { top: 0.8, bottom: 0 },
   })
-  const volumeData = props.candles.map(c => ({
+  volumeSeries.setData(props.candles.map(c => ({
     time: c.time,
     value: c.volume || 0,
     color: c.close >= c.open ? '#ef5350' : '#26a69a',
-  }))
-  volumeSeries.setData(volumeData)
+  })))
 
-  // ✅ 修正：volume series 建立後再設定其 priceScale
   chart.priceScale('volume').applyOptions({
     scaleMargins: { top: 0.84, bottom: 0 },
     borderVisible: false,
-    tickMarkFormatter: (val) => `${val.toFixed(0)} 張`,  // ✅ 顯示「張」
+    tickMarkFormatter: (val) => `${val.toFixed(0)} 張`,
   })
-
 
   chart.priceScale('right').applyOptions({
-    scaleMargins: { top: 0.05, bottom: 0.25 }, // 預留底部空間
+    scaleMargins: { top: 0.05, bottom: 0.25 },
   })
 
-  // ➤ MA 線（通用設定）
   const maCommonOpts = {
     lineWidth: 1.5,
     lastValueVisible: false,
     priceLineVisible: false,
   }
 
-  ma5Series = chart.addSeries(LineSeries, {
-    color: '#3b82f6',
-    visible: showMA5.value,
-    ...maCommonOpts,
-  })
-  ma20Series = chart.addSeries(LineSeries, {
-    color: '#a855f7',
-    visible: showMA20.value,
-    ...maCommonOpts,
-  })
-  ma60Series = chart.addSeries(LineSeries, {
-    color: '#f97316',
-    visible: showMA60.value,
-    ...maCommonOpts,
-  })
+  ma5Series = chart.addSeries(LineSeries, { color: '#3b82f6', visible: showMA5.value, ...maCommonOpts })
+  ma20Series = chart.addSeries(LineSeries, { color: '#a855f7', visible: showMA20.value, ...maCommonOpts })
+  ma60Series = chart.addSeries(LineSeries, { color: '#f97316', visible: showMA60.value, ...maCommonOpts })
 
   ma5Series.setData(props.candles.map(c => c.ma5 ? { time: c.time, value: c.ma5 } : null).filter(Boolean))
   ma20Series.setData(props.candles.map(c => c.ma20 ? { time: c.time, value: c.ma20 } : null).filter(Boolean))
@@ -235,38 +186,25 @@ onMounted(() => {
   resizeObserver = new ResizeObserver((entries) => {
     for (const entry of entries) {
       if (entry.contentRect.width > 0 && !chart) initChart()
-      chart?.resize(entry.contentRect.width, 600)
+      chart?.resize(entry.contentRect.width, chartContainer.value.clientHeight)
     }
   })
   resizeObserver.observe(chartContainer.value)
   watch([showMA5, showMA20, showMA60], updateMAVisibility)
-
-  // 預設 hover
-  const last = props.candles.at(-1)
-  const prev = props.candles.at(-2) ?? {}
-  const dt = new Date(last.time * 1000)
-  hoverData.value = {
-    date: dt.toLocaleDateString('zh-TW'),
-    open: last.open,
-    high: last.high,
-    low: last.low,
-    close: last.close,
-    volume: last.volume,
-    ma5: last.ma5 ?? undefined,
-    ma20: last.ma20 ?? undefined,
-    ma60: last.ma60 ?? undefined,
-    ma5Color: last.ma5 !== undefined && prev.ma5 !== undefined ? (last.ma5 > prev.ma5 ? 'up' : 'down') : '',
-    ma20Color: last.ma20 !== undefined && prev.ma20 !== undefined ? (last.ma20 > prev.ma20 ? 'up' : 'down') : '',
-    ma60Color: last.ma60 !== undefined && prev.ma60 !== undefined ? (last.ma60 > prev.ma60 ? 'up' : 'down') : '',
-  }
 })
 
 onUnmounted(() => {
-  if (resizeObserver) resizeObserver.disconnect()
+  resizeObserver?.disconnect()
 })
 </script>
 
 <style scoped>
+.chart-view-wrapper {
+  height: calc(100vh - 60px - 40px);
+  display: flex;
+  flex-direction: column;
+}
+
 .chart-container-outer {
   background-color: #0d1117;
   padding: 1.5rem;
@@ -276,38 +214,40 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  height: auto;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
 }
 
 .chart {
   width: 100%;
-  height: auto;
-  box-shadow: inset 0 0 0 1px #2c313a;
+  flex: 1;
   border-radius: 8px;
+  box-shadow: inset 0 0 0 1px #2c313a;
+  overflow: hidden;
 }
 
+.chart-contained canvas {
+  max-width: 100% !important;
+  height: auto !important;
+  object-fit: contain;
+}
 
 .hover-display {
   font-size: 1.2rem;
   color: #e6edf3;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.2rem;
   align-items: flex-start;
-  margin-left: 0.2rem; /* 或 0，依實際需求微調 */
+  margin-left: 0.2rem;
 }
 
-.extra-info {
+.extra-info, .ohlc, .ma-values {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.2rem;
-}
-
-
-.ohlc, .ma-values {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.2rem;
+  gap: 0.8rem;
 }
 
 .hover-display span.up {
@@ -318,7 +258,6 @@ onUnmounted(() => {
 }
 
 .ma-toggle {
-
   gap: 1.5rem;
   font-size: 0.95rem;
   user-select: none;

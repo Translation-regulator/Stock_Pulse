@@ -1,6 +1,5 @@
 // ✅ src/pages/HomePage.vue
 <script setup>
-import NavBar from '../components/NavBar.vue'
 import HeroSection from '../components/HeroSection.vue'
 import HomepageVideo from '../components/HomepageVideo.vue'
 import Footer from '../components/Footer.vue'
