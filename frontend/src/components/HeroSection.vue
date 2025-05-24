@@ -24,7 +24,7 @@ const handleSearch = () => {
   text-align: center;
 }
 .title {
-  font-size: 4rem;
+  font-size: clamp(2rem, 5vw, 4rem);
   font-weight: bold;
   background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet, red);
   background-size: 300% auto;
@@ -75,7 +75,7 @@ const handleSearch = () => {
   background: #1f6feb;
   color: white;
   border: none;
-  padding: 0.rem 1rem;
+  padding: 0.6rem 1rem;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.2s ease;

@@ -16,7 +16,7 @@ import Footer from '../components/Footer.vue'
 
 <style scoped>
 .home-page {
-  flex: 1; /* ✅ 撐滿 router-view */
+  flex: 1; 
   display: flex;
   flex-direction: column;
   background-color: #0d1117;
@@ -24,7 +24,7 @@ import Footer from '../components/Footer.vue'
 }
 
 .content {
-  flex: 1; /* ✅ 剩下的都給中間內容用 */
+  flex: 1; 
   display: flex;
   flex-direction: column;
   align-items: center;
