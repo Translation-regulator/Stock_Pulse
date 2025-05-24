@@ -1,4 +1,3 @@
-// ✅ src/pages/HomePage.vue
 <script setup>
 import HeroSection from '../components/HeroSection.vue'
 import HomepageVideo from '../components/HomepageVideo.vue'
@@ -11,28 +10,25 @@ import Footer from '../components/Footer.vue'
       <HeroSection />
       <HomepageVideo />
     </div>
-
-    <Footer/>
+    <Footer />
   </div>
 </template>
 
-
 <style scoped>
 .home-page {
-  background-color: #0d1117;
-  color: white;
-  min-height: 100vh;
+  flex: 1; /* ✅ 撐滿 router-view */
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
+  background-color: #0d1117;
+  overflow: hidden;
 }
 
 .content {
-  flex: 1;
+  flex: 1; /* ✅ 剩下的都給中間內容用 */
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100%;
+  justify-content: center;
 }
-
 </style>
+

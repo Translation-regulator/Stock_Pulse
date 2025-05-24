@@ -16,10 +16,10 @@
 
 .bg-video {
   width: 90vw;
-  height: 50vh;              /* 自動等比例高度 */
-  border-radius: 20px;       /* 圓角 */
-  overflow: hidden;
+  max-height: 45vh;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);  /* 可選：陰影更有質感 */
+  border-radius: 20px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
 }
 </style>

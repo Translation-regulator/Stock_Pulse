@@ -10,7 +10,7 @@ const handleSearch = () => {
 
 <template>
   <section class="hero">
-    <h1 class="title">StockPulse</h1>
+    <div class="title">StockPulse</div>
     <p class="subtitle">即時行情‧即刻分享</p>
     <div class="input-group">
       <input v-model="inputValue" type="text" class="input" placeholder="請輸入個股代號或名稱" />
@@ -47,7 +47,7 @@ const handleSearch = () => {
 
 .subtitle {
   font-size: 2rem;
-  margin-top: 1rem;
+  margin-top: 0.5rem;
   color: #ccc;
 }
 
@@ -75,7 +75,7 @@ const handleSearch = () => {
   background: #1f6feb;
   color: white;
   border: none;
-  padding: 0.6rem 1rem;
+  padding: 0.rem 1rem;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.2s ease;
