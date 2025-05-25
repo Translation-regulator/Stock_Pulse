@@ -107,7 +107,8 @@ const totalProfitRate = computed(() =>
 .portfolio-page {
   color: white;
   background-color: #0d1117;
-  padding: 2rem;
+  padding-left: 5%;
+  padding-right: 5%;
   min-height: 100vh;
 }
 
