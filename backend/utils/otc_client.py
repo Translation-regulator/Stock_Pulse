@@ -6,14 +6,14 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def get_otc_listed_companies():
-    url = "https://isin.twse.com.tw/isin/C_public.jsp?strMode=4"
+    url = "https://isin.twse.com.tw/isin/C_public.jsp?strMode=4"  # 上櫃
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
         "Accept-Language": "zh-TW,zh;q=0.9",
         "Accept": "text/html,application/xhtml+xml"
     }
 
-    res = requests.get(url, headers=headers, verify=False)
+    res = requests.get(url, headers=headers, verify=False, timeout=10)
     res.encoding = "big5"
 
     soup = BeautifulSoup(res.text, "html.parser")
@@ -24,7 +24,7 @@ def get_otc_listed_companies():
         return []
 
     rows = table.find_all("tr")
-    print(f"📊 上櫃表格列數：{len(rows)}")
+    print(f"📊 上櫃表格列數（含表頭）：{len(rows)}")
 
     result = []
     for row in rows[1:]:
@@ -38,7 +38,7 @@ def get_otc_listed_companies():
 
         stock_id, stock_name = stock_info[0], stock_info[1]
         if not stock_id.isdigit():
-            continue
+            continue  # 排除 ETF、債券等
 
         isin_code = cols[1].text.strip()
         listed_date_raw = cols[2].text.strip()
@@ -51,8 +51,11 @@ def get_otc_listed_companies():
             listed_date = None
             if listed_date_raw:
                 year, month, day = map(int, listed_date_raw.split('/'))
-                listed_date = datetime(year + 1911, month, day).date()
-        except:
+                if year < 200:  # 民國才加 1911
+                    year += 1911
+                listed_date = datetime(year, month, day).date()
+        except Exception as e:
+            print(f"⚠️ 上櫃日期轉換錯誤：{listed_date_raw} → {e}")
             listed_date = None
 
         result.append({
@@ -61,10 +64,15 @@ def get_otc_listed_companies():
             "isin_code": isin_code,
             "security_type": security_type,
             "industry": industry,
-            "listing_type": "上櫃",
             "listed_date": listed_date,
-            "remark": remark,
             "cfi_code": cfi_code
         })
 
+    print(f"✅ 抓取成功，共 {len(result)} 筆上櫃股票")
     return result
+
+
+if __name__ == "__main__":
+    data = get_otc_listed_companies()
+    for r in data[:5]:
+        print(r)

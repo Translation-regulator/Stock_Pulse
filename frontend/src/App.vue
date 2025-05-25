@@ -19,6 +19,6 @@ html, body, #app {
 .app-layout {
   display: flex;
   flex-direction: column;
-  height: 100vh; /* ✅ 控制整體畫面高度 */
+  height: 100vh; /* 控制整體畫面高度 */
 }
 </style>

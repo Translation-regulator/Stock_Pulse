@@ -13,7 +13,7 @@ def get_twse_listed_companies():
         "Accept": "text/html,application/xhtml+xml"
     }
 
-    res = requests.get(url, headers=headers, verify=False)
+    res = requests.get(url, headers=headers, verify=False, timeout=10)
     res.encoding = "big5"
 
     soup = BeautifulSoup(res.text, "html.parser")
@@ -24,7 +24,7 @@ def get_twse_listed_companies():
         return []
 
     rows = table.find_all("tr")
-    print(f"📊 上市表格列數：{len(rows)}")
+    print(f"📊 上市表格列數（含表頭）：{len(rows)}")
 
     result = []
     for row in rows[1:]:
@@ -38,7 +38,7 @@ def get_twse_listed_companies():
 
         stock_id, stock_name = stock_info[0], stock_info[1]
         if not stock_id.isdigit():
-            continue
+            continue  # 篩掉非數字開頭的項目（如ETF、債券）
 
         isin_code = cols[1].text.strip()
         listed_date_raw = cols[2].text.strip()
@@ -47,12 +47,14 @@ def get_twse_listed_companies():
         cfi_code = cols[5].text.strip()
         remark = cols[6].text.strip()
 
+        # ✅ 上市日期為西元，不需加1911
         try:
             listed_date = None
             if listed_date_raw:
                 year, month, day = map(int, listed_date_raw.split('/'))
-                listed_date = datetime(year + 1911, month, day).date()
-        except:
+                listed_date = datetime(year, month, day).date()
+        except Exception as e:
+            print(f"⚠️ 上市日期轉換錯誤：{listed_date_raw} → {e}")
             listed_date = None
 
         result.append({
@@ -61,10 +63,16 @@ def get_twse_listed_companies():
             "isin_code": isin_code,
             "security_type": security_type,
             "industry": industry,
-            "listing_type": "上市",
             "listed_date": listed_date,
-            "remark": remark,
             "cfi_code": cfi_code
         })
 
+    print(f"✅ 抓取成功，共 {len(result)} 筆上市股票")
     return result
+
+
+# ✅ 測試用
+if __name__ == "__main__":
+    data = get_twse_listed_companies()
+    for r in data[:5]:
+        print(r)

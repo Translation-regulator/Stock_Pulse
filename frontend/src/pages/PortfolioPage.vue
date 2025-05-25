@@ -42,10 +42,10 @@
       </tbody>
     </table>
 
-    <!-- 🔹 新增持股 -->
+    <!-- 新增持股 -->
     <button class="add-btn" @click="showAddModal = true">➕ 新增持股</button>
 
-    <!-- 🔹 彈出表單（簡化版） -->
+    <!-- 彈出表單（簡化版） -->
     <div v-if="showAddModal" class="modal">
       <div class="modal-content">
         <h3>新增持股</h3>
@@ -109,7 +109,6 @@ const totalProfitRate = computed(() =>
   background-color: #0d1117;
   padding-left: 5%;
   padding-right: 5%;
-  min-height: 100vh;
 }
 
 .title {
@@ -117,7 +116,7 @@ const totalProfitRate = computed(() =>
   margin-bottom: 1rem;
 }
 
-.summary {
+.summary { 
   display: flex;
   gap: 2rem;
   margin-bottom: 1rem;
