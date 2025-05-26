@@ -10,13 +10,10 @@ def create_stock_info_table():
             stock_id VARCHAR(10) NOT NULL UNIQUE,
             stock_name VARCHAR(100) NOT NULL,
             isin_code VARCHAR(20),
-            security_type VARCHAR(50),
+            listing_type VARCHAR(50),
             industry VARCHAR(100),
-            listing_type ENUM('上市', '上櫃', '興櫃') NOT NULL,
             listed_date DATE,
-            remark VARCHAR(100),
             cfi_code VARCHAR(10),
-            is_active BOOLEAN DEFAULT TRUE,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         );
     """)

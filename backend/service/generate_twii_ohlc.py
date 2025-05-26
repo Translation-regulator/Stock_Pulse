@@ -4,7 +4,7 @@ from utils.db import get_connection
 
 def generate_twii_ohlc():
     conn = get_connection()
-    df = pd.read_sql("SELECT date, open, high, low, close, volume, trade_count FROM twii_index", conn)
+    df = pd.read_sql("SELECT date, open, high, low, close, volume, trade_count, change_point FROM twii_index", conn)
     df['date'] = pd.to_datetime(df['date'])
     df.sort_values('date', inplace=True)
 
@@ -34,7 +34,8 @@ def generate_twii_ohlc():
             'low': float(group['low'].min()),
             'close': float(group.iloc[-1]['close']),
             'volume': int(group['volume'].sum()),
-            'trade_count': int(group['trade_count'].sum())
+            'trade_count': int(group['trade_count'].sum()),
+            'change_point': float(group.iloc[-1]['change_point'])
         })
 
     # ========== ✅ 月線處理（保留本月） ========== #
@@ -57,30 +58,34 @@ def generate_twii_ohlc():
             'low': float(group['low'].min()),
             'close': float(group.iloc[-1]['close']),
             'volume': int(group['volume'].sum()),
-            'trade_count': int(group['trade_count'].sum())
+            'trade_count': int(group['trade_count'].sum()),
+            'change_point': float(group.iloc[-1]['change_point'])
         })
 
     # ========== ✅ 寫入週線資料（REPLACE） ========== #
     for row in weekly_rows:
         cursor.execute("""
-            REPLACE INTO twii_weekly (date, open, high, low, close, volume, trade_count)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            REPLACE INTO twii_weekly (date, open, high, low, close, volume, trade_count, change_point)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             row['date'].date(),
             row['open'], row['high'], row['low'], row['close'],
-            row['volume'], row['trade_count']
+            row['volume'], row['trade_count'], row['change_point']
         ))
+
 
     # ========== ✅ 寫入月線資料（REPLACE） ========== #
     for row in monthly_rows:
         cursor.execute("""
-            REPLACE INTO twii_monthly (date, open, high, low, close, volume, trade_count)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            REPLACE INTO twii_monthly (date, open, high, low, close, volume, trade_count, change_point)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             row['date'].date(),
             row['open'], row['high'], row['low'], row['close'],
-            row['volume'], row['trade_count']
+            row['volume'], row['trade_count'], row['change_point']
         ))
+
+
 
     conn.commit()
     cursor.close()

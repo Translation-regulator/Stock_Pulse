@@ -23,6 +23,25 @@ async def get_stock_info(query: str):
     if not row:
         raise HTTPException(status_code=404, detail="查無此股票")
     return row
+
+@router.get("/stocks/search")
+async def search_stocks(q: str):
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT stock_id, stock_name
+        FROM stock_info
+        WHERE stock_id LIKE %s OR stock_name LIKE %s
+        ORDER BY stock_id
+        LIMIT 10
+    """, (f"%{q}%", f"%{q}%"))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return rows
+
 # ✅ 通用函式
 def fetch_stock_ohlc(table: str, stock_id: str):
     conn = get_connection()
@@ -41,6 +60,16 @@ def fetch_stock_ohlc(table: str, stock_id: str):
         raise HTTPException(status_code=404, detail="查無資料")
 
     df = pd.DataFrame(rows)
+
+    # ✅ 將 Decimal 轉為 float（避免乘法錯誤）
+    for col in ["open", "high", "low", "close", "volume"]:
+        if col in df.columns:
+            df[col] = df[col].astype(float)
+
+    # ✅ 避免傳出 null 值：過濾關鍵欄位缺值
+    df = df.dropna(subset=["open", "high", "low", "close"])
+
+    # 技術指標
     df["ma5"] = df["close"].rolling(5).mean()
     df["ma20"] = df["close"].rolling(20).mean()
     df["ma60"] = df["close"].rolling(60).mean()
@@ -67,7 +96,14 @@ def fetch_stock_ohlc(table: str, stock_id: str):
             "change_point": row["change_point"] if pd.notna(row["change_point"]) else None,
             "change_percent": row["change_percent"] if pd.notna(row["change_percent"]) else None,
         })
+
+    # ✅ 過濾 open/high/low/close 非數值
+    result = [r for r in result if all(
+        isinstance(r.get(k), (int, float)) for k in ['open', 'high', 'low', 'close']
+    )]
+
     return result
+
 
 # ✅ 路由：個股日/週/月線
 @router.get("/stocks/{stock_id}/daily")

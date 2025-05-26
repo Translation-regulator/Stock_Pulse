@@ -13,10 +13,9 @@ def create_twii_table():
             close DECIMAL(10,2),                                        -- 收盤價
             volume BIGINT,                                              -- 成交量（單位：股）
             trade_count BIGINT,                                         -- 成交筆數
-            weighted_index DECIMAL(10,2),                               -- 加權指數（收盤值）
             change_point DECIMAL(10,2),                                 -- 指數漲跌點數
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP               -- 最後更新時間
-                ON UPDATE CURRENT_TIMESTAMP,
+            ON UPDATE CURRENT_TIMESTAMP,
             UNIQUE KEY unique_date (date)                               -- 保證日期唯一，避免重複資料
         );
     """)

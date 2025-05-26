@@ -18,29 +18,26 @@ def get_four_digit_stocks():
     cursor = conn.cursor()
     cursor.execute("""
         SELECT stock_id FROM stock_info
-        WHERE CHAR_LENGTH(stock_id) = 4 AND is_active = TRUE
-        AND listing_type = '上市'
+        WHERE security_type = '上市'
     """)
     rows = cursor.fetchall()
     conn.close()
     return [row[0] for row in rows]
 
-def get_last_date(stock_id):
+def has_current_month_data(stock_id):
+    today = datetime.today()
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT MAX(date) FROM stock_daily_price
-        WHERE stock_id = %s
-    """, (stock_id,))
-    row = cursor.fetchone()
+        SELECT 1 FROM stock_daily_price
+        WHERE stock_id = %s AND YEAR(date) = %s AND MONTH(date) = %s
+        LIMIT 1
+    """, (stock_id, today.year, today.month))
+    result = cursor.fetchone()
     conn.close()
-    return row[0]
+    return result is not None
 
-def insert_latest_data(stock_id, cursor):
-    today = datetime.today()
-    year = today.year
-    month = today.month
-
+def insert_latest_data(stock_id, cursor, year, month):
     prices = get_monthly_daily_price(stock_id, year, month)
     data_to_insert = []
 
@@ -76,29 +73,34 @@ def insert_latest_data(stock_id, cursor):
                     time.sleep(random.uniform(1.0, 2.0))
                     continue
                 else:
-                    print(f"❌ 寫入失敗：{stock_id} -> {e}")
+                    print(f"寫入失敗：{stock_id} -> {e}")
                     return 0
+    return 0
 
 def fetch_recent_prices():
     stock_ids = get_four_digit_stocks()
-    print(f"📈 開始補抓最近個股資料，共 {len(stock_ids)} 檔")
+    print(f"開始補抓【本月】個股資料，共 {len(stock_ids)} 檔")
 
     conn = get_connection()
     cursor = conn.cursor()
     total_inserted = 0
+    today = datetime.today()
 
     for stock_id in tqdm(stock_ids, desc="🛠️ 補抓中"):
         try:
-            inserted = insert_latest_data(stock_id, cursor)
+            if has_current_month_data(stock_id):
+                continue
+
+            inserted = insert_latest_data(stock_id, cursor, today.year, today.month)
             conn.commit()
             total_inserted += inserted
             time.sleep(random.uniform(0.5, 0.8))
         except Exception as e:
-            print(f"❌ 補抓錯誤：{stock_id} -> {e}")
+            print(f"補抓錯誤：{stock_id} -> {e}")
             continue
 
     conn.close()
-    print(f"\n✅ 補抓完成，共新增 {total_inserted} 筆資料")
+    print(f"\n🎉 本月補抓完成，共新增 {total_inserted} 筆資料")
 
 if __name__ == "__main__":
     fetch_recent_prices()

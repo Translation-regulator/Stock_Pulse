@@ -15,7 +15,7 @@
 }
 
 .bg-video {
-  width: 90vw;
+  width: 80vw;
   max-height: 45vh;
   aspect-ratio: 16 / 9;
   object-fit: cover;

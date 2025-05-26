@@ -1,10 +1,10 @@
-
 import requests
 import time
 import random
-from datetime import datetime, timedelta
+from datetime import datetime
 from bs4 import BeautifulSoup
 from utils.db import get_connection
+from tqdm import tqdm  # type: ignore
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -15,7 +15,7 @@ def get_current_year_month():
 def get_all_otc_ids():
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT stock_id FROM stock_info WHERE security_type = '上櫃股票' ORDER BY stock_id")
+    cursor.execute("SELECT stock_id FROM stock_info WHERE security_type = '上櫃' ORDER BY stock_id")
     rows = cursor.fetchall()
     conn.close()
     return [row[0] for row in rows]
@@ -38,7 +38,7 @@ def is_date_fetched(stock_id, date):
 
 def insert_price_to_db(rows):
     if not rows:
-        return
+        return 0
     conn = get_connection()
     cursor = conn.cursor()
     query = """REPLACE INTO stock_daily_price (
@@ -53,7 +53,7 @@ def insert_price_to_db(rows):
     cursor.executemany(query, values)
     conn.commit()
     conn.close()
-    print(f"📝 已寫入 {len(rows)} 筆")
+    return len(rows)
 
 def get_otc_monthly_html_prices(stock_id, year, month):
     date_str = f"{year}/{month:02d}/01"
@@ -104,7 +104,6 @@ def get_otc_monthly_html_prices(stock_id, year, month):
                 "amount": int(parse(tds[2].text) * 1000) if parse(tds[2].text) else None
             })
 
-        print(f"✅ 抓取 {stock_id} {year}-{month:02d} 共 {len(result)} 筆")
         return result
 
     except Exception as e:
@@ -114,18 +113,22 @@ def get_otc_monthly_html_prices(stock_id, year, month):
 def fetch_otc_current_month_prices():
     year, month = get_current_year_month()
     stock_ids = get_all_otc_ids()
+    total_inserted = 0
 
-    for stock_id in stock_ids:
+    print(f"📦 開始抓取上櫃股票：{year}-{month:02d} 共 {len(stock_ids)} 檔")
+
+    for stock_id in tqdm(stock_ids, desc="📊 上櫃日線補抓中"):
         listed = get_listed_date(stock_id)
         if listed.year > year or (listed.year == year and listed.month > month):
             continue
 
         rows = get_otc_monthly_html_prices(stock_id, year, month)
         new_rows = [r for r in rows if not is_date_fetched(r["stock_id"], r["date"])]
-        insert_price_to_db(new_rows)
-        time.sleep(random.uniform(1, 2))
+        inserted = insert_price_to_db(new_rows)
+        total_inserted += inserted
+        time.sleep(random.uniform(0.5, 0.8))
 
+    print(f"\n✅ 上櫃日線補抓完成，總共新增 {total_inserted} 筆資料")
 
 if __name__ == "__main__":
     fetch_otc_current_month_prices()
-

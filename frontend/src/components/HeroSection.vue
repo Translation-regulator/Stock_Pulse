@@ -1,20 +1,36 @@
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const inputValue = ref('')
+const router = useRouter()
 
-const handleSearch = () => {
-  alert(`搜尋內容：${inputValue.value}`)
+const handleSearch = async () => {
+  if (!inputValue.value.trim()) return
+
+  try {
+    const res = await fetch(`/api/stocks/info/${encodeURIComponent(inputValue.value)}`)
+    if (!res.ok) throw new Error()
+    const data = await res.json()
+    router.push(`/stock/${data.stock_id}`) // ✅ 導向個股頁面
+  } catch (e) {
+    alert('❌ 查無此股票，請重新輸入')
+  }
 }
 </script>
+
 
 <template>
   <section class="hero">
     <div class="title">StockPulse</div>
     <p class="subtitle">即時行情‧即刻分享</p>
     <div class="input-group">
-      <input v-model="inputValue" type="text" class="input" placeholder="請輸入個股代號或名稱" />
-      <button class="search-btn" @click="handleSearch">搜尋</button>
+    <input
+      v-model="inputValue"
+      @keyup.enter="handleSearch"
+      placeholder="請輸入股號或名稱"
+      class="input"
+    />
     </div>
   </section>
 </template>

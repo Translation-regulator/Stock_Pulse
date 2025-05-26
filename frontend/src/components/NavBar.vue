@@ -132,8 +132,8 @@ onMounted(() => {
   box-sizing: border-box;
   color: white;
   font-family: 'Segoe UI', sans-serif;
-  padding-left: 5%;
-  padding-right: 5%;
+  padding-left: 10%;
+  padding-right: 10%;
 }
 
 .left .logo {

@@ -36,6 +36,8 @@ def create_price_tables():
             close DECIMAL(10, 2),
             volume BIGINT,
             amount BIGINT,
+            change_price DECIMAL(10,2),
+            transaction_count INT,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             UNIQUE KEY unique_weekly (stock_id, date),
             FOREIGN KEY (stock_id) REFERENCES stock_info(stock_id)
@@ -54,6 +56,8 @@ def create_price_tables():
             close DECIMAL(10, 2),
             volume BIGINT,
             amount BIGINT,
+            change_price DECIMAL(10,2),
+            transaction_count INT,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             UNIQUE KEY unique_monthly (stock_id, date),
             FOREIGN KEY (stock_id) REFERENCES stock_info(stock_id)

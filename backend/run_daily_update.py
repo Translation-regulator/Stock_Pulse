@@ -14,35 +14,35 @@ def main():
     try:
         fetch_twii()
     except Exception as e:
-        print(f"❌ 大盤補抓失敗：{e}")
+        print(f"大盤補抓失敗：{e}")
 
     # 個股日線股價（上市）
     print("\n===== ⬇️ 上市個股資料補抓開始 =====")
     try:
         fetch_recent_prices()
     except Exception as e:
-        print(f"❌ 上市個股補抓失敗：{e}")
+        print(f"上市個股補抓失敗：{e}")
 
     # 上櫃個股日線股價（新增）
     print("\n===== ⬇️ 上櫃個股資料補抓開始 =====")
     try:
         fetch_otc_current_month_prices()  # ⬅️ 執行上櫃日線抓取
     except Exception as e:
-        print(f"❌ 上櫃個股補抓失敗：{e}")
+        print(f"上櫃個股補抓失敗：{e}")
 
     # 大盤轉換週/月線
     print("\n===== ⬇️ TWII 週/月線轉換開始 =====")
     try:
         generate_twii_ohlc()
     except Exception as e:
-        print(f"❌ TWII 轉換失敗：{e}")
+        print(f"TWII 轉換失敗：{e}")
 
     # 個股日線 → 週/月線轉換
     print("\n===== ⬇️ 個股週/月線轉換開始 =====")
     try:
         generate_stock_ohlc()
     except Exception as e:
-        print(f"❌ 個股週/月線轉換失敗：{e}")
+        print(f"個股週/月線轉換失敗：{e}")
 
     print("\n🎉 所有補抓與轉換作業完成")
 

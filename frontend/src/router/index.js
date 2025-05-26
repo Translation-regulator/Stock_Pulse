@@ -7,7 +7,12 @@ import PortfolioPage from '../pages/PortfolioPage.vue'
 const routes = [
   { path: '/', component: HomePage },
   { path: '/twii', component: TwiiPage },
-  { path: '/stock', component: StockPage},
+  {
+  path: '/stock/:stockId?',
+  name: 'StockPage',
+  component: StockPage,
+  props: true, 
+  },
   { path: '/portfolio', component: PortfolioPage},
 ]
 
