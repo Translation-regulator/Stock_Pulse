@@ -3,6 +3,7 @@ from service.fetch_twii_latest import main as fetch_twii
 from service.fetch_recent_price import fetch_recent_prices
 from service.generate_stock_ohlc import generate_stock_ohlc
 from service.generate_twii_ohlc import generate_twii_ohlc
+from service.fetch_otc_lastest_daily_price import fetch_otc_current_month_prices   
 
 def main():
     print("\n🔁 開始執行每日更新作業")
@@ -15,12 +16,19 @@ def main():
     except Exception as e:
         print(f"❌ 大盤補抓失敗：{e}")
 
-    # 個股日線股價
-    print("\n===== ⬇️ 個股資料補抓開始 =====")
+    # 個股日線股價（上市）
+    print("\n===== ⬇️ 上市個股資料補抓開始 =====")
     try:
         fetch_recent_prices()
     except Exception as e:
-        print(f"❌ 個股補抓失敗：{e}")
+        print(f"❌ 上市個股補抓失敗：{e}")
+
+    # 上櫃個股日線股價（新增）
+    print("\n===== ⬇️ 上櫃個股資料補抓開始 =====")
+    try:
+        fetch_otc_current_month_prices()  # ⬅️ 執行上櫃日線抓取
+    except Exception as e:
+        print(f"❌ 上櫃個股補抓失敗：{e}")
 
     # 大盤轉換週/月線
     print("\n===== ⬇️ TWII 週/月線轉換開始 =====")

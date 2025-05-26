@@ -1,14 +1,15 @@
+from contextlib import contextmanager
+from mysql.connector import pooling
 import os
 from dotenv import load_dotenv
 import mysql.connector
-from mysql.connector import pooling
 
 load_dotenv()
 
-# 建立連線池物件（只建立一次）
+# 初始化連線池（只會建立一次）
 connection_pool = pooling.MySQLConnectionPool(
     pool_name="mypool",
-    pool_size=10,  # 你可以依據服務需求調整
+    pool_size=5,
     pool_reset_session=True,
     host=os.getenv("DB_HOST"),
     user=os.getenv("DB_USER"),
@@ -17,10 +18,20 @@ connection_pool = pooling.MySQLConnectionPool(
     charset="utf8mb4"
 )
 
-# 每次呼叫取得一條連線
 def get_connection():
     try:
         return connection_pool.get_connection()
     except mysql.connector.Error as e:
         print(f"MySQL connection fail: {e}")
         raise
+
+@contextmanager
+def get_cursor():
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        yield cursor
+        conn.commit()
+    finally:
+        cursor.close()   # ✅ 一定要關
+        conn.close()     # ✅ 還給連線池
