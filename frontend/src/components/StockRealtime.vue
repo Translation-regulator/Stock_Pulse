@@ -1,0 +1,89 @@
+<template>
+  <div class="stock-realtime">
+    <strong>{{ stockName }}（{{ stockId }}）：</strong>
+    <span :class="isUp ? 'up' : 'down'">
+      <template v-if="price !== null">
+        {{ price.toFixed(2) }}
+      </template>
+      <template v-else>
+        尚無成交
+      </template>
+      <div></div>
+    </span>
+    <strong> 更新時間：</strong>
+    <span>{{ time || '載入中...' }}</span>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+
+const props = defineProps({ stockId: String })
+
+const stockName = ref('')
+const price = ref(null)
+const time = ref('')
+const isUp = ref(true)
+let socket = null
+
+const connectWebSocket = () => {
+  if (!props.stockId) return
+  if (socket) socket.close()
+
+  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  socket = new WebSocket(`${protocol}://${window.location.host}/ws/stock/${props.stockId}`)
+
+  socket.onopen = () => {
+    console.log(`✅ WebSocket 已連線: /ws/stock/${props.stockId}`)
+  }
+
+  socket.onmessage = (event) => {
+    const data = JSON.parse(event.data)
+    if (data.error) {
+      console.error('⚠️ 後端錯誤:', data.error)
+      return
+    }
+
+    stockName.value = data.stock_name
+
+    if (typeof data.price === 'number') {
+      isUp.value = price.value !== null ? data.price >= price.value : true
+      price.value = data.price
+    }
+
+    // 即使 price 是 null，也更新時間
+    if (data.time) {
+      time.value = new Date(parseInt(data.time)).toLocaleTimeString()
+    }
+  }
+
+  socket.onerror = (err) => {
+    console.error("⚠️ WebSocket 錯誤：", err)
+  }
+
+  socket.onclose = () => {
+    console.warn("❌ WebSocket 關閉")
+  }
+}
+
+onMounted(connectWebSocket)
+watch(() => props.stockId, connectWebSocket)
+onBeforeUnmount(() => { if (socket) socket.close() })
+</script>
+
+<style scoped>
+.stock-realtime {
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  background-color: #2a2a2b;
+  border-radius: 8px;
+  max-width: 400px;
+}
+.up {
+  color: #e53935;
+}
+.down {
+  color: #43a047;
+}
+</style>

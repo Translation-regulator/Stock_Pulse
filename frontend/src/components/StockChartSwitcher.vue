@@ -2,10 +2,13 @@
   <div class="stock-switcher">
     <h2>{{ stockName }}（{{ stockId }}）</h2>
 
-    <div class="switch-buttons">
-      <button @click="mode = 'daily'" :class="{ active: mode === 'daily' }">日線</button>
-      <button @click="mode = 'weekly'" :class="{ active: mode === 'weekly' }">週線</button>
-      <button @click="mode = 'monthly'" :class="{ active: mode === 'monthly' }">月線</button>
+    <div class="switch-bar">
+      <div class="switch-buttons">
+        <button @click="mode = 'daily'" :class="{ active: mode === 'daily' }">日線</button>
+        <button @click="mode = 'weekly'" :class="{ active: mode === 'weekly' }">週線</button>
+        <button @click="mode = 'monthly'" :class="{ active: mode === 'monthly' }">月線</button>
+      </div>
+      <StockRealtime :stockId="stockId" />
     </div>
 
     <div v-if="loading">📊 資料載入中...</div>
@@ -17,6 +20,8 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import ChartRenderer from './ChartRenderer.vue'
+import StockRealtime from './StockRealtime.vue'
+
 
 const props = defineProps({
   stockId: String,
@@ -66,6 +71,15 @@ h2 {
   color: #e6edf3;
   margin-bottom: 1rem;
 }
+
+.switch-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
 
 .switch-buttons {
   display: flex;

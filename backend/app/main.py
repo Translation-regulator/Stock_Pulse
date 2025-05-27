@@ -4,6 +4,7 @@ from app.router import twii_ws
 from app.router import twii_ohlc
 from app.router import stock_ohlc 
 from app.router import auth
+from app.router import stock_ws
 app = FastAPI()
 
 # CORS（允許前端請求）
@@ -30,3 +31,5 @@ app.include_router(twii_ws.router, prefix="/ws", tags=["websocket"])
 app.include_router(stock_ohlc.router, prefix="/api")
 
 app.include_router(auth.router)
+
+app.include_router(stock_ws.router, prefix="/ws", tags=["stock_ws"])
