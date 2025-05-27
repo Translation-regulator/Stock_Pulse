@@ -1,4 +1,4 @@
-from utils.db import get_connection  # 你原本應該就有這個連線方法
+from utils.db import get_connection  
 
 def create_twii_ohlc_tables():
     conn = get_connection()
@@ -41,7 +41,7 @@ def create_twii_ohlc_tables():
     conn.commit()
     cursor.close()
     conn.close()
-    print("✅ twii_weekly 和 twii_monthly 表格更新完成")
+    print("twii_weekly 和 twii_monthly 表格更新完成")
 
 if __name__ == "__main__":
     create_twii_ohlc_tables()

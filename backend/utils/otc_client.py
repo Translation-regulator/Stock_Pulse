@@ -20,11 +20,11 @@ def get_otc_listed_companies():
     table = soup.find("table", {"class": "h4"})
 
     if not table:
-        print("❌ 沒有找到 class='h4' 的表格（上櫃）！")
+        print("沒有找到 class='h4' 的表格（上櫃）！")
         return []
 
     rows = table.find_all("tr")
-    print(f"📊 上櫃表格列數（含表頭）：{len(rows)}")
+    print(f"上櫃表格列數（含表頭）：{len(rows)}")
 
     result = []
     for row in rows[1:]:
@@ -55,7 +55,7 @@ def get_otc_listed_companies():
                     year += 1911
                 listed_date = datetime(year, month, day).date()
         except Exception as e:
-            print(f"⚠️ 上櫃日期轉換錯誤：{listed_date_raw} → {e}")
+            print(f"上櫃日期轉換錯誤：{listed_date_raw} → {e}")
             listed_date = None
 
         result.append({
@@ -68,7 +68,7 @@ def get_otc_listed_companies():
             "cfi_code": cfi_code
         })
 
-    print(f"✅ 抓取成功，共 {len(result)} 筆上櫃股票")
+    print(f"抓取成功，共 {len(result)} 筆上櫃股票")
     return result
 
 

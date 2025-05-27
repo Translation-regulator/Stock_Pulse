@@ -50,7 +50,7 @@ def fetch_summary_by_date(date):
                     trade_count = int(cols[3].text.replace(",", ""))
                     break
     except Exception as e:
-        print(f"❌ 抓成交量失敗 {date_str}: {e}")
+        print(f"抓成交量失敗 {date_str}: {e}")
 
     url_index = "https://www.twse.com.tw/rwd/zh/TAIEX/MI_5MINS_HIST"
     params = {"response": "html", "date": date_str}
@@ -71,9 +71,9 @@ def fetch_summary_by_date(date):
                         change_point = weighted_index - float(cols[1].text.replace(",", ""))
                         break
     except Exception as e:
-        print(f"❌ 抓加權指數失敗 {date_str}: {e}")
+        print(f"抓加權指數失敗 {date_str}: {e}")
 
-    print(f"📊 {date} volume: {volume}, trade_count: {trade_count}, index: {weighted_index}, change: {change_point}")
+    print(f"{date} volume: {volume}, trade_count: {trade_count}, index: {weighted_index}, change: {change_point}")
     return volume, trade_count, weighted_index, change_point
 
 
@@ -84,18 +84,18 @@ def fetch_twii_by_month(year, month):
         "date": f"{year}{month:02d}01"
     }
     headers = {"User-Agent": "Mozilla/5.0"}
-    print(f"🔗 抓取網址: {url}?response=html&date={params['date']}")
+    print(f"抓取網址: {url}?response=html&date={params['date']}")
 
     try:
         res = retry_request(url, headers=headers, params=params)
         soup = BeautifulSoup(res.text, "html.parser")
         table = soup.find("table")
     except Exception as e:
-        print(f"❌ 主資料抓取失敗：{e}")
+        print(f"主資料抓取失敗：{e}")
         return []
 
     if not table:
-        print(f"⚠️ 找不到 {params['date']} 的表格")
+        print(f"找不到 {params['date']} 的表格")
         return []
 
     result = []
@@ -129,10 +129,10 @@ def fetch_twii_by_month(year, month):
                 "change_point": change_point
             })
         except Exception as e:
-            print(f"⚠️ 跳過資料列：{e}")
+            print(f"跳過資料列：{e}")
             continue
 
-    print(f"🧾 原始資料筆數：{len(result)}，前5筆：")
+    print(f"原始資料筆數：{len(result)}，前5筆：")
     for item in result[:5]:
         print(item)
 
@@ -169,7 +169,7 @@ def insert_twii_data(data):
                 item["change_point"]
             ))
         except Exception as e:
-            print(f"❌ 寫入失敗 {item['date']} -> {e}")
+            print(f"寫入失敗 {item['date']} -> {e}")
     conn.commit()
     conn.close()
 

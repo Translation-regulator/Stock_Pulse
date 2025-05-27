@@ -66,7 +66,7 @@ def create_price_tables():
 
     conn.commit()
     conn.close()
-    print("✅ stock_daily_price、stock_weekly_price、stock_monthly_price 資料表建立完成")
+    print("stock_daily_price、stock_weekly_price、stock_monthly_price 資料表建立完成")
 
 if __name__ == "__main__":
     create_price_tables()

@@ -8,7 +8,7 @@ def sync_stock_info():
 
     # 1. 抓取資料
     twse_data = get_twse_listed_companies()
-    time.sleep(1)  # ✅ 防止短時間大量請求
+    time.sleep(1)  # 防止短時間大量請求
     otc_data = get_otc_listed_companies()
     all_data = twse_data + otc_data
 

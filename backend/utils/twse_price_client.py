@@ -28,8 +28,8 @@ def get_monthly_daily_price(stock_id: str, year: int, month: int):
             high_price = parse_float(row[4])
             low_price = parse_float(row[5])
             close_price = parse_float(row[6])
-            volume = parse_int(row[1]) * 1000               # 千股 → 股
-            amount = parse_int(row[2]) * 1000               # 千元 → 元
+            volume = parse_int(row[1]) * 1000               # 千股 --> 股
+            amount = parse_int(row[2]) * 1000               # 千元 --> 元
             change = parse_change(row[7])
             transaction_count = parse_int(row[8])
 
@@ -49,7 +49,7 @@ def get_monthly_daily_price(stock_id: str, year: int, month: int):
         return prices
 
     except Exception as e:
-        print(f"❌ 發生錯誤：{e}")
+        print(f"發生錯誤：{e}")
         return []
 
 def parse_float(value: str):
@@ -70,7 +70,6 @@ def parse_change(value: str):
     except:
         return None
 
-# ✅ 測試用
 if __name__ == "__main__":
     result = get_monthly_daily_price("2330", 2022, 1)
     for r in result[:3]:

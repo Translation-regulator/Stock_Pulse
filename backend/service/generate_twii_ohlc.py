@@ -10,7 +10,7 @@ def generate_twii_ohlc():
 
     cursor = conn.cursor()
 
-    # ========== ✅ 週線處理：以週五為週期結束 ========== #
+    # ========== 週線處理：以週五為週期結束 ========== #
     weekly_rows = []
     for _, group in df.groupby(pd.Grouper(key='date', freq='W-FRI')):
 
@@ -21,14 +21,14 @@ def generate_twii_ohlc():
         week_start = group['date'].min()
         week_end = group['date'].max()
 
-        # 🔁 刪除這週內所有週線資料（避免殘留週一等）
+        # 刪除這週內所有週線資料（避免殘留週一等）
         cursor.execute("""
             DELETE FROM twii_weekly
             WHERE date BETWEEN %s AND %s
         """, (week_start.date(), week_end.date()))
 
         weekly_rows.append({
-            'date': last_date,  # ✅ 使用目前週內的最後交易日（滾動式更新）
+            'date': last_date,  # 使用目前週內的最後交易日（滾動式更新）
             'open': float(group.iloc[0]['open']),
             'high': float(group['high'].max()),
             'low': float(group['low'].min()),
@@ -38,7 +38,7 @@ def generate_twii_ohlc():
             'change_point': float(group.iloc[-1]['change_point'])
         })
 
-    # ========== ✅ 月線處理（保留本月） ========== #
+    # ========== 月線處理（保留本月） ========== #
     df['month_id'] = df['date'].dt.to_period("M")
     monthly_rows = []
     for month_id, group in df.groupby('month_id'):
@@ -62,7 +62,7 @@ def generate_twii_ohlc():
             'change_point': float(group.iloc[-1]['change_point'])
         })
 
-    # ========== ✅ 寫入週線資料（REPLACE） ========== #
+    # ========== 寫入週線資料（REPLACE） ========== #
     for row in weekly_rows:
         cursor.execute("""
             REPLACE INTO twii_weekly (date, open, high, low, close, volume, trade_count, change_point)
@@ -74,7 +74,7 @@ def generate_twii_ohlc():
         ))
 
 
-    # ========== ✅ 寫入月線資料（REPLACE） ========== #
+    # ========== 寫入月線資料（REPLACE） ========== #
     for row in monthly_rows:
         cursor.execute("""
             REPLACE INTO twii_monthly (date, open, high, low, close, volume, trade_count, change_point)
@@ -90,7 +90,7 @@ def generate_twii_ohlc():
     conn.commit()
     cursor.close()
     conn.close()
-    print("✅ 週線（滾動更新）與月線已成功寫入")
+    print("週線（滾動更新）與月線已成功寫入")
 
 if __name__ == "__main__":
     generate_twii_ohlc()

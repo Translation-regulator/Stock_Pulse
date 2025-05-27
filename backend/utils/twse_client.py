@@ -20,11 +20,11 @@ def get_twse_listed_companies():
     table = soup.find("table", {"class": "h4"})
 
     if not table:
-        print("❌ 沒有找到 class='h4' 的表格！")
+        print("沒有找到 class='h4' 的表格！")
         return []
 
     rows = table.find_all("tr")
-    print(f"📊 上市表格列數（含表頭）：{len(rows)}")
+    print(f"上市表格列數（含表頭）：{len(rows)}")
 
     result = []
     for row in rows[1:]:
@@ -47,14 +47,14 @@ def get_twse_listed_companies():
         cfi_code = cols[5].text.strip()
         remark = cols[6].text.strip()
 
-        # ✅ 上市日期為西元，不需加1911
+        # 上市日期為西元，不需加1911
         try:
             listed_date = None
             if listed_date_raw:
                 year, month, day = map(int, listed_date_raw.split('/'))
                 listed_date = datetime(year, month, day).date()
         except Exception as e:
-            print(f"⚠️ 上市日期轉換錯誤：{listed_date_raw} → {e}")
+            print(f"上市日期轉換錯誤：{listed_date_raw} → {e}")
             listed_date = None
 
         result.append({
@@ -67,11 +67,10 @@ def get_twse_listed_companies():
             "cfi_code": cfi_code
         })
 
-    print(f"✅ 抓取成功，共 {len(result)} 筆上市股票")
+    print(f"抓取成功，共 {len(result)} 筆上市股票")
     return result
 
 
-# ✅ 測試用
 if __name__ == "__main__":
     data = get_twse_listed_companies()
     for r in data[:5]:

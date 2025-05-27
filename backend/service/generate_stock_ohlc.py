@@ -3,11 +3,11 @@ import pandas as pd
 from utils.db import get_connection
 from tqdm import tqdm  # type: ignore
 
-# ✅ CLI 分段參數（如 1 5 表示第1組，共5組）
+# CLI 分段參數（如 1 5 表示第1組，共5組）
 part_index = int(sys.argv[1]) if len(sys.argv) > 1 else 1
 total_parts = int(sys.argv[2]) if len(sys.argv) > 2 else 1
 
-# ✅ 取得所有股票 ID（從 daily 表取得）
+# 取得所有股票 ID（從 daily 表取得）
 def get_all_stock_ids():
     conn = get_connection()
     cursor = conn.cursor()
@@ -17,7 +17,7 @@ def get_all_stock_ids():
     conn.close()
     return stock_ids
 
-# ✅ 單檔處理：轉換為週線與月線
+# 單檔處理：轉換為週線與月線
 def process_stock(stock_id: str):
     conn = get_connection()
     df = pd.read_sql(f"""
@@ -35,7 +35,7 @@ def process_stock(stock_id: str):
 
     cursor = conn.cursor()
 
-    # ✅ 週線處理
+    # 週線處理
     df['week_id'] = df.index.to_series().dt.to_period("W").apply(lambda r: r.start_time)
     for week_id, group in df.groupby("week_id"):
         week_start = group.index.min().date()
@@ -64,7 +64,7 @@ def process_stock(stock_id: str):
             int(group["transaction_count"].sum()) if group["transaction_count"].notnull().any() else None
         ))
 
-    # ✅ 月線處理
+    # 月線處理
     df['month_id'] = df.index.to_series().dt.to_period("M").apply(lambda r: r.start_time)
     for month_id, group in df.groupby("month_id"):
         month_start = group.index.min().date()
@@ -97,7 +97,7 @@ def process_stock(stock_id: str):
     cursor.close()
     conn.close()
 
-# ✅ 執行多檔股票的轉換
+# 執行多檔股票的轉換
 def generate_stock_ohlc():
     all_ids = get_all_stock_ids()
     total = len(all_ids)
@@ -106,7 +106,7 @@ def generate_stock_ohlc():
     end = total if part_index == total_parts else start + chunk_size
     ids_to_process = all_ids[start:end]
 
-    print(f"🚀 開始處理第 {part_index}/{total_parts} 組，共 {len(ids_to_process)} 檔")
+    print(f" 開始處理第 {part_index}/{total_parts} 組，共 {len(ids_to_process)} 檔")
     for stock_id in tqdm(ids_to_process, desc=f"第 {part_index} 組"):
         process_stock(stock_id)
 

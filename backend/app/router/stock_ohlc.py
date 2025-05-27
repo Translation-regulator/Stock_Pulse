@@ -5,7 +5,7 @@ import pandas as pd
 
 router = APIRouter()
 
-# ✅ 查詢個股基本資料（提供 stock_id 與 stock_name 給前端）
+# 查詢個股基本資料（提供 stock_id 與 stock_name 給前端）
 @router.get("/stocks/info/{query}")
 async def get_stock_info(query: str):
     conn = get_connection()

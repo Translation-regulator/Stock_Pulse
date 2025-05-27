@@ -33,5 +33,5 @@ def get_cursor():
         yield cursor
         conn.commit()
     finally:
-        cursor.close()   # ✅ 一定要關
-        conn.close()     # ✅ 還給連線池
+        cursor.close()   
+        conn.close()     

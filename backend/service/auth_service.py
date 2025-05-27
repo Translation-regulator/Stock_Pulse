@@ -1,4 +1,4 @@
-from passlib.context import CryptContext
+from passlib.context import CryptContext # type: ignore
 from utils.jwt import create_access_token
 from utils.db import get_connection
 

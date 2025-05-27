@@ -17,12 +17,12 @@ clients = set()
 def start_fugle_stream():
     def broadcast(obj):
         message = json.dumps(obj)  # 在這裡統一轉為 JSON 字串
-        print("📤 廣播給所有客戶端:", message)
+        print("廣播給所有客戶端:", message)
         for callback in clients.copy():
             try:
                 callback(message)
             except Exception as e:
-                print("❌ 傳送給客戶端失敗:", e)
+                print("傳送給客戶端失敗:", e)
                 clients.discard(callback)
 
     def fake_worker():
@@ -71,7 +71,7 @@ def start_fugle_stream():
 
                 broadcast(parsed)
             except Exception as e:
-                print("❌ 處理 Fugle 資料失敗:", e)
+                print("處理 Fugle 資料失敗:", e)
 
         stock = client.stock
         stock.on('message', handle_message)

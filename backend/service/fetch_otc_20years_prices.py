@@ -73,11 +73,11 @@ def get_otc_monthly_html_prices(stock_id, year, month):
                 "amount": int(parsed[1] * 1000) if parsed[1] else None
             })
 
-        print(f"✅ 抓取 {stock_id} {year}-{month:02d} 共 {len(result)} 筆")
+        print(f"抓取 {stock_id} {year}-{month:02d} 共 {len(result)} 筆")
         return result
 
     except Exception as e:
-        print(f"⚠️ 抓取錯誤：{stock_id} {year}-{month:02d} → {e}")
+        print(f"抓取錯誤：{stock_id} {year}-{month:02d} → {e}")
         return []
 
 def insert_price_to_db(rows):
@@ -102,7 +102,7 @@ def insert_price_to_db(rows):
         conn.commit()
     finally:
         conn.close()
-    print(f"📝 已寫入 {len(rows)} 筆")
+    print(f"已寫入 {len(rows)} 筆")
 
 def main():
     all_ids = get_all_otc_ids()
@@ -115,12 +115,12 @@ def main():
     current_year = datetime.today().year
     current_month = datetime.today().month
 
-    print(f"🚀 第 {part_index}/{total_parts} 組，共 {len(ids_to_fetch)} 檔")
+    print(f"第 {part_index}/{total_parts} 組，共 {len(ids_to_fetch)} 檔")
 
-    for stock_id in tqdm(ids_to_fetch, desc="📊 股票進度", unit="檔"):
+    for stock_id in tqdm(ids_to_fetch, desc="股票進度", unit="檔"):
         listed_date = get_listed_date(stock_id)
         start_year = max(listed_date.year, 2005)
-        print(f"📦 開始處理 {stock_id}，從 {start_year} 年起")
+        print(f"開始處理 {stock_id}，從 {start_year} 年起")
 
         for year in range(start_year, current_year + 1):
             year_rows = []
@@ -134,7 +134,7 @@ def main():
                 time.sleep(random.uniform(0.5, 0.8))
 
             if year_rows:
-                print(f"💾 寫入 {stock_id} 年 {year} 共 {len(year_rows)} 筆")
+                print(f"寫入 {stock_id} 年 {year} 共 {len(year_rows)} 筆")
                 insert_price_to_db(year_rows)
             else:
                 print(f"❗ {stock_id} 年 {year} 沒有資料")

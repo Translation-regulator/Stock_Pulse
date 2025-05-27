@@ -69,7 +69,7 @@ def insert_latest_data(stock_id, cursor, year, month):
                 return cursor.rowcount
             except Exception as e:
                 if "deadlock" in str(e).lower():
-                    print(f"⚠️ Deadlock：{stock_id} -> retrying")
+                    print(f"Deadlock：{stock_id} -> retrying")
                     time.sleep(random.uniform(1.0, 2.0))
                     continue
                 else:
@@ -100,7 +100,7 @@ def fetch_recent_prices():
             continue
 
     conn.close()
-    print(f"\n🎉 本月補抓完成，共新增 {total_inserted} 筆資料")
+    print(f"本月補抓完成，共新增 {total_inserted} 筆資料")
 
 if __name__ == "__main__":
     fetch_recent_prices()

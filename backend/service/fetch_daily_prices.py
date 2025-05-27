@@ -5,7 +5,7 @@ from utils.db import get_connection
 from utils.twse_price_client import get_monthly_daily_price
 from tqdm import tqdm   # type: ignore
 
-# ✅ 民國轉西元
+# 民國轉西元
 def convert_to_ad_date(date_str):
     try:
         y, m, d = date_str.split("-")
@@ -14,7 +14,7 @@ def convert_to_ad_date(date_str):
     except:
         return None
 
-# ✅ 取得上市四碼普通股
+# 取得上市四碼普通股
 def get_four_digit_stocks():
     conn = get_connection()
     cursor = conn.cursor()
@@ -27,7 +27,7 @@ def get_four_digit_stocks():
     conn.close()
     return [row[0] for row in rows]
 
-# ✅ 查詢該股票已有資料月份（避免重複）
+# 查詢該股票已有資料月份（避免重複）
 def get_existing_months(stock_id):
     conn = get_connection()
     cursor = conn.cursor()
@@ -39,7 +39,7 @@ def get_existing_months(stock_id):
     conn.close()
     return set(row[0] for row in rows)
 
-# ✅ 抓資料時加入 retry（避免失敗）
+# 抓資料時加入 retry（避免失敗）
 def get_monthly_daily_price_with_retry(stock_id, year, month, max_retries=2):
     for attempt in range(max_retries):
         try:

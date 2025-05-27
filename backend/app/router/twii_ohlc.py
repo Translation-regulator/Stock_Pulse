@@ -5,7 +5,7 @@ import pandas as pd
 
 router = APIRouter()
 
-# ✅ 通用函式：處理日、週、月線 OHLC + 成交金額 + 漲跌點數/幅度 + MA
+# 通用函式：處理日、週、月線 OHLC + 成交金額 + 漲跌點數/幅度 + MA
 def fetch_ohlc(table: str):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)

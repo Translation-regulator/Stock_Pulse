@@ -107,7 +107,7 @@ def get_otc_monthly_html_prices(stock_id, year, month):
         return result
 
     except Exception as e:
-        print(f"⚠️ 抓取錯誤：{stock_id} {year}-{month:02d} → {e}")
+        print(f"抓取錯誤：{stock_id} {year}-{month:02d} → {e}")
         return []
 
 def fetch_otc_current_month_prices():
@@ -128,7 +128,7 @@ def fetch_otc_current_month_prices():
         total_inserted += inserted
         time.sleep(random.uniform(0.5, 0.8))
 
-    print(f"\n✅ 上櫃日線補抓完成，總共新增 {total_inserted} 筆資料")
+    print(f"\n上櫃日線補抓完成，總共新增 {total_inserted} 筆資料")
 
 if __name__ == "__main__":
     fetch_otc_current_month_prices()
