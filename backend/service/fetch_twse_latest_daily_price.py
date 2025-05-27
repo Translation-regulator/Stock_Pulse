@@ -12,10 +12,10 @@ def get_current_year_month():
     today = datetime.today()
     return today.year, today.month
 
-def get_all_otc_ids():
+def get_all_listed_ids():
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT stock_id FROM stock_info WHERE listing_type = '上櫃' ORDER BY stock_id")
+    cursor.execute("SELECT stock_id FROM stock_info WHERE listing_type = '上市' ORDER BY stock_id")
     rows = cursor.fetchall()
     conn.close()
     return [row[0] for row in rows]
@@ -56,11 +56,15 @@ def insert_price_to_db(rows):
     conn.close()
     return len(rows)
 
-def get_otc_monthly_html_prices(stock_id, year, month):
-    date_str = f"{year}/{month:02d}/01"
-    url = f"https://www.tpex.org.tw/www/zh-tw/afterTrading/tradingStock?response=html&date={date_str}&code={stock_id}"
+def get_twse_monthly_html_prices(stock_id, year, month):
+    date_str = f"{year}{month:02d}01"
+    url = f"https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY?date={date_str}&stockNo={stock_id}&response=html"
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Referer": "https://www.twse.com.tw/"
+    }
     try:
-        res = requests.get(url, timeout=10, verify=False)
+        res = requests.get(url, headers=headers, verify=False, timeout=10)
         res.encoding = "utf-8"
         soup = BeautifulSoup(res.text, "html.parser")
         table = soup.find("table")
@@ -102,7 +106,7 @@ def get_otc_monthly_html_prices(stock_id, year, month):
                 "low": parse(tds[5].text),
                 "close": parse(tds[6].text),
                 "volume": int(parse(tds[1].text) * 1000) if parse(tds[1].text) else None,
-                "amount": int(parse(tds[2].text) * 1000) if parse(tds[2].text) else None,
+                "amount": int(parse(tds[2].text)) if parse(tds[2].text) else None,
                 "change_price": parse(tds[7].text),
                 "transaction_count": int(parse(tds[8].text)) if parse(tds[8].text) else None
             })
@@ -113,25 +117,25 @@ def get_otc_monthly_html_prices(stock_id, year, month):
         print(f"抓取錯誤：{stock_id} {year}-{month:02d} → {e}")
         return []
 
-def fetch_otc_current_month_prices():
+def fetch_twse_current_month_prices():
     year, month = get_current_year_month()
-    stock_ids = get_all_otc_ids()
+    stock_ids = get_all_listed_ids()
     total_inserted = 0
 
-    print(f"\U0001F4E6 開始抓取上櫃股票：{year}-{month:02d} 共 {len(stock_ids)} 檔")
+    print(f"\U0001F4E6 開始抓取上市股票：{year}-{month:02d} 共 {len(stock_ids)} 檔")
 
-    for stock_id in tqdm(stock_ids, desc="\U0001F4CA 上櫃日線補抓中"):
+    for stock_id in tqdm(stock_ids, desc="\U0001F4CA 上市日線補抓中"):
         listed = get_listed_date(stock_id)
         if listed.year > year or (listed.year == year and listed.month > month):
             continue
 
-        rows = get_otc_monthly_html_prices(stock_id, year, month)
+        rows = get_twse_monthly_html_prices(stock_id, year, month)
         new_rows = [r for r in rows if not is_date_fetched(r["stock_id"], r["date"])]
         inserted = insert_price_to_db(new_rows)
         total_inserted += inserted
         time.sleep(random.uniform(1, 1.2))
 
-    print(f"\n上櫃日線補抓完成，總共新增 {total_inserted} 筆資料")
+    print(f"\n上市日線補抓完成，總共新增 {total_inserted} 筆資料")
 
 if __name__ == "__main__":
-    fetch_otc_current_month_prices()
+    fetch_twse_current_month_prices()
