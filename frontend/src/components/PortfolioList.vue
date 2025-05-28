@@ -24,10 +24,10 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(stock, index) in stocks" :key="index">
+        <tr v-for="(stock, index) in stocks" :key="stock.id">
           <td class="stock-id">
             <span class="code">{{ stock.stock_id }}</span><br />
-            <span class="symbol">{{ stock.symbol }}</span>
+            <span class="symbol">{{ stock.stock_name }}</span>
           </td>
           <td>
             <span v-if="!stock.realtime_price" style="color: #aaa">尚無報價</span>
@@ -38,7 +38,7 @@
           <td>{{ stock.prev_close }}</td>
           <td :class="getChangeClass(stock)">{{ getChangeSymbol(stock) }} {{ getChangePercent(stock) }}%</td>
           <td>{{ stock.shares }}</td>
-          <td>{{ stock.avg_price }}</td>
+          <td>{{ stock.buy_price }}</td>
           <td>${{ (stock.realtime_price * stock.shares).toLocaleString() }}</td>
           <td :class="getProfitClass(stock)">{{ getProfit(stock) }}</td>
           <td>{{ stock.buy_date }}</td>
@@ -59,17 +59,29 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import AddStockModal from './AddStockModal.vue'
 import EditStockModal from './EditStockModal.vue'
 import StockRealtime from './StockRealtime.vue'
+import { useAuth } from '@/composables/useAuth'
 
+const { accessToken } = useAuth()
+const stocks = ref([])
 const showAddModal = ref(false)
 const showEditModal = ref(false)
 const selectedIndex = ref(null)
 const selectedStock = ref(null)
 
-const stocks = ref([])
+onMounted(async () => {
+  const token = localStorage.getItem('access_token')
+  if (!token) return
+
+  const res = await fetch('/api/portfolio/me', {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  const data = await res.json()
+  stocks.value = data.map(s => ({ ...s, realtime_price: 0, prev_close: 0 }))
+})
 
 function selectStock(index) {
   selectedIndex.value = index
@@ -77,23 +89,63 @@ function selectStock(index) {
   showEditModal.value = true
 }
 
-function updateStock(updatedStock) {
-  if (selectedIndex.value !== null) {
-    stocks.value[selectedIndex.value] = { ...updatedStock }
+async function updateStock(updatedStock) {
+  const token = localStorage.getItem('access_token')
+  const res = await fetch(`/api/portfolio/${updatedStock.id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      stock_id: updatedStock.stock_id,
+      stock_name: updatedStock.stock_name,
+      shares: updatedStock.shares,
+      buy_price: updatedStock.buy_price,
+      buy_date: updatedStock.buy_date,
+      note: null
+    })
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    alert(data.detail || '更新失敗')
+    return
+  }
+  stocks.value[selectedIndex.value] = {
+    ...updatedStock,
+    avg_price: updatedStock.buy_price
   }
   showEditModal.value = false
 }
 
-function addStock(item) {
-  stocks.value.push({
+async function addStock(item) {
+  const newStock = {
     stock_id: item.stock_id,
-    symbol: item.stock_name,
-    shares: 0,
-    avg_price: 0,
-    buy_date: '',
-    realtime_price: 0,
-    prev_close: 0,
-  })
+    stock_name: item.stock_name,
+    shares: item.shares,
+    buy_price: item.buy_price,
+    buy_date: item.buy_date,
+    note: null
+  }
+  try {
+    const res = await fetch('/api/portfolio', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken.value}`
+      },
+      body: JSON.stringify(newStock)
+    })
+    const data = await res.json()
+    stocks.value.push({
+      ...data,
+      realtime_price: 0,
+      prev_close: 0,
+      avg_price: data.buy_price
+    })
+  } catch (err) {
+    alert('新增失敗')
+  }
 }
 
 function updateRealtime(data, index) {
@@ -108,7 +160,7 @@ const totalValue = computed(() =>
   stocks.value.reduce((sum, s) => sum + s.realtime_price * s.shares, 0)
 )
 const totalProfit = computed(() =>
-  stocks.value.reduce((sum, s) => sum + (s.realtime_price - s.avg_price) * s.shares, 0)
+  stocks.value.reduce((sum, s) => sum + (s.realtime_price - s.buy_price) * s.shares, 0)
 )
 
 function getChangeClass(stock) {
@@ -127,13 +179,12 @@ function getChangePercent(stock) {
   )
 }
 function getProfit(stock) {
-  const diff = (stock.realtime_price - stock.avg_price) * stock.shares
+  const diff = (stock.realtime_price - stock.buy_price) * stock.shares
   const prefix = diff >= 0 ? '+' : ''
   return prefix + diff.toLocaleString()
 }
-
 function getProfitClass(stock) {
-  const diff = (stock.realtime_price - stock.avg_price) * stock.shares
+  const diff = (stock.realtime_price - stock.buy_price) * stock.shares
   return diff >= 0 ? 'loss' : 'gain'
 }
 </script>

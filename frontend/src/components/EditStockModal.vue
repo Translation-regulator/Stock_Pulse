@@ -23,12 +23,12 @@
       </div>
 
       <div class="form-group">
-        <label>持有價格</label>
-        <input type="number" v-model.number="editedStock.avg_price" />
+        <label>買進價格</label>
+        <input type="number" step="0.01" v-model.number="editedStock.buy_price" />
       </div>
 
       <div class="form-group">
-        <label>購買時間</label>
+        <label>買進日期</label>
         <input type="date" v-model="editedStock.buy_date" />
       </div>
 
@@ -72,7 +72,7 @@ const onSearch = async () => {
 
 const selectSuggestion = (item) => {
   editedStock.value.stock_id = item.stock_id
-  editedStock.value.symbol = item.stock_name
+  editedStock.value.stock_name = item.stock_name
   searchQuery.value = `${item.stock_id} - ${item.stock_name}`
   suggestions.value = []
 }

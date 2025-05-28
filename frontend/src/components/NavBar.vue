@@ -2,6 +2,9 @@
 import { ref, computed, onMounted } from 'vue'
 import logo from '@/assets/StockPulse.png'
 import { RouterLink } from 'vue-router'
+import { useAuth } from '@/composables/useAuth'
+
+const { accessToken, username, isLoggedIn, login, logout } = useAuth()
 
 const showPopup = ref(false)
 const isLoginMode = ref(true)
@@ -10,11 +13,6 @@ const showDropdown = ref(false)
 const name = ref('')
 const email = ref('')
 const password = ref('')
-
-const username = ref('')
-const accessToken = ref('')
-
-const isLoggedIn = computed(() => !!accessToken.value)
 
 const togglePopup = () => {
   showPopup.value = !showPopup.value
@@ -60,19 +58,6 @@ const handleSubmit = async () => {
   }
 }
 
-const logout = () => {
-  localStorage.removeItem('access_token')
-  localStorage.removeItem('username')
-  accessToken.value = ''
-  username.value = ''
-  showDropdown.value = false
-  alert('已登出')
-}
-
-onMounted(() => {
-  accessToken.value = localStorage.getItem('access_token') || ''
-  username.value = localStorage.getItem('username') || ''
-})
 </script>
 
 <template>
