@@ -28,17 +28,24 @@ def get_listed_date(stock_id):
     conn.close()
     return row[0] if row and row[0] else datetime(2005, 1, 1).date()
 
-def is_date_fetched(stock_id, date):
+# ✅ 效能優化：一次撈出某檔股票當月所有已有日期
+def get_existing_dates(stock_id, year, month):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT 1 FROM stock_daily_price WHERE stock_id = %s AND date = %s LIMIT 1", (stock_id, date))
-    row = cursor.fetchone()
+    cursor.execute("""
+        SELECT date FROM stock_daily_price
+        WHERE stock_id = %s AND YEAR(date) = %s AND MONTH(date) = %s
+    """, (stock_id, year, month))
+    rows = cursor.fetchall()
     conn.close()
-    return row is not None
+    return set(row[0] for row in rows)
 
 def insert_price_to_db(rows):
     if not rows:
+        print("⚠️ 沒有新資料需要寫入")
         return 0
+
+    print(f"📝 準備寫入 {len(rows)} 筆資料，範例：{rows[0]}")
     conn = get_connection()
     cursor = conn.cursor()
     query = """REPLACE INTO stock_daily_price (
@@ -122,7 +129,7 @@ def get_twse_monthly_html_prices(stock_id, year, month, max_retries=3):
 
         time.sleep(random.uniform(1.0, 2.0))
 
-    return None  # 最終失敗
+    return None
 
 def fetch_twse_current_month_prices():
     year, month = get_current_year_month()
@@ -142,7 +149,9 @@ def fetch_twse_current_month_prices():
             failed_ids.append(stock_id)
             continue
 
-        new_rows = [r for r in rows if not is_date_fetched(r["stock_id"], r["date"])]
+        existing_dates = get_existing_dates(stock_id, year, month)
+        new_rows = [r for r in rows if r["date"] not in existing_dates]
+
         inserted = insert_price_to_db(new_rows)
         total_inserted += inserted
         time.sleep(random.uniform(1, 1.2))

@@ -13,16 +13,28 @@ async def stock_ws(websocket: WebSocket, stock_id: str):
 
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT listing_type FROM stock_info WHERE stock_id = %s", (stock_id,))
-    row = cursor.fetchone()
-    conn.close()
 
-    if not row:
+    # 查詢股票上市類型（上市/上櫃）
+    cursor.execute("SELECT listing_type FROM stock_info WHERE stock_id = %s", (stock_id,))
+    stock_row = cursor.fetchone()
+    if not stock_row:
         await websocket.send_json({"error": "查無此股票代號"})
         await websocket.close()
         return
 
-    prefix = "tse" if row[0] == "上市" else "otc"
+    # 查詢最新一筆 close（昨收價）
+    cursor.execute("""
+        SELECT close FROM stock_daily_price
+        WHERE stock_id = %s AND close IS NOT NULL
+        ORDER BY date DESC
+        LIMIT 1
+    """, (stock_id,))
+    close_row = cursor.fetchone()
+    conn.close()
+
+    yesterday_close = float(close_row[0]) if close_row else 0
+
+    prefix = "tse" if stock_row[0] == "上市" else "otc"
     ex_ch = f"{prefix}_{stock_id}.tw"
     url = f"https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch={ex_ch}"
 
@@ -48,6 +60,7 @@ async def stock_ws(websocket: WebSocket, stock_id: str):
                             "stock_name": None,
                             "volume": None,
                             "time": None,
+                            "prev_close": yesterday_close,
                             "error": "查無資料"
                         })
                         await asyncio.sleep(5)
@@ -55,13 +68,13 @@ async def stock_ws(websocket: WebSocket, stock_id: str):
 
                     stock = data["msgArray"][0]
                     price = stock["z"]
+
                     if price in [None, "-", ""]:
                         print(f"⚠️ 尚無成交價：{stock_id}，送出上次價格與最新時間")
                         if last_valid_data:
-                            # 傳送保留價格，但更新 time
                             await websocket.send_json({
                                 **last_valid_data,
-                                "time": str(int(time.time() * 1000))  # 當下時間（毫秒）
+                                "time": str(int(time.time() * 1000))
                             })
                         await asyncio.sleep(5)
                         continue
@@ -71,7 +84,8 @@ async def stock_ws(websocket: WebSocket, stock_id: str):
                         "stock_name": stock["n"],
                         "price": float(price),
                         "volume": stock["v"],
-                        "time": stock["tlong"]
+                        "time": stock["tlong"],
+                        "prev_close": yesterday_close
                     }
 
                     await websocket.send_json(last_valid_data)

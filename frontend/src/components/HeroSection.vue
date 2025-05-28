@@ -1,39 +1,24 @@
 <script setup>
-import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import StockSearchInput from './StockSearchInput.vue'
 
-const inputValue = ref('')
 const router = useRouter()
 
-const handleSearch = async () => {
-  if (!inputValue.value.trim()) return
-
-  try {
-    const res = await fetch(`/api/stocks/info/${encodeURIComponent(inputValue.value)}`)
-    if (!res.ok) throw new Error()
-    const data = await res.json()
-    router.push(`/stock/${data.stock_id}`) // ✅ 導向個股頁面
-  } catch (e) {
-    alert('❌ 查無此股票，請重新輸入')
-  }
+const handleSelect = (item) => {
+  router.push(`/stock/${item.stock_id}`)
 }
 </script>
-
 
 <template>
   <section class="hero">
     <div class="title">StockPulse</div>
     <p class="subtitle">即時行情‧即刻分享</p>
     <div class="input-group">
-    <input
-      v-model="inputValue"
-      @keyup.enter="handleSearch"
-      placeholder="請輸入股號或名稱"
-      class="input"
-    />
+      <StockSearchInput @select="handleSelect" showSuggestions />
     </div>
   </section>
 </template>
+
 
 <style scoped>
 .hero {
@@ -73,30 +58,5 @@ const handleSearch = async () => {
   justify-content: center;
   align-items: center;
   gap: 1rem;
-}
-
-.input {
-  padding: 0.8rem 1.5rem;
-  width: 300px;
-  font-size: 1rem;
-  border-radius: 8px;
-  border: none;
-  background: #222;
-  color: white;
-  outline: none;
-}
-
-.search-btn {
-  font-size: 1.2rem;
-  background: #1f6feb;
-  color: white;
-  border: none;
-  padding: 0.6rem 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-.search-btn:hover {
-  background: #3b82f6;
 }
 </style>

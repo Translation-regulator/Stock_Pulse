@@ -8,7 +8,6 @@
       <template v-else>
         尚無成交
       </template>
-      <div></div>
     </span>
     <strong> 更新時間：</strong>
     <span>{{ time || '載入中...' }}</span>
@@ -18,7 +17,9 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 
+// 👉 接收 props + emit
 const props = defineProps({ stockId: String })
+const emit = defineEmits(['update'])  // ⭐ 定義事件
 
 const stockName = ref('')
 const price = ref(null)
@@ -49,9 +50,15 @@ const connectWebSocket = () => {
     if (typeof data.price === 'number') {
       isUp.value = price.value !== null ? data.price >= price.value : true
       price.value = data.price
+
+      // emit 給父層
+      emit('update', {
+        stock_id: props.stockId,
+        price: price.value,
+        prev_close: data.prev_close,
+      })
     }
 
-    // 即使 price 是 null，也更新時間
     if (data.time) {
       time.value = new Date(parseInt(data.time)).toLocaleTimeString()
     }
