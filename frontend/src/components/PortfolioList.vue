@@ -59,28 +59,41 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import AddStockModal from './AddStockModal.vue'
 import EditStockModal from './EditStockModal.vue'
 import StockRealtime from './StockRealtime.vue'
 import { useAuth } from '@/composables/useAuth'
 
-const { accessToken } = useAuth()
+const { accessToken, isLoggedIn } = useAuth()
 const stocks = ref([])
 const showAddModal = ref(false)
 const showEditModal = ref(false)
 const selectedIndex = ref(null)
 const selectedStock = ref(null)
 
-onMounted(async () => {
-  const token = localStorage.getItem('access_token')
-  if (!token) return
+async function loadPortfolio() {
+  if (!accessToken.value) {
+    stocks.value = []
+    return
+  }
 
   const res = await fetch('/api/portfolio/me', {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${accessToken.value}` },
   })
+
+  if (!res.ok) return
+
   const data = await res.json()
   stocks.value = data.map(s => ({ ...s, realtime_price: 0, prev_close: 0 }))
+}
+
+// ✅ 頁面載入時執行一次
+onMounted(loadPortfolio)
+
+// ✅ 監看 accessToken 變化（登入或登出後都會載入資料）
+watch(accessToken, () => {
+  loadPortfolio()
 })
 
 function selectStock(index) {
@@ -122,9 +135,9 @@ async function addStock(item) {
   const newStock = {
     stock_id: item.stock_id,
     stock_name: item.stock_name,
-    shares: item.shares,
-    buy_price: item.buy_price,
-    buy_date: item.buy_date,
+    shares: 0,
+    buy_price: 0,
+    buy_date: null,
     note: null
   }
   try {
@@ -187,6 +200,8 @@ function getProfitClass(stock) {
   const diff = (stock.realtime_price - stock.buy_price) * stock.shares
   return diff >= 0 ? 'loss' : 'gain'
 }
+
+
 </script>
 
 <style scoped>
