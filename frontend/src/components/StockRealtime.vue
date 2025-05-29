@@ -31,8 +31,8 @@ const connectWebSocket = () => {
   if (!props.stockId) return
   if (socket) socket.close()
 
-  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-  socket = new WebSocket(`${protocol}://${window.location.host}/ws/stock/${props.stockId}`)
+  const base = import.meta.env.VITE_WS_BASE
+  socket = new WebSocket(`${base}/ws/stock/${props.stockId}`)
 
   socket.onopen = () => {
     console.log(`✅ WebSocket 已連線: /ws/stock/${props.stockId}`)

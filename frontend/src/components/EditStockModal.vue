@@ -42,7 +42,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import axios from 'axios'
+import api from '@/api'
 
 const props = defineProps({
   show: Boolean,
@@ -63,7 +63,7 @@ const onSearch = async () => {
   if (searchQuery.value.length < 4) return
   const q = searchQuery.value.trim()
   try {
-    const res = await axios.get(`/api/stocks/search?q=${q}`)
+    const res = await api.get('/api/stocks/search', { params: { q } })
     suggestions.value = res.data
   } catch (err) {
     suggestions.value = []

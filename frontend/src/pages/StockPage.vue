@@ -35,7 +35,8 @@ async function fetchStockInfo(query) {
   notFound.value = false
 
   try {
-    const res = await fetch(`/api/stocks/info/${encodeURIComponent(query)}`)
+    const base = import.meta.env.VITE_API_BASE
+    const res = await fetch(`${base}/api/stocks/info/${encodeURIComponent(query)}`)
     if (!res.ok) throw new Error()
     const data = await res.json()
     stockId.value = data.stock_id

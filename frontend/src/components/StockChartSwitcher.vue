@@ -21,7 +21,7 @@
 import { ref, watch, onMounted } from 'vue'
 import ChartRenderer from './ChartRenderer.vue'
 import StockRealtime from './StockRealtime.vue'
-
+import api from '@/api'
 
 const props = defineProps({
   stockId: String,
@@ -36,13 +36,8 @@ async function fetchData() {
   if (!props.stockId) return
   loading.value = true
   try {
-    const res = await fetch(`/api/stocks/${props.stockId}/${mode.value}`)
-    if (!res.ok) {
-      ohlc.value = []
-      return
-    }
-    const data = await res.json()
-    ohlc.value = data
+    const res = await api.get(`/api/stocks/${props.stockId}/${mode.value}`)
+    ohlc.value = res.data
   } catch (err) {
     console.error('取得個股資料失敗', err)
     ohlc.value = []

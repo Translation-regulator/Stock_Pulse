@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import logo from '@/assets/StockPulse.png'
 import { RouterLink } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import api from '@/api' 
 
 const { accessToken, username, isLoggedIn, login, logout } = useAuth()
 
@@ -30,33 +31,24 @@ const handleSubmit = async () => {
     : { name: name.value, email: email.value, password: password.value }
 
   try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-
-    const data = await res.json()
-
-    if (!res.ok) {
-      alert(data.detail || '發生錯誤')
-      return
-    }
+    const res = await api.post(url, payload)  // ✅ axios 正確寫法
+    const data = res.data                     // ✅ 從 res.data 取得回傳資料
 
     if (isLoginMode.value) {
       localStorage.setItem('access_token', data.access_token)
-      localStorage.setItem('username', data.name) 
+      localStorage.setItem('username', data.name)
       accessToken.value = data.access_token
-      username.value = data.name                
+      username.value = data.name
       alert('登入成功！')
     }
 
-
     showPopup.value = false
   } catch (err) {
-    alert('伺服器錯誤')
+    const msg = err.response?.data?.detail || '伺服器錯誤'
+    alert(msg)
   }
 }
+
 
 </script>
 

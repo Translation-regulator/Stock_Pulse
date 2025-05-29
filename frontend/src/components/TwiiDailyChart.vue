@@ -7,13 +7,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/api'
 import ChartRenderer from './ChartRenderer.vue'
 
 const data = ref([])     
 
 onMounted(async () => {
-  const res = await axios.get('http://localhost:8000/api/twii/daily')
+  const res = await api.get('/api/twii/daily')
   data.value = res.data
 })
 </script>

@@ -3,12 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from router import twii_ws, twii_ohlc, stock_ohlc, auth, stock_ws, stock_portfolio, chatroom
 
 app = FastAPI()
-
+# "http://stockpulse-frontend-vue.s3-website-ap-northeast-1.amazonaws.com"
 # CORS 設定（給前端 Vue S3 使用）
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://stockpulse-frontend-vue.s3-website-ap-northeast-1.amazonaws.com"
+        "http://localhost:5173"
     ],
     allow_credentials=True,
     allow_methods=["*"],

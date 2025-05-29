@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, onBeforeUnmount, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 
@@ -31,6 +31,9 @@ const messages = ref([])
 const chatboxRef = ref(null)
 let socket = null
 
+const WS_BASE = import.meta.env.VITE_WS_BASE || 'ws://localhost:8000'
+
+// 📌 自動滾動到最新訊息
 watch(messages, async () => {
   await nextTick()
   if (chatboxRef.value) {
@@ -38,39 +41,59 @@ watch(messages, async () => {
   }
 })
 
-onMounted(() => {
-  socket = new WebSocket(`ws://localhost:8000/ws/chat/${roomId}?token=${accessToken.value}`)
+// 📌 建立 WebSocket 連線
+const connectSocket = () => {
+  if (!accessToken.value) {
+    console.warn('尚未取得 accessToken，延後建立 WebSocket')
+    return
+  }
+
+  socket = new WebSocket(`${WS_BASE}/ws/chat/${roomId}?token=${accessToken.value}`)
 
   socket.onopen = () => {
-    console.log("WebSocket 已連線")
+    console.log('WebSocket 已連線')
   }
 
   socket.onmessage = (event) => {
-    console.log("收到訊息：", event.data)
     messages.value.push(event.data)
   }
 
   socket.onerror = (e) => {
-    console.error("WebSocket 錯誤：", e)
+    console.error('WebSocket 錯誤：', e)
   }
 
   socket.onclose = () => {
-    console.warn("WebSocket 已關閉")
+    console.warn('WebSocket 已關閉')
   }
+}
+
+onMounted(() => {
+  // 等待 token 準備好再連線
+  const stop = watch(
+    () => accessToken.value,
+    (token) => {
+      if (token) {
+        connectSocket()
+        stop() // 監聽一次就好
+      }
+    },
+    { immediate: true }
+  )
 })
 
 onBeforeUnmount(() => {
   if (socket) socket.close()
 })
 
+// 📌 發送訊息
 function sendMessage() {
   if (!input.value.trim()) return
+
   if (socket && socket.readyState === WebSocket.OPEN) {
-    console.log("發送訊息：", input.value)
     socket.send(input.value)
     input.value = ''
   } else {
-    console.warn("WebSocket 尚未連線，訊息未送出")
+    console.warn('WebSocket 尚未連線，訊息未送出')
   }
 }
 </script>

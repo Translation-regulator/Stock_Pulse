@@ -23,6 +23,7 @@
 
 <script setup>
 import { ref, watch, nextTick } from 'vue'
+import api from '@/api'
 
 const emit = defineEmits(['select'])
 
@@ -36,10 +37,15 @@ async function fetchSuggestions() {
     return
   }
 
-  const res = await fetch(`/api/stocks/search?q=${encodeURIComponent(searchQuery.value)}`)
-  if (res.ok) {
-    suggestions.value = await res.json()
+  try {
+    const res = await api.get('/api/stocks/search', {
+      params: { q: searchQuery.value }
+    })
+    suggestions.value = res.data
     highlightedIndex.value = -1
+  } catch (err) {
+    suggestions.value = []
+    console.error('❌ 搜尋失敗', err)
   }
 }
 

@@ -13,7 +13,8 @@ const latest = ref(null)
 let ws = null
 
 onMounted(() => {
-  ws = new WebSocket('/ws/twii')
+  const base = import.meta.env.VITE_WS_BASE
+  ws = new WebSocket(`${base}/ws/twii`)
   ws.onmessage = (event) => {
     const { time, value, raw_time } = JSON.parse(event.data)
     console.log('📩 收到即時資料:', { time, value, raw_time }) // ⬅️ 加這行

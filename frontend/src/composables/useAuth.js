@@ -1,5 +1,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import api from '@/api'
+
 
 const accessToken = ref(localStorage.getItem('access_token') || '')
 const username = ref(localStorage.getItem('username') || '')
@@ -10,7 +12,7 @@ export function useAuth() {
 
   const login = async (email, password) => {
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await api.post('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

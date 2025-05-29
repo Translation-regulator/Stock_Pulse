@@ -16,7 +16,8 @@ const isUp = ref(true)
 let ws = null
 
 onMounted(() => {
-  ws = new WebSocket('/ws/twii')
+  const base = import.meta.env.VITE_WS_BASE
+  ws = new WebSocket(`${base}/ws/twii`)
   ws.onmessage = (event) => {
     const payload = JSON.parse(event.data)
     if (payload?.value !== undefined) {

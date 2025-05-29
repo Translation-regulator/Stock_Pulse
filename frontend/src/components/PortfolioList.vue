@@ -64,6 +64,8 @@ import AddStockModal from './AddStockModal.vue'
 import EditStockModal from './EditStockModal.vue'
 import StockRealtime from './StockRealtime.vue'
 import { useAuth } from '@/composables/useAuth'
+import api from '@/api' 
+
 
 const { accessToken, isLoggedIn } = useAuth()
 const stocks = ref([])
@@ -78,7 +80,7 @@ async function loadPortfolio() {
     return
   }
 
-  const res = await fetch('/api/portfolio/me', {
+  const res = await api.get('/api/portfolio/me', {
     headers: { Authorization: `Bearer ${accessToken.value}` },
   })
 
@@ -103,32 +105,31 @@ function selectStock(index) {
 }
 
 async function updateStock(updatedStock) {
-  const token = localStorage.getItem('access_token')
-  const res = await fetch(`/api/portfolio/${updatedStock.id}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
+  try {
+    const res = await api.put(`/api/portfolio/${updatedStock.id}`, {
       stock_id: updatedStock.stock_id,
       stock_name: updatedStock.stock_name,
       shares: updatedStock.shares,
       buy_price: updatedStock.buy_price,
       buy_date: updatedStock.buy_date,
       note: null
+    }, {
+      headers: {
+        Authorization: `Bearer ${accessToken.value}`
+      }
     })
-  })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) {
-    alert(data.detail || '更新失敗')
-    return
+
+    const data = res.data
+    stocks.value[selectedIndex.value] = {
+      ...updatedStock,
+      avg_price: updatedStock.buy_price
+    }
+    showEditModal.value = false
+  } catch (err) {
+    const message = err?.response?.data?.detail || '更新失敗'
+    alert(message)
+    console.error(err)
   }
-  stocks.value[selectedIndex.value] = {
-    ...updatedStock,
-    avg_price: updatedStock.buy_price
-  }
-  showEditModal.value = false
 }
 
 async function addStock(item) {
@@ -140,16 +141,15 @@ async function addStock(item) {
     buy_date: null,
     note: null
   }
+
   try {
-    const res = await fetch('/api/portfolio', {
-      method: 'POST',
+    const res = await api.post('/api/portfolio', newStock, {
       headers: {
-        'Content-Type': 'application/json',
         Authorization: `Bearer ${accessToken.value}`
-      },
-      body: JSON.stringify(newStock)
+      }
     })
-    const data = await res.json()
+
+    const data = res.data
     stocks.value.push({
       ...data,
       realtime_price: 0,
@@ -158,8 +158,10 @@ async function addStock(item) {
     })
   } catch (err) {
     alert('新增失敗')
+    console.error(err)
   }
 }
+
 
 function updateRealtime(data, index) {
   const stock = stocks.value[index]
