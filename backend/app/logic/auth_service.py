@@ -1,6 +1,6 @@
 from passlib.context import CryptContext # type: ignore
-from utils.jwt import create_access_token
-from utils.db import get_connection
+from app_utils.jwt import create_access_token
+from app_utils.db import get_connection
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

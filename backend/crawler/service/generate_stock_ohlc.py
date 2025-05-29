@@ -1,6 +1,6 @@
 import sys
 import pandas as pd
-from utils.db import get_connection
+from crawler_utils.db import get_connection
 from tqdm import tqdm  # type: ignore
 
 # CLI 分段參數（如 1 5 表示第1組，共5組）

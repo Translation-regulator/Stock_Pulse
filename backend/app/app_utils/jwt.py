@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from dotenv import load_dotenv
 from fastapi import Request, HTTPException
-from utils.db import get_connection
+from app_utils.db import get_connection
 
 load_dotenv()
 

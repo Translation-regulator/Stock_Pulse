@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from service.insert_twii_index import fetch_twii_by_month, insert_twii_data
-from utils.db import get_connection
+from crawler_utils.db import get_connection
 
 def get_last_date_in_db():
     conn = get_connection()

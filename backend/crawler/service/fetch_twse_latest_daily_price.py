@@ -3,7 +3,7 @@ import time
 import random
 from datetime import datetime
 from bs4 import BeautifulSoup
-from utils.db import get_connection
+from crawler_utils.db import get_connection
 from tqdm import tqdm  # type: ignore
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)

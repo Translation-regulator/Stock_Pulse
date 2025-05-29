@@ -1,6 +1,6 @@
 import pandas as pd
 from datetime import timedelta
-from utils.db import get_connection
+from crawler_utils.db import get_connection
 
 def generate_twii_ohlc():
     conn = get_connection()

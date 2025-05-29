@@ -2,7 +2,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import httpx
 import asyncio
 import time
-from utils.db import get_connection
+from app_utils.db import get_connection
 
 router = APIRouter()
 

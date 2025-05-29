@@ -4,7 +4,7 @@ import random
 import sys
 from datetime import datetime
 from bs4 import BeautifulSoup
-from utils.db import get_connection, get_cursor
+from crawler_utils.db import get_connection, get_cursor
 import urllib3
 from tqdm import tqdm  # type: ignore
 

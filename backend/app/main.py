@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.router import twii_ws
-from app.router import twii_ohlc
-from app.router import stock_ohlc 
-from app.router import auth
-from app.router import stock_ws
-from app.router import stock_portfolio
-from app.router import chatroom
+from router import twii_ws
+from router import twii_ohlc
+from router import stock_ohlc 
+from router import auth
+from router import stock_ws
+from router import stock_portfolio
+from router import chatroom
 app = FastAPI()
 
 # CORS（允許前端請求）

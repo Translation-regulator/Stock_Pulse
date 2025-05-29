@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, Request, Depends
 from models.user_model import RegisterForm, LoginForm
-from service.auth_service import register_user, login_user
-from utils.jwt import decode_token
-from utils.db import get_connection
-from service.auth_service import verify_password, create_access_token
+from logic.auth_service import register_user, login_user
+from app_utils.jwt import decode_token
+from app_utils.db import get_connection
+from logic.auth_service import verify_password, create_access_token
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 @router.post("/register")

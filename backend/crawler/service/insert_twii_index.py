@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
-from utils.db import get_connection
+from crawler_utils.db import get_connection
 import urllib3
 import time
 import random

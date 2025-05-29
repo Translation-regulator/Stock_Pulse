@@ -1,6 +1,6 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from collections import defaultdict
-from utils.jwt import decode_token
+from app_utils.jwt import decode_token
 
 router = APIRouter()
 room_connections = defaultdict(set)

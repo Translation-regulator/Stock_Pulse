@@ -1,8 +1,8 @@
 import time
 import random
 from datetime import datetime
-from utils.db import get_connection
-from utils.twse_price_client import get_monthly_daily_price
+from crawler_utils.db import get_connection
+from crawler_utils.twse_price_client import get_monthly_daily_price
 from tqdm import tqdm   # type: ignore
 
 # 民國轉西元

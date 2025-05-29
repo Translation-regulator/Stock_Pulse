@@ -1,7 +1,7 @@
 import time
-from utils.twse_client import get_twse_listed_companies
-from utils.otc_client import get_otc_listed_companies
-from utils.db import get_connection
+from crawler_utils.twse_client import get_twse_listed_companies
+from crawler_utils.otc_client import get_otc_listed_companies
+from crawler_utils.db import get_connection
 
 def sync_stock_info():
     print("🔄 開始同步 stock_info ...")

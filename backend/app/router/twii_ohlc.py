@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from datetime import datetime, time as dt_time
-from utils.db import get_connection
+from app_utils.db import get_connection
 import pandas as pd
 
 router = APIRouter()

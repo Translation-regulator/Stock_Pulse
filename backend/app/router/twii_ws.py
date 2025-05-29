@@ -1,5 +1,5 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from service.fugle_ws_client import start_fugle_stream, register_client
+from logic.fugle_ws_client import start_fugle_stream, register_client
 import asyncio
 
 router = APIRouter()
