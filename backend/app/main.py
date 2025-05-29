@@ -6,6 +6,7 @@ from app.router import stock_ohlc
 from app.router import auth
 from app.router import stock_ws
 from app.router import stock_portfolio
+from app.router import chatroom
 app = FastAPI()
 
 # CORS（允許前端請求）
@@ -36,3 +37,5 @@ app.include_router(auth.router)
 app.include_router(stock_ws.router, prefix="/ws", tags=["stock_ws"])
 
 app.include_router(stock_portfolio.router)
+
+app.include_router(chatroom.router)

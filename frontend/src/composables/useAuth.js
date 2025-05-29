@@ -1,4 +1,4 @@
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const accessToken = ref(localStorage.getItem('access_token') || '')
@@ -21,13 +21,13 @@ export function useAuth() {
       const data = await res.json()
 
       accessToken.value = data.access_token
-      username.value = data.username
+      username.value = data.name // ✅ 你後端回傳的是 name，不是 username
 
       localStorage.setItem('access_token', data.access_token)
-      localStorage.setItem('username', data.username)
+      localStorage.setItem('username', data.name)
 
       alert('登入成功！')
-      window.location.reload()
+      await router.push('/') // ✅ 導回首頁，不 reload
       return true
     } catch (e) {
       console.error('登入錯誤', e)
@@ -43,7 +43,7 @@ export function useAuth() {
     localStorage.removeItem('username')
 
     alert('已登出')
-    await router.reload()
+    await router.push('/') // ✅ 登出後導回首頁，不 reload
   }
 
   return {

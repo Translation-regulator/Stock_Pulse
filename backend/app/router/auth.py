@@ -22,7 +22,10 @@ def login(form: LoginForm):
     if not user or not verify_password(form.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="登入失敗")
 
-    token = create_access_token({"sub": user["email"]})
+    token = create_access_token({
+    "sub": user["email"],
+    "name": user["name"] 
+})
 
     return {
         "access_token": token,
