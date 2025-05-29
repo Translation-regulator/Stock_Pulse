@@ -68,18 +68,24 @@ const connectSocket = () => {
 }
 
 onMounted(() => {
-  // 等待 token 準備好再連線
-  const stop = watch(
+  let stopWatcher = null
+
+  stopWatcher = watch(
     () => accessToken.value,
     (token) => {
       if (token) {
         connectSocket()
-        stop() // 監聽一次就好
+        stopWatcher && stopWatcher()  // ✅ 確保只監聽一次
       }
     },
-    { immediate: true }
+    {
+      immediate: true,
+      flush: 'post'  // 避免初始化時機衝突
+    }
   )
 })
+
+
 
 onBeforeUnmount(() => {
   if (socket) socket.close()
