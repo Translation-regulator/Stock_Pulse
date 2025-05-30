@@ -21,5 +21,5 @@ async def twii_ws(websocket: WebSocket):
             msg = await queue.get()
             await websocket.send_text(msg)
     except WebSocketDisconnect:
-        print("⚠️ 前端斷線，停止傳送資料")
+        print("前端斷線，停止傳送資料")
 
