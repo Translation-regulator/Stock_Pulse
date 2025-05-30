@@ -1,6 +1,6 @@
 <template>
   <footer class="footer">
-    <p>© 2025 StockPulse | Powered by Vue</p>
+    <p>© 2025 StockPulse | Powered by me</p>
   </footer>
 </template>
 

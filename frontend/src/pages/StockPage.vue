@@ -4,13 +4,13 @@
       <StockSearchInput @select="handleStockSelect" />
     </div>
 
-    <div v-if="loading">📊 資料載入中...</div>
+    <div v-if="loading">資料載入中...</div>
     <StockChartSwitcher
       v-else-if="stockId && stockName"
       :stockId="stockId"
       :stockName="stockName"
     />
-    <p v-else-if="notFound">❌ 查無此股票</p>
+    <p v-else-if="notFound">查無此股票</p>
   </div>
 </template>
 
@@ -42,7 +42,7 @@ async function fetchStockInfo(query) {
     stockId.value = data.stock_id
     stockName.value = data.stock_name
 
-    // ✅ 路由同步更新
+    // 路由同步更新
     if (route.params.stockId !== data.stock_id) {
       router.push(`/stock/${data.stock_id}`)
     }
@@ -60,7 +60,7 @@ function handleStockSelect(stock) {
   fetchStockInfo(stock.stock_id)
 }
 
-// ✅ 如果網址有 stockId（/stock/1101）就自動查
+// 如果網址有 stockId 就自動查
 onMounted(() => {
   const paramId = route.params.stockId
   if (paramId) {
@@ -73,6 +73,7 @@ onMounted(() => {
 .stock-page {
   margin-left: 10%;
   margin-right: 10%;
+  box-sizing: border-box;
   color: white;
 }
 

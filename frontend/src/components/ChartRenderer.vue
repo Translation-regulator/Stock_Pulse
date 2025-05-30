@@ -30,29 +30,10 @@
           </div>
         </div>
 
-        <!-- MA 數值 + 按下切換顯示 -->
         <div class="ma-values">
-          <span
-            :class="['ma-toggle-label', showMA5 ? 'active' : 'inactive']"
-            style="color: #3b82f6"
-            @click="showMA5 = !showMA5"
-          >
-            MA5：{{ hoverData.ma5?.toFixed(2) ?? '-' }}
-          </span>
-          <span
-            :class="['ma-toggle-label', showMA20 ? 'active' : 'inactive']"
-            style="color: #a855f7"
-            @click="showMA20 = !showMA20"
-          >
-            MA20：{{ hoverData.ma20?.toFixed(2) ?? '-' }}
-          </span>
-          <span
-            :class="['ma-toggle-label', showMA60 ? 'active' : 'inactive']"
-            style="color: #f97316"
-            @click="showMA60 = !showMA60"
-          >
-            MA60：{{ hoverData.ma60?.toFixed(2) ?? '-' }}
-          </span>
+          <span :class="['ma-toggle-label', showMA5 ? 'active' : 'inactive']" style="color: #3b82f6" @click="showMA5 = !showMA5">MA5：{{ hoverData.ma5?.toFixed(2) ?? '-' }}</span>
+          <span :class="['ma-toggle-label', showMA20 ? 'active' : 'inactive']" style="color: #a855f7" @click="showMA20 = !showMA20">MA20：{{ hoverData.ma20?.toFixed(2) ?? '-' }}</span>
+          <span :class="['ma-toggle-label', showMA60 ? 'active' : 'inactive']" style="color: #f97316" @click="showMA60 = !showMA60">MA60：{{ hoverData.ma60?.toFixed(2) ?? '-' }}</span>
         </div>
       </div>
 
@@ -62,7 +43,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { createChart, CandlestickSeries, LineSeries, HistogramSeries } from 'lightweight-charts'
 
 const props = defineProps({
@@ -71,7 +52,29 @@ const props = defineProps({
 
 const chartContainer = ref(null)
 const hoverData = ref(null)
+const showMA5 = ref(true)
+const showMA20 = ref(true)
+const showMA60 = ref(true)
+const isHovering = ref(false)
 
+// 🔧 將 hoverData 設定為你想顯示的內容
+const updateHoverData = (data) => {
+  const dt = new Date(data.time * 1000)
+  hoverData.value = {
+    date: dt.toLocaleDateString('zh-TW'),
+    open: data.open,
+    high: data.high,
+    low: data.low,
+    close: data.close,
+    volume: data.volume,
+    turnover: data.turnover,
+    change_point: data.change_point,
+    change_percent: data.change_percent,
+    ma5: data.ma5,
+    ma20: data.ma20,
+    ma60: data.ma60,
+  }
+}
 let chart = null
 let candleSeries = null
 let volumeSeries = null
@@ -80,10 +83,6 @@ let ma20Series = null
 let ma60Series = null
 let resizeObserver = null
 
-const showMA5 = ref(true)
-const showMA20 = ref(true)
-const showMA60 = ref(true)
-
 const updateMAVisibility = () => {
   ma5Series?.applyOptions({ visible: showMA5.value })
   ma20Series?.applyOptions({ visible: showMA20.value })
@@ -91,16 +90,18 @@ const updateMAVisibility = () => {
 }
 
 const initChart = () => {
-  const width = chartContainer.value.clientWidth || 800
-  const height = chartContainer.value.clientHeight || 500
+  const width = chartContainer.value.clientWidth
+  const height = chartContainer.value.clientHeight
+
+  if (!width || !height) {
+    console.warn('❗ Chart container has no size')
+    return
+  }
 
   chart = createChart(chartContainer.value, {
     width,
     height,
-    layout: {
-      background: { color: '#0d1117' },
-      textColor: '#e6edf3',
-    },
+    layout: { background: { color: '#0d1117' }, textColor: '#e6edf3' },
     grid: {
       vertLines: { color: '#30363d' },
       horzLines: { color: '#30363d' },
@@ -132,14 +133,11 @@ const initChart = () => {
     priceFormat: { type: 'volume' },
     scaleMargins: { top: 0.8, bottom: 0 },
   })
-  volumeSeries.setData(
-    props.candles.map(c => ({
-      time: c.time,
-      value: c.volume || 0,
-      color: c.close >= c.open ? '#ef5350' : '#26a69a',
-    }))
-  )
-
+  volumeSeries.setData(props.candles.map(c => ({
+    time: c.time,
+    value: c.volume || 0,
+    color: c.close >= c.open ? '#ef5350' : '#26a69a',
+  })))
   chart.priceScale('volume').applyOptions({
     scaleMargins: { top: 0.84, bottom: 0 },
     borderVisible: false,
@@ -150,58 +148,88 @@ const initChart = () => {
     scaleMargins: { top: 0.05, bottom: 0.25 },
   })
 
-  const maCommonOpts = {
+  const maCommon = {
     lineWidth: 1.5,
     lastValueVisible: false,
     priceLineVisible: false,
   }
 
-  ma5Series = chart.addSeries(LineSeries, { color: '#3b82f6', visible: showMA5.value, ...maCommonOpts })
-  ma20Series = chart.addSeries(LineSeries, { color: '#a855f7', visible: showMA20.value, ...maCommonOpts })
-  ma60Series = chart.addSeries(LineSeries, { color: '#f97316', visible: showMA60.value, ...maCommonOpts })
+  ma5Series = chart.addSeries(LineSeries, { color: '#3b82f6', visible: showMA5.value, ...maCommon })
+  ma20Series = chart.addSeries(LineSeries, { color: '#a855f7', visible: showMA20.value, ...maCommon })
+  ma60Series = chart.addSeries(LineSeries, { color: '#f97316', visible: showMA60.value, ...maCommon })
 
-  ma5Series.setData(props.candles.map(c => c.ma5 ? { time: c.time, value: c.ma5 } : null).filter(Boolean))
-  ma20Series.setData(props.candles.map(c => c.ma20 ? { time: c.time, value: c.ma20 } : null).filter(Boolean))
-  ma60Series.setData(props.candles.map(c => c.ma60 ? { time: c.time, value: c.ma60 } : null).filter(Boolean))
+  ma5Series.setData(props.candles.filter(c => c.ma5).map(c => ({ time: c.time, value: c.ma5 })))
+  ma20Series.setData(props.candles.filter(c => c.ma20).map(c => ({ time: c.time, value: c.ma20 })))
+  ma60Series.setData(props.candles.filter(c => c.ma60).map(c => ({ time: c.time, value: c.ma60 })))
 
   chart.timeScale().scrollToPosition(props.candles.length - 1, false)
 
-  chart.subscribeCrosshairMove(param => {
-    const ohlc = param?.seriesData?.get(candleSeries)
-    const index = props.candles.findIndex(c => c.time === param?.time)
-    const current = props.candles[index]
-    const prev = props.candles[index - 1] ?? {}
+chart.subscribeCrosshairMove(param => {
+  const point = param?.point
+  const ohlc = param?.seriesData?.get(candleSeries)
 
-    if (ohlc && current) {
-      const dt = new Date(typeof param.time === 'object' && 'timestamp' in param.time ? param.time.timestamp * 1000 : param.time * 1000)
-      hoverData.value = {
-        date: dt.toLocaleDateString('zh-TW'),
-        open: ohlc.open,
-        high: ohlc.high,
-        low: ohlc.low,
-        close: ohlc.close,
-        volume: current.volume,
-        turnover: current.turnover,
-        change_point: current.change_point,
-        change_percent: current.change_percent,
-        ma5: current.ma5 ?? undefined,
-        ma20: current.ma20 ?? undefined,
-        ma60: current.ma60 ?? undefined,
+  // 滑鼠離開圖表 → 顯示最新一筆
+  if (!point || !param?.time || !ohlc) {
+    isHovering.value = false
+    const latest = props.candles.at(-1)
+    if (latest) updateHoverData({ ...latest, time: latest.time })
+    return
+  }
+
+  // 滑鼠移動中
+  isHovering.value = true
+  const index = props.candles.findIndex(c => c.time === param.time)
+  const current = props.candles[index]
+  if (!current) return
+
+  updateHoverData({
+    time: param.time,
+    open: ohlc.open,
+    high: ohlc.high,
+    low: ohlc.low,
+    close: ohlc.close,
+    volume: current.volume,
+    turnover: current.turnover,
+    change_point: current.change_point,
+    change_percent: current.change_percent,
+    ma5: current.ma5,
+    ma20: current.ma20,
+    ma60: current.ma60,
+  })
+})
+
+}
+
+onMounted(async () => {
+  await nextTick()
+
+  // 初始顯示最新一筆
+  if (props.candles.length > 0) {
+    const latest = props.candles.at(-1)
+    updateHoverData({
+      ...latest,
+      time: latest.time,
+    })
+  }
+
+  resizeObserver = new ResizeObserver(entries => {
+    for (const entry of entries) {
+      const width = entry.contentRect.width
+      const height = entry.contentRect.height
+      if (width > 0 && height > 0) {
+        if (!chart) {
+          initChart()
+        } else {
+          chart.resize(width, height)
+        }
       }
     }
   })
-}
-
-onMounted(() => {
-  resizeObserver = new ResizeObserver(entries => {
-    for (const entry of entries) {
-      if (entry.contentRect.width > 0 && !chart) initChart()
-      chart?.resize(entry.contentRect.width, chartContainer.value.clientHeight)
-    }
-  })
   resizeObserver.observe(chartContainer.value)
+
   watch([showMA5, showMA20, showMA60], updateMAVisibility)
 })
+
 
 onUnmounted(() => {
   resizeObserver?.disconnect()
@@ -215,25 +243,24 @@ onUnmounted(() => {
   flex-direction: column;
 }
 .chart-container-outer {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   background-color: #0d1117;
   padding: 1.5rem;
   border-radius: 12px;
   border: 1px solid #30363d;
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  flex: 1;
-  min-height: 0;
   overflow: hidden;
-  position: relative;
 }
 .chart {
-  width: 100%;
   flex: 1;
+  min-height: 0;
+  width: 100%;
   border-radius: 8px;
   box-shadow: inset 0 0 0 1px #2c313a;
-  overflow: hidden;
+  position: relative;
 }
 .hover-display {
   font-size: 1.2rem;

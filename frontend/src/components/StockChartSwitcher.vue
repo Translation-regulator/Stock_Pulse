@@ -54,13 +54,18 @@ onMounted(fetchData)
 
 <style scoped>
 .stock-switcher {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 250px); /* 或依你頁面需要調整 */
   padding: 1.5rem;
   background-color: #0d1117;
   border-radius: 12px;
   border: 1px solid #30363d;
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
   margin-top: 1rem;
+  overflow: hidden; /* 防止內部溢出 */
 }
+
 
 h2 {
   color: #e6edf3;

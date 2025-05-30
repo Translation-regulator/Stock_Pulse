@@ -9,7 +9,8 @@
         尚無成交
       </template>
     </span>
-    <strong> 更新時間：</strong>
+    <div></div>
+    <strong>   更新時間：</strong>
     <span>{{ time || '載入中...' }}</span>
   </div>
 </template>
@@ -80,7 +81,7 @@ onBeforeUnmount(() => { if (socket) socket.close() })
 
 <style scoped>
 .stock-realtime {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: bold;
   padding: 0.5rem 1rem;
   background-color: #2a2a2b;
