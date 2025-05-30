@@ -50,9 +50,8 @@ async function fetchSuggestions() {
 }
 
 function selectSuggestion(item) {
-  searchQuery.value = `${item.stock_id} - ${item.stock_name}`
+  searchQuery.value = `${item.stock_id} - ${item.stock_name}`  
   emit('select', item)
-  searchQuery.value = ''  
   suggestions.value = []
   highlightedIndex.value = -1
 }

@@ -31,11 +31,11 @@ const handleSubmit = async () => {
     : { name: name.value, email: email.value, password: password.value }
 
   try {
-    const res = await api.post(url, payload)  // ✅ axios 正確寫法
-    const data = res.data                     // ✅ 從 res.data 取得回傳資料
+    const res = await api.post(url, payload)  
+    const data = res.data                     
 
     if (isLoginMode.value) {
-      localStorage.setItem('access_token', data.access_token)
+      localStorage.setItem('accessToken', data.access_token)
       localStorage.setItem('username', data.name)
       accessToken.value = data.access_token
       username.value = data.name

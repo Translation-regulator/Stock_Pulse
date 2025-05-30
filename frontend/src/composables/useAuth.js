@@ -1,9 +1,9 @@
+// composables/useAuth.js
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/api'
 
-
-const accessToken = ref(localStorage.getItem('access_token') || '')
+const accessToken = ref(localStorage.getItem('accessToken') || '')
 const username = ref(localStorage.getItem('username') || '')
 
 export function useAuth() {
@@ -12,24 +12,17 @@ export function useAuth() {
 
   const login = async (email, password) => {
     try {
-      const res = await api.post('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
-
-      if (!res.ok) throw new Error('登入失敗')
-
-      const data = await res.json()
+      const res = await api.post('/auth/login', { email, password })
+      const data = res.data
 
       accessToken.value = data.access_token
-      username.value = data.name // ✅ 你後端回傳的是 name，不是 username
+      username.value = data.name
 
-      localStorage.setItem('access_token', data.access_token)
+      localStorage.setItem('accessToken', data.access_token)
       localStorage.setItem('username', data.name)
 
       alert('登入成功！')
-      await router.push('/') // ✅ 導回首頁，不 reload
+      await router.push('/')
       return true
     } catch (e) {
       console.error('登入錯誤', e)
@@ -41,11 +34,11 @@ export function useAuth() {
   const logout = async () => {
     accessToken.value = ''
     username.value = ''
-    localStorage.removeItem('access_token')
+    localStorage.removeItem('accessToken')
     localStorage.removeItem('username')
 
     alert('已登出')
-    await router.push('/') // ✅ 登出後導回首頁，不 reload
+    await router.push('/')
   }
 
   return {

@@ -1,3 +1,142 @@
+<script setup>
+import { ref, computed, onMounted, watch } from 'vue'
+import AddStockModal from './AddStockModal.vue'
+import EditStockModal from './EditStockModal.vue'
+import StockRealtime from './StockRealtime.vue'
+import { useAuth } from '@/composables/useAuth'
+import api from '@/api'
+
+const { accessToken, isLoggedIn } = useAuth()
+const stocks = ref([])
+const showAddModal = ref(false)
+const showEditModal = ref(false)
+const selectedIndex = ref(null)
+const selectedStock = ref(null)
+
+async function loadPortfolio() {
+  if (!accessToken.value) {
+    stocks.value = []
+    return
+  }
+
+  try {
+    const res = await api.get('/portfolio/me')
+    const data = res.data
+    stocks.value = data.map(s => ({
+      ...s,
+      realtime_price: 0,
+      prev_close: 0
+    }))
+  } catch (err) {
+    console.error('❌ 載入投資組合失敗', err)
+    alert('讀取投資組合失敗')
+  }
+}
+
+onMounted(loadPortfolio)
+watch(accessToken, () => {
+  loadPortfolio()
+})
+
+function selectStock(index) {
+  selectedIndex.value = index
+  selectedStock.value = { ...stocks.value[index] }
+  showEditModal.value = true
+}
+
+async function updateStock(updatedStock) {
+  try {
+    await api.put(`/portfolio/${updatedStock.id}`, {
+      stock_id: updatedStock.stock_id,
+      stock_name: updatedStock.stock_name,
+      shares: updatedStock.shares,
+      buy_price: updatedStock.buy_price,
+      buy_date: updatedStock.buy_date,
+      note: null
+    })
+
+    await loadPortfolio() // 更新完重載資料較保險
+    showEditModal.value = false
+  } catch (err) {
+    const message = err?.response?.data?.detail || '更新失敗'
+    alert(message)
+    console.error(err)
+  }
+}
+
+async function addStock(item) {
+  const newStock = {
+    stock_id: item.stock_id,
+    stock_name: item.stock_name,
+    shares: 0,
+    buy_price: 0,
+    buy_date: null,
+    note: null
+  }
+
+  try {
+    await api.post('/portfolio', newStock)
+    await loadPortfolio()
+  } catch (err) {
+    alert('新增失敗')
+    console.error(err)
+  }
+}
+
+async function deleteStock(id, index) {
+  if (!confirm('確定要刪除這筆股票嗎？')) return
+
+  try {
+    await api.delete(`/portfolio/${id}`)
+    stocks.value.splice(index, 1)
+    alert('✅ 刪除成功')
+  } catch (err) {
+    alert('❌ 刪除失敗')
+    console.error(err)
+  }
+}
+
+function updateRealtime(data, index) {
+  const stock = stocks.value[index]
+  if (stock) {
+    stock.realtime_price = data.price
+    stock.prev_close = data.prev_close ?? stock.prev_close
+  }
+}
+
+const totalValue = computed(() =>
+  stocks.value.reduce((sum, s) => sum + s.realtime_price * s.shares, 0)
+)
+const totalProfit = computed(() =>
+  stocks.value.reduce((sum, s) => sum + (s.realtime_price - s.buy_price) * s.shares, 0)
+)
+
+function getChangeClass(stock) {
+  return stock.realtime_price >= stock.prev_close ? 'up' : 'down'
+}
+function getChangeSymbol(stock) {
+  return stock.realtime_price >= stock.prev_close ? '▲' : '▼'
+}
+function getChangeValue(stock) {
+  return Math.abs((stock.realtime_price - stock.prev_close).toFixed(2))
+}
+function getChangePercent(stock) {
+  if (!stock.prev_close || stock.prev_close === 0) return '0.00'
+  return (
+    ((Math.abs(stock.realtime_price - stock.prev_close) / stock.prev_close) * 100).toFixed(2)
+  )
+}
+function getProfit(stock) {
+  const diff = (stock.realtime_price - stock.buy_price) * stock.shares
+  const prefix = diff >= 0 ? '+' : ''
+  return prefix + diff.toLocaleString()
+}
+function getProfitClass(stock) {
+  const diff = (stock.realtime_price - stock.buy_price) * stock.shares
+  return diff >= 0 ? 'loss' : 'gain'
+}
+</script>
+
 <template>
   <div class="portfolio-box">
     <div class="portfolio-header">
@@ -44,6 +183,7 @@
           <td>{{ stock.buy_date }}</td>
           <td>
             <button class="edit-row-button" @click="selectStock(index)">編輯</button>
+            <button class="delete-row-button" @click="deleteStock(stock.id, index)">刪除</button>
           </td>
         </tr>
       </tbody>
@@ -57,154 +197,6 @@
     <EditStockModal :show="showEditModal" :stock="selectedStock" @close="showEditModal = false" @save="updateStock" />
   </div>
 </template>
-
-<script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import AddStockModal from './AddStockModal.vue'
-import EditStockModal from './EditStockModal.vue'
-import StockRealtime from './StockRealtime.vue'
-import { useAuth } from '@/composables/useAuth'
-import api from '@/api' 
-
-
-const { accessToken, isLoggedIn } = useAuth()
-const stocks = ref([])
-const showAddModal = ref(false)
-const showEditModal = ref(false)
-const selectedIndex = ref(null)
-const selectedStock = ref(null)
-
-async function loadPortfolio() {
-  if (!accessToken.value) {
-    stocks.value = []
-    return
-  }
-
-  const res = await api.get('/portfolio/me', {
-    headers: { Authorization: `Bearer ${accessToken.value}` },
-  })
-
-  if (!res.ok) return
-
-  const data = await res.json()
-  stocks.value = data.map(s => ({ ...s, realtime_price: 0, prev_close: 0 }))
-}
-
-// ✅ 頁面載入時執行一次
-onMounted(loadPortfolio)
-
-// ✅ 監看 accessToken 變化（登入或登出後都會載入資料）
-watch(accessToken, () => {
-  loadPortfolio()
-})
-
-function selectStock(index) {
-  selectedIndex.value = index
-  selectedStock.value = { ...stocks.value[index] }
-  showEditModal.value = true
-}
-
-async function updateStock(updatedStock) {
-  try {
-    const res = await api.put(`/portfolio/${updatedStock.id}`, {
-      stock_id: updatedStock.stock_id,
-      stock_name: updatedStock.stock_name,
-      shares: updatedStock.shares,
-      buy_price: updatedStock.buy_price,
-      buy_date: updatedStock.buy_date,
-      note: null
-    }, {
-      headers: {
-        Authorization: `Bearer ${accessToken.value}`
-      }
-    })
-
-    const data = res.data
-    stocks.value[selectedIndex.value] = {
-      ...updatedStock,
-      avg_price: updatedStock.buy_price
-    }
-    showEditModal.value = false
-  } catch (err) {
-    const message = err?.response?.data?.detail || '更新失敗'
-    alert(message)
-    console.error(err)
-  }
-}
-
-async function addStock(item) {
-  const newStock = {
-    stock_id: item.stock_id,
-    stock_name: item.stock_name,
-    shares: 0,
-    buy_price: 0,
-    buy_date: null,
-    note: null
-  }
-
-  try {
-    const res = await api.post('/portfolio', newStock, {
-      headers: {
-        Authorization: `Bearer ${accessToken.value}`
-      }
-    })
-
-    const data = res.data
-    stocks.value.push({
-      ...data,
-      realtime_price: 0,
-      prev_close: 0,
-      avg_price: data.buy_price
-    })
-  } catch (err) {
-    alert('新增失敗')
-    console.error(err)
-  }
-}
-
-
-function updateRealtime(data, index) {
-  const stock = stocks.value[index]
-  if (stock) {
-    stock.realtime_price = data.price
-    stock.prev_close = data.prev_close ?? stock.prev_close
-  }
-}
-
-const totalValue = computed(() =>
-  stocks.value.reduce((sum, s) => sum + s.realtime_price * s.shares, 0)
-)
-const totalProfit = computed(() =>
-  stocks.value.reduce((sum, s) => sum + (s.realtime_price - s.buy_price) * s.shares, 0)
-)
-
-function getChangeClass(stock) {
-  return stock.realtime_price >= stock.prev_close ? 'up' : 'down'
-}
-function getChangeSymbol(stock) {
-  return stock.realtime_price >= stock.prev_close ? '▲' : '▼'
-}
-function getChangeValue(stock) {
-  return Math.abs((stock.realtime_price - stock.prev_close).toFixed(2))
-}
-function getChangePercent(stock) {
-  if (!stock.prev_close || stock.prev_close === 0) return '0.00'
-  return (
-    ((Math.abs(stock.realtime_price - stock.prev_close) / stock.prev_close) * 100).toFixed(2)
-  )
-}
-function getProfit(stock) {
-  const diff = (stock.realtime_price - stock.buy_price) * stock.shares
-  const prefix = diff >= 0 ? '+' : ''
-  return prefix + diff.toLocaleString()
-}
-function getProfitClass(stock) {
-  const diff = (stock.realtime_price - stock.buy_price) * stock.shares
-  return diff >= 0 ? 'loss' : 'gain'
-}
-
-
-</script>
 
 <style scoped>
 .portfolio-box {
@@ -291,5 +283,16 @@ function getProfitClass(stock) {
 }
 .loss {
   color: #ef5350;
+}
+
+.delete-row-button {
+  padding: 0.2rem 0.6rem;
+  font-size: 0.9rem;
+  background: #e74c3c;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  margin-left: 5px;
 }
 </style>

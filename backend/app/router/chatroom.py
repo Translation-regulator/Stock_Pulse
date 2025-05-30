@@ -1,5 +1,7 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from collections import defaultdict
+from datetime import datetime
+import json
 from app_utils.jwt import decode_token
 
 router = APIRouter()
@@ -19,21 +21,34 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, token: str):
         return
 
     await websocket.accept()
-    room_connections[room_id].add(websocket) 
+    room_connections[room_id].add(websocket)
 
-    print(f"[WS] 使用者 {username} 加入聊天室 {room_id}")
+    print(f"[WS] 使用者 {username} 加入房間 {room_id}，目前人數：{len(room_connections[room_id])}")
 
     try:
         while True:
-            msg = await websocket.receive_text()
-            print(f"[WS] 收到訊息：{msg}")
-            full_msg = f"{username}：{msg}"
+            # ✅ 解析前端傳來的 JSON
+            raw_msg = await websocket.receive_text()
+            try:
+                parsed_msg = json.loads(raw_msg)
+                content = parsed_msg.get("content", "")
+            except Exception as e:
+                print(f"[WS] JSON decode 錯誤：{raw_msg}")
+                continue
 
-            # 廣播給房間內所有人
+            current_time = datetime.now().strftime("%H:%M")
+
+            message_data = {
+                "username": username,
+                "content": content,
+                "time": current_time
+            }
+
+            print(f"[WS] 廣播訊息：{message_data}")
+
             for conn in room_connections[room_id]:
-                await conn.send_text(full_msg)
+                await conn.send_text(json.dumps(message_data))
 
     except WebSocketDisconnect:
-        if websocket in room_connections[room_id]:
-            room_connections[room_id].remove(websocket)
-        print(f"[WS] 使用者 {username} 離開聊天室 {room_id}")
+        room_connections[room_id].discard(websocket)
+        print(f"[WS] 使用者 {username} 離開房間 {room_id}，剩餘人數：{len(room_connections[room_id])}")
