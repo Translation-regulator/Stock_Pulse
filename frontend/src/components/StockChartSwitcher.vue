@@ -36,7 +36,7 @@ async function fetchData() {
   if (!props.stockId) return
   loading.value = true
   try {
-    const res = await api.get(`/api/stocks/${props.stockId}/${mode.value}`)
+    const res = await api.get(`/stocks/${props.stockId}/${mode.value}`)
     ohlc.value = res.data
   } catch (err) {
     console.error('取得個股資料失敗', err)

@@ -80,7 +80,7 @@ async function loadPortfolio() {
     return
   }
 
-  const res = await api.get('/api/portfolio/me', {
+  const res = await api.get('/portfolio/me', {
     headers: { Authorization: `Bearer ${accessToken.value}` },
   })
 
@@ -106,7 +106,7 @@ function selectStock(index) {
 
 async function updateStock(updatedStock) {
   try {
-    const res = await api.put(`/api/portfolio/${updatedStock.id}`, {
+    const res = await api.put(`/portfolio/${updatedStock.id}`, {
       stock_id: updatedStock.stock_id,
       stock_name: updatedStock.stock_name,
       shares: updatedStock.shares,
@@ -143,7 +143,7 @@ async function addStock(item) {
   }
 
   try {
-    const res = await api.post('/api/portfolio', newStock, {
+    const res = await api.post('/portfolio', newStock, {
       headers: {
         Authorization: `Bearer ${accessToken.value}`
       }

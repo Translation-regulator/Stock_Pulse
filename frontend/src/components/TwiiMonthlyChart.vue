@@ -12,7 +12,7 @@ import ChartRenderer from './ChartRenderer.vue'
 const data = ref([])
 
 onMounted(async () => {
-  const res = await api.get('/api/twii/monthly')
+  const res = await api.get('/twii/monthly')
   data.value = res.data
 })
 </script>

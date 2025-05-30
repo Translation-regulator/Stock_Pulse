@@ -25,7 +25,7 @@ const switchMode = () => {
 }
 
 const handleSubmit = async () => {
-  const url = isLoginMode.value ? '/api/auth/login' : '/api/auth/register'
+  const url = isLoginMode.value ? '/auth/login' : '/auth/register'
   const payload = isLoginMode.value
     ? { email: email.value, password: password.value }
     : { name: name.value, email: email.value, password: password.value }

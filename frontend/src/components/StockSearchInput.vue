@@ -38,7 +38,7 @@ async function fetchSuggestions() {
   }
 
   try {
-    const res = await api.get('/api/stocks/search', {
+    const res = await api.get('/stocks/search', {
       params: { q: searchQuery.value }
     })
     suggestions.value = res.data
