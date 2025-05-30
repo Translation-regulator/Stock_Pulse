@@ -45,13 +45,14 @@ async function fetchSuggestions() {
     highlightedIndex.value = -1
   } catch (err) {
     suggestions.value = []
-    console.error('❌ 搜尋失敗', err)
+    console.error('搜尋失敗', err)
   }
 }
 
 function selectSuggestion(item) {
   searchQuery.value = `${item.stock_id} - ${item.stock_name}`
   emit('select', item)
+  searchQuery.value = ''  
   suggestions.value = []
   highlightedIndex.value = -1
 }
@@ -106,33 +107,40 @@ watch(searchQuery, fetchSuggestions)
 <style scoped>
 .input-wrapper {
   position: relative;
-  width: 300px;
+  max-width: 400px;
+  width: 100%;
+  margin: 0 auto;
 }
 .input {
   padding: 0.8rem 1.5rem;
+  font-size: 1.2rem;
+  text-align: center;
   width: 100%;
-  font-size: 1rem;
+  box-sizing: border-box; 
   border-radius: 8px;
   border: none;
   background: #222;
   color: white;
   outline: none;
+  box-sizing: border-box;  
 }
 .suggestions {
   position: absolute;
   top: 100%;
   left: 0;
-  right: 0;
+  width: 100%;              
+  box-sizing: border-box;   
   background: #333;
   border-radius: 8px;
-  list-style: none;
-  padding: 0;
   margin-top: 4px;
+  padding: 0;
+  list-style: none;
   max-height: 200px;
   overflow-y: auto;
   z-index: 10;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  text-align: center;
 }
 .suggestions::-webkit-scrollbar {
   display: none;
