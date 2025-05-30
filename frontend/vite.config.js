@@ -1,25 +1,24 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import path from 'path' 
+import path from 'path'
 
 export default defineConfig({
+  base: './', // 讓 HTML 使用相對路徑，適合部署到 S3
   plugins: [vue()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'), 
+      '@': path.resolve(__dirname, 'src'),
     },
   },
   server: {
     proxy: {
-      // WebSocket 代理
-      '/ws': {
-        target: 'http://52.198.101.80:8000/',
-        ws: true,
+      '/api': {
+        target: 'http://localhost:8000', // 本機開發用
         changeOrigin: true,
       },
-      // API 路由代理
-      '/api': {
-        target: 'http://52.198.101.80:8000/',
+      '/ws': {
+        target: 'ws://localhost:8000', // WebSocket 開發代理
+        ws: true,
         changeOrigin: true,
       },
     },
