@@ -42,7 +42,6 @@ let socket = null
 
 const WS_BASE = import.meta.env.VITE_WS_BASE || 'ws://localhost:8000'
 
-// 📌 自動滾動到最底
 function scrollToBottom() {
   nextTick(() => {
     if (chatboxRef.value) {
@@ -53,7 +52,6 @@ function scrollToBottom() {
 watch(messages, scrollToBottom)
 onMounted(scrollToBottom)
 
-// 📌 建立 WebSocket 連線
 const connectSocket = () => {
   if (!accessToken.value) {
     console.warn('尚未取得 accessToken，延後建立 WebSocket')
@@ -69,7 +67,7 @@ const connectSocket = () => {
   socket.onmessage = (event) => {
     try {
       const msg = JSON.parse(event.data)
-      console.log('[收到訊息]', msg)
+      console.log('[📨 收到訊息]', msg)
 
       messages.value.push({
         fromSelf: msg.username === username.value,
@@ -78,7 +76,7 @@ const connectSocket = () => {
         time: msg.time,
       })
     } catch (e) {
-      console.error('無法解析訊息格式：', event.data)
+      console.error('❌ 無法解析訊息格式：', event.data)
     }
   }
 
@@ -91,9 +89,9 @@ const connectSocket = () => {
   }
 }
 
+let stopWatcher
 
 onMounted(() => {
-  let stopWatcher = null
   stopWatcher = watch(
     () => accessToken.value,
     (token) => {
@@ -105,30 +103,32 @@ onMounted(() => {
     { immediate: true, flush: 'post' }
   )
 
-  // 📌 拖曳功能
+  // ✅ 拖曳功能移到這裡
   let isDragging = false
   let offsetX = 0
   let offsetY = 0
 
-  const el = chatroomRef.value
-  if (!el) return
+  nextTick(() => {
+    const el = chatroomRef.value
+    if (!el) return
 
-  el.addEventListener('mousedown', (e) => {
-    isDragging = true
-    offsetX = e.clientX - el.offsetLeft
-    offsetY = e.clientY - el.offsetTop
-    document.body.style.userSelect = 'none'
-  })
+    el.addEventListener('mousedown', (e) => {
+      isDragging = true
+      offsetX = e.clientX - el.offsetLeft
+      offsetY = e.clientY - el.offsetTop
+      document.body.style.userSelect = 'none'
+    })
 
-  document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return
-    el.style.left = `${e.clientX - offsetX}px`
-    el.style.top = `${e.clientY - offsetY}px`
-  })
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return
+      el.style.left = `${e.clientX - offsetX}px`
+      el.style.top = `${e.clientY - offsetY}px`
+    })
 
-  document.addEventListener('mouseup', () => {
-    isDragging = false
-    document.body.style.userSelect = ''
+    document.addEventListener('mouseup', () => {
+      isDragging = false
+      document.body.style.userSelect = ''
+    })
   })
 })
 
@@ -136,28 +136,19 @@ onBeforeUnmount(() => {
   if (socket) socket.close()
 })
 
-// 📌 發送訊息
 function sendMessage() {
   if (!input.value.trim()) return
 
-  const now = new Date()
-  const formattedTime = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })
-
-  const payload = {
-    username: username.value || '我',
-    content: input.value,
-    time: formattedTime,
-  }
-
   if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify(payload))
-    input.value = ''
+    socket.send(JSON.stringify({ content: input.value.trim() }))
     input.value = ''
   } else {
     console.warn('WebSocket 尚未連線，訊息未送出')
   }
 }
 </script>
+
+
 
 <style scoped>
 .chatroom-container {
