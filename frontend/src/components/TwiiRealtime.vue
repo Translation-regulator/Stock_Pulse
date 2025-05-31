@@ -1,8 +1,8 @@
 <template>
   <div class="twii-realtime">
-      <strong>加權指數：</strong>
-      <span :class="isUp ? 'up' : 'down'">{{ twii !== null ? twii.toFixed(2) : '載入中...' }}</span>
-      <strong>  更新時間：</strong>
+      <span>加權指數：</span>
+      <strong :class="isUp ? 'up' : 'down'">{{ twii !== null ? twii.toFixed(2) : '載入中...' }}</strong>
+      <span>  更新時間：</span>
       <span>{{ time || '載入中...' }}</span>
   </div>
 </template>
@@ -36,8 +36,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .twii-realtime {
-  font-size: 1.2rem;
-  font-weight: bold;
+  font-size: 1.0rem;
   padding: 0.5rem 1rem;
   background-color: #2a2a2b;
   border-radius: 8px;

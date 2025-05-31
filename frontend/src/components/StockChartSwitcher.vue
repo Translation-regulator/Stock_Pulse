@@ -1,6 +1,6 @@
 <template>
   <div class="stock-switcher">
-    <h2>{{ stockName }}（{{ stockId }}）</h2>
+    <div class="stock-id-name">{{ stockName }}（{{ stockId }}）</div>
 
     <div class="switch-bar">
       <div class="switch-buttons">
@@ -56,35 +56,34 @@ onMounted(fetchData)
 .stock-switcher {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 250px); /* 或依你頁面需要調整 */
-  padding: 1.5rem;
+  height: calc(100vh - 160px); /* 或依你頁面需要調整 */
+  padding: 1rem;
   background-color: #0d1117;
   border-radius: 12px;
   border: 1px solid #30363d;
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
-  margin-top: 1rem;
+  margin-top: 0.5rem;
   overflow: hidden; /* 防止內部溢出 */
 }
 
 
-h2 {
+.stock-id-name {
   color: #e6edf3;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 20px;
 }
 
 .switch-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.0rem;
 }
 
 
 .switch-buttons {
   display: flex;
   gap: 10px;
-  margin-bottom: 1rem;
 }
 
 button {

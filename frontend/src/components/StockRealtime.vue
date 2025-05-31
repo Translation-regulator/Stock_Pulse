@@ -1,16 +1,15 @@
 <template>
   <div class="stock-realtime">
-    <strong>{{ stockName }}（{{ stockId }}）：</strong>
-    <span :class="isUp ? 'up' : 'down'">
+    <span>{{ stockName }}（{{ stockId }}）：</span>
+    <strong :class="isUp ? 'up' : 'down'">
       <template v-if="price !== null">
         {{ price.toFixed(2) }}
       </template>
       <template v-else>
         尚無成交
       </template>
-    </span>
-    <div></div>
-    <strong>   更新時間：</strong>
+    </strong>
+    <span>     更新時間：</span>
     <span>{{ time || '載入中...' }}</span>
   </div>
 </template>
@@ -81,12 +80,12 @@ onBeforeUnmount(() => { if (socket) socket.close() })
 
 <style scoped>
 .stock-realtime {
-  font-size: 1.1rem;
-  font-weight: bold;
+  font-size: 16px;
   padding: 0.5rem 1rem;
   background-color: #2a2a2b;
   border-radius: 8px;
   max-width: 400px;
+  margin: 0.5rem 0rem;
 }
 .up {
   color: #e53935;

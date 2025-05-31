@@ -248,7 +248,7 @@ onUnmounted(() => {
   flex: 1;
   min-height: 0;
   background-color: #0d1117;
-  padding: 1.5rem;
+  padding: 0.5rem;
   border-radius: 12px;
   border: 1px solid #30363d;
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
@@ -263,7 +263,7 @@ onUnmounted(() => {
   position: relative;
 }
 .hover-display {
-  font-size: 1.2rem;
+  font-size: 13px;
   color: #e6edf3;
   display: flex;
   flex-direction: column;
@@ -274,7 +274,7 @@ onUnmounted(() => {
 .extra-info, .ohlc, .ma-values {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.2rem;
+  gap: 0.5rem;
 }
 .hover-display span.up {
   color: #ef5350;
@@ -284,8 +284,8 @@ onUnmounted(() => {
 }
 .ma-values {
   display: flex;
-  gap: 1.5rem;
-  font-size: 1.1rem;
+  gap: 0.5rem;
+  font-size: rem;
   user-select: none;
 }
 .ma-toggle-label {

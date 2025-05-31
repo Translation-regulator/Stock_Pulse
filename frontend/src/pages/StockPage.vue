@@ -78,7 +78,7 @@ onMounted(() => {
 }
 
 .input-group {
-  margin-top: 2rem;
+  margin-top: 0.5rem;
   display: flex;
   justify-content: center;
   align-items: center;
