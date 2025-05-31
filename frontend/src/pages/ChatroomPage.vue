@@ -38,7 +38,10 @@ const input = ref('')
 const messages = ref([])
 const chatboxRef = ref(null)
 const chatroomRef = ref(null)
+
 let socket = null
+let connected = false
+let reconnectTimer = null
 
 const WS_BASE = import.meta.env.VITE_WS_BASE || 'ws://localhost:8000'
 
@@ -53,15 +56,13 @@ watch(messages, scrollToBottom)
 onMounted(scrollToBottom)
 
 const connectSocket = () => {
-  if (!accessToken.value) {
-    console.warn('尚未取得 accessToken，延後建立 WebSocket')
-    return
-  }
+  if (connected || !accessToken.value) return
 
   socket = new WebSocket(`${WS_BASE}/ws/chat/${roomId}?token=${accessToken.value}`)
 
   socket.onopen = () => {
-    console.log('WebSocket 已連線')
+    connected = true
+    console.log('[WS] 已連線')
   }
 
   socket.onmessage = (event) => {
@@ -81,11 +82,14 @@ const connectSocket = () => {
   }
 
   socket.onerror = (e) => {
-    console.error('WebSocket 錯誤：', e)
+    console.error('[WS] 錯誤：', e)
   }
 
   socket.onclose = () => {
-    console.warn('WebSocket 已關閉')
+    connected = false
+    console.warn('[WS] 已關閉，5 秒後重新連線')
+    // ✅ 自動重連（可選）
+    reconnectTimer = setTimeout(connectSocket, 5000)
   }
 }
 
@@ -103,7 +107,7 @@ onMounted(() => {
     { immediate: true, flush: 'post' }
   )
 
-  // ✅ 拖曳功能移到這裡
+  // ✅ 拖曳功能
   let isDragging = false
   let offsetX = 0
   let offsetY = 0
@@ -133,7 +137,14 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  if (socket) socket.close()
+  if (socket) {
+    try {
+      socket.close()
+    } catch (e) {
+      console.warn('關閉 WebSocket 發生錯誤：', e)
+    }
+  }
+  if (reconnectTimer) clearTimeout(reconnectTimer)
 })
 
 function sendMessage() {
@@ -147,8 +158,6 @@ function sendMessage() {
   }
 }
 </script>
-
-
 
 <style scoped>
 .chatroom-container {
