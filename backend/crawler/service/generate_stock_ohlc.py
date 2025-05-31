@@ -46,18 +46,19 @@ def process_stock(stock_id: str):
     # 週線處理
     df['week_id'] = df.index.to_series().dt.to_period("W").apply(lambda r: r.start_time)
     for week_id, group in df.groupby("week_id"):
+        group = group.dropna(subset=[
+            "open", "high", "low", "close", "volume", "amount", "transaction_count"
+        ])
+        if group.empty:
+            print(f"[跳過週線] {stock_id} @ {week_id} → 無有效資料")
+            continue
+
         week_start = group.index.min().date()
         week_end = group.index.max().date()
         last_date = group.index.max().date()
 
-        # 處理 NaN
         amount_sum = group["amount"].sum()
         txn_sum = group["transaction_count"].sum()
-        amount_val = None if pd.isna(amount_sum) else int(amount_sum)
-        txn_val = None if pd.isna(txn_sum) else int(txn_sum)
-
-        if amount_val is None or txn_val is None:
-            print(f"[週線 NaN 警告] {stock_id} @ {last_date} → amount={amount_sum}, txn={txn_sum}")
 
         cursor.execute("""
             DELETE FROM stock_weekly_price
@@ -76,25 +77,28 @@ def process_stock(stock_id: str):
             float(group["low"].min()),
             float(group.iloc[-1]["close"]),
             int(group["volume"].sum()),
-            amount_val,
+            int(amount_sum),
             float(group.iloc[-1]["close"]) - float(group.iloc[0]["open"]),
-            txn_val
+            int(txn_sum)
         ))
+
 
     # 月線處理
     df['month_id'] = df.index.to_series().dt.to_period("M").apply(lambda r: r.start_time)
     for month_id, group in df.groupby("month_id"):
+        group = group.dropna(subset=[
+            "open", "high", "low", "close", "volume", "amount", "transaction_count"
+        ])
+        if group.empty:
+            print(f"[跳過月線] {stock_id} @ {month_id} → 無有效資料")
+            continue
+
         month_start = group.index.min().date()
         month_end = group.index.max().date()
         last_date = group.index.max().date()
 
         amount_sum = group["amount"].sum()
         txn_sum = group["transaction_count"].sum()
-        amount_val = None if pd.isna(amount_sum) else int(amount_sum)
-        txn_val = None if pd.isna(txn_sum) else int(txn_sum)
-
-        if amount_val is None or txn_val is None:
-            print(f"[月線 NaN 警告] {stock_id} @ {last_date} → amount={amount_sum}, txn={txn_sum}")
 
         cursor.execute("""
             DELETE FROM stock_monthly_price
@@ -113,10 +117,11 @@ def process_stock(stock_id: str):
             float(group["low"].min()),
             float(group.iloc[-1]["close"]),
             int(group["volume"].sum()),
-            amount_val,
+            int(amount_sum),
             float(group.iloc[-1]["close"]) - float(group.iloc[0]["open"]),
-            txn_val
+            int(txn_sum)
         ))
+
 
     conn.commit()
     cursor.close()
