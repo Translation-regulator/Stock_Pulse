@@ -42,6 +42,15 @@ def process_stock(stock_id: str):
         week_end = group.index.max().date()
         last_date = group.index.max().date()
 
+        # 處理 NaN
+        amount_sum = group["amount"].sum()
+        txn_sum = group["transaction_count"].sum()
+        amount_val = None if pd.isna(amount_sum) else int(amount_sum)
+        txn_val = None if pd.isna(txn_sum) else int(txn_sum)
+
+        if amount_val is None or txn_val is None:
+            print(f"[週線 NaN 警告] {stock_id} @ {last_date} → amount={amount_sum}, txn={txn_sum}")
+
         cursor.execute("""
             DELETE FROM stock_weekly_price
             WHERE stock_id = %s AND date BETWEEN %s AND %s
@@ -59,9 +68,9 @@ def process_stock(stock_id: str):
             float(group["low"].min()),
             float(group.iloc[-1]["close"]),
             int(group["volume"].sum()),
-            int(group["amount"].sum()) if group["amount"].notnull().any() else None,
+            amount_val,
             float(group.iloc[-1]["close"]) - float(group.iloc[0]["open"]),
-            int(group["transaction_count"].sum()) if group["transaction_count"].notnull().any() else None
+            txn_val
         ))
 
     # 月線處理
@@ -70,6 +79,15 @@ def process_stock(stock_id: str):
         month_start = group.index.min().date()
         month_end = group.index.max().date()
         last_date = group.index.max().date()
+
+        # 處理 NaN
+        amount_sum = group["amount"].sum()
+        txn_sum = group["transaction_count"].sum()
+        amount_val = None if pd.isna(amount_sum) else int(amount_sum)
+        txn_val = None if pd.isna(txn_sum) else int(txn_sum)
+
+        if amount_val is None or txn_val is None:
+            print(f"[月線 NaN 警告] {stock_id} @ {last_date} → amount={amount_sum}, txn={txn_sum}")
 
         cursor.execute("""
             DELETE FROM stock_monthly_price
@@ -88,9 +106,9 @@ def process_stock(stock_id: str):
             float(group["low"].min()),
             float(group.iloc[-1]["close"]),
             int(group["volume"].sum()),
-            int(group["amount"].sum()) if group["amount"].notnull().any() else None,
+            amount_val,
             float(group.iloc[-1]["close"]) - float(group.iloc[0]["open"]),
-            int(group["transaction_count"].sum()) if group["transaction_count"].notnull().any() else None
+            txn_val
         ))
 
     conn.commit()
