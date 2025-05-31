@@ -1,5 +1,6 @@
 import sys
 import pandas as pd
+from datetime import datetime
 from crawler_utils.db import get_connection
 from tqdm import tqdm  # type: ignore
 
@@ -17,7 +18,7 @@ def get_all_stock_ids():
     conn.close()
     return stock_ids
 
-# 單檔處理：轉換為週線與月線
+# 單檔處理：僅轉換「本月」的週線與月線
 def process_stock(stock_id: str):
     conn = get_connection()
     df = pd.read_sql(f"""
@@ -26,6 +27,13 @@ def process_stock(stock_id: str):
         WHERE stock_id = '{stock_id}'
         ORDER BY date ASC
     """, conn, parse_dates=['date'])
+
+    if df.empty:
+        return
+
+    # ✅ 僅保留本月資料
+    first_day_of_month = datetime.today().replace(day=1)
+    df = df[df['date'] >= first_day_of_month]
 
     if df.empty:
         return
@@ -80,7 +88,6 @@ def process_stock(stock_id: str):
         month_end = group.index.max().date()
         last_date = group.index.max().date()
 
-        # 處理 NaN
         amount_sum = group["amount"].sum()
         txn_sum = group["transaction_count"].sum()
         amount_val = None if pd.isna(amount_sum) else int(amount_sum)
