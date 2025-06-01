@@ -1,10 +1,14 @@
 import axios from 'axios'
 
+// ✅ API base 來自環境變數（開發預設為 localhost）
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE || 'http://localhost:8000',
+  baseURL: import.meta.env.VITE_API_BASE || 'http://localhost:8000/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
 })
 
-// ✅ 每次請求都自動加上 Authorization 標頭
+// ✅ 自動附加 JWT token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken')
   if (token) {
@@ -13,16 +17,18 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// ✅ 若遇到 401，代表 token 過期 → 清除登入資訊並導回首頁
+// ✅ 遇到 401 → 清除登入資訊並導向首頁
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401) {
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
       localStorage.removeItem('accessToken')
       localStorage.removeItem('username')
-      window.location.href = '/'  // 可改 router.push('/')，要看你在哪個環境執行
+
+      // 若你在 Vue 中，也可改為 router.push('/')
+      window.location.href = '/'
     }
-    return Promise.reject(error)
+    return Promise.reject(err)
   }
 )
 

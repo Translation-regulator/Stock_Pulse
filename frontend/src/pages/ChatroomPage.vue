@@ -1,6 +1,6 @@
 <template>
   <div class="chatroom-container" ref="chatroomRef">
-    <h2>聊天室 - {{ roomId }}</h2>
+    <h2>聊天室</h2>
 
     <div class="chatbox" ref="chatboxRef">
       <div
@@ -31,7 +31,6 @@ import { useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 
 const route = useRoute()
-const roomId = route.params.roomId || 'default'
 const { accessToken, username } = useAuth()
 
 const input = ref('')
@@ -58,7 +57,7 @@ onMounted(scrollToBottom)
 const connectSocket = () => {
   if (connected || !accessToken.value) return
 
-  socket = new WebSocket(`${WS_BASE}/ws/chat/${roomId}?token=${accessToken.value}`)
+  socket = new WebSocket(`${WS_BASE}/ws/chat?token=${accessToken.value}`)
 
   socket.onopen = () => {
     connected = true
@@ -88,10 +87,10 @@ const connectSocket = () => {
   socket.onclose = () => {
     connected = false
     console.warn('[WS] 已關閉，5 秒後重新連線')
-    // ✅ 自動重連（可選）
     reconnectTimer = setTimeout(connectSocket, 5000)
   }
 }
+
 
 let stopWatcher
 

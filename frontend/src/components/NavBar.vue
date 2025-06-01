@@ -62,7 +62,7 @@ const handleSubmit = async () => {
       <RouterLink to="/twii" class="menu">大盤指數</RouterLink>
       <RouterLink to="/stock" class="menu">個股資訊</RouterLink>
       <RouterLink to="/portfolio" class="menu">投資組合</RouterLink>
-      <RouterLink to="/chat/default" class="menu">聊天室</RouterLink>
+      <RouterLink to="/chat" class="menu">聊天室</RouterLink>
     </div>
 
     <div>
