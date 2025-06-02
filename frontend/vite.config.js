@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import path from 'path'
 
 export default defineConfig({
-  base: './', // 讓 HTML 使用相對路徑，適合部署到 S3
+  base: '/', // 讓 HTML 使用相對路徑，適合部署到 S3
   plugins: [vue()],
   resolve: {
     alias: {

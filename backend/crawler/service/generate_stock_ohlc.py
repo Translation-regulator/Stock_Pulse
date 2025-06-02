@@ -9,18 +9,15 @@ part_index = int(sys.argv[1]) if len(sys.argv) > 1 else 1
 total_parts = int(sys.argv[2]) if len(sys.argv) > 2 else 1
 
 # 取得所有股票 ID（從 daily 表取得）
-def get_all_stock_ids():
-    conn = get_connection()
+def get_all_stock_ids(conn):
     cursor = conn.cursor()
     cursor.execute("SELECT DISTINCT stock_id FROM stock_daily_price ORDER BY stock_id")
     stock_ids = [row[0] for row in cursor.fetchall()]
     cursor.close()
-    conn.close()
     return stock_ids
 
-# 單檔處理：僅轉換「本月」的週線與月線
-def process_stock(stock_id: str):
-    conn = get_connection()
+# 單檔處理（只用傳入的 conn/cursor）
+def process_stock(stock_id: str, conn, cursor):
     df = pd.read_sql(f"""
         SELECT date, open, high, low, close, volume, amount, transaction_count
         FROM stock_daily_price
@@ -31,24 +28,19 @@ def process_stock(stock_id: str):
     if df.empty:
         return
 
-    # ✅ 僅保留本月資料
+    # 僅保留本月資料
     first_day_of_month = datetime.today().replace(day=1)
     df = df[df['date'] >= first_day_of_month]
-
     if df.empty:
         return
 
     df.set_index("date", inplace=True)
     df.sort_index(inplace=True)
 
-    cursor = conn.cursor()
-
-    # 週線處理
+    # ===== 週線處理 =====
     df['week_id'] = df.index.to_series().dt.to_period("W").apply(lambda r: r.start_time)
     for week_id, group in df.groupby("week_id"):
-        group = group.dropna(subset=[
-            "open", "high", "low", "close", "volume", "amount", "transaction_count"
-        ])
+        group = group.dropna(subset=["open", "high", "low", "close", "volume", "amount", "transaction_count"])
         if group.empty:
             print(f"[跳過週線] {stock_id} @ {week_id} → 無有效資料")
             continue
@@ -56,9 +48,6 @@ def process_stock(stock_id: str):
         week_start = group.index.min().date()
         week_end = group.index.max().date()
         last_date = group.index.max().date()
-
-        amount_sum = group["amount"].sum()
-        txn_sum = group["transaction_count"].sum()
 
         cursor.execute("""
             DELETE FROM stock_weekly_price
@@ -77,18 +66,15 @@ def process_stock(stock_id: str):
             float(group["low"].min()),
             float(group.iloc[-1]["close"]),
             int(group["volume"].sum()),
-            int(amount_sum),
+            int(group["amount"].sum()),
             float(group.iloc[-1]["close"]) - float(group.iloc[0]["open"]),
-            int(txn_sum)
+            int(group["transaction_count"].sum())
         ))
 
-
-    # 月線處理
+    # ===== 月線處理 =====
     df['month_id'] = df.index.to_series().dt.to_period("M").apply(lambda r: r.start_time)
     for month_id, group in df.groupby("month_id"):
-        group = group.dropna(subset=[
-            "open", "high", "low", "close", "volume", "amount", "transaction_count"
-        ])
+        group = group.dropna(subset=["open", "high", "low", "close", "volume", "amount", "transaction_count"])
         if group.empty:
             print(f"[跳過月線] {stock_id} @ {month_id} → 無有效資料")
             continue
@@ -96,9 +82,6 @@ def process_stock(stock_id: str):
         month_start = group.index.min().date()
         month_end = group.index.max().date()
         last_date = group.index.max().date()
-
-        amount_sum = group["amount"].sum()
-        txn_sum = group["transaction_count"].sum()
 
         cursor.execute("""
             DELETE FROM stock_monthly_price
@@ -117,28 +100,33 @@ def process_stock(stock_id: str):
             float(group["low"].min()),
             float(group.iloc[-1]["close"]),
             int(group["volume"].sum()),
-            int(amount_sum),
+            int(group["amount"].sum()),
             float(group.iloc[-1]["close"]) - float(group.iloc[0]["open"]),
-            int(txn_sum)
+            int(group["transaction_count"].sum())
         ))
 
-
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-# 執行多檔股票的轉換
+# 主流程：只開一條連線 + 一個 cursor
 def generate_stock_ohlc():
-    all_ids = get_all_stock_ids()
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    all_ids = get_all_stock_ids(conn)
     total = len(all_ids)
     chunk_size = total // total_parts
     start = (part_index - 1) * chunk_size
     end = total if part_index == total_parts else start + chunk_size
     ids_to_process = all_ids[start:end]
 
-    print(f" 開始處理第 {part_index}/{total_parts} 組，共 {len(ids_to_process)} 檔")
+    print(f"🚀 開始處理第 {part_index}/{total_parts} 組，共 {len(ids_to_process)} 檔")
     for stock_id in tqdm(ids_to_process, desc=f"第 {part_index} 組"):
-        process_stock(stock_id)
+        try:
+            process_stock(stock_id, conn, cursor)
+        except Exception as e:
+            print(f"❌ 處理 {stock_id} 時發生錯誤：{e}")
+
+    conn.commit()
+    cursor.close()
+    conn.close()
 
 if __name__ == "__main__":
     generate_stock_ohlc()

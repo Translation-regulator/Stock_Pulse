@@ -53,7 +53,7 @@ async def stock_ws(websocket: WebSocket, stock_id: str):
                     data = res.json()
 
                     if not data.get("msgArray"):
-                        print(f"⚠️ 無資料：{stock_id}")
+                        print(f"無資料：{stock_id}")
                         await websocket.send_json({
                             "stock_id": stock_id,
                             "price": None,

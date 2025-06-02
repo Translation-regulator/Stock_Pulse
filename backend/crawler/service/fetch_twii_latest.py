@@ -10,14 +10,29 @@ def get_last_date_in_db():
     conn.close()
     return row[0] or datetime(2000, 1, 1).date()
 
-def get_workdays(start_date, end_date):
+
+def is_twii_day_complete(date):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT volume, close FROM twii_index WHERE date = %s", (date,))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        return False
+    volume, close = row
+    return bool(volume) and close is not None
+
+
+def get_workdays(start_date, end_date, check_db=True):
     current = start_date
     days = []
     while current <= end_date:
         if current.weekday() < 5:  # 週一到週五為工作日
-            days.append(current)
+            if not check_db or not is_twii_day_complete(current):
+                days.append(current)
         current += timedelta(days=1)
     return days
+
 
 def main():
     today = datetime.today().date()
@@ -26,7 +41,8 @@ def main():
     print(f"最後一筆資料日期：{last_date}")
     print(f"補抓區間：{last_date + timedelta(days=1)} ～ {today}")
 
-    workdays = get_workdays(last_date + timedelta(days=1), today)
+    # ✅ 僅抓尚未存在或資料不完整的工作日
+    workdays = get_workdays(last_date + timedelta(days=1), today, check_db=True)
     if not workdays:
         print("資料已是最新，無需補抓。")
         return
@@ -53,14 +69,15 @@ def main():
         if data_for_day:
             inserted_dates = insert_twii_data(data_for_day)
             if inserted_dates:
-                print(f"寫入 {target_day} 成功")
+                print(f"✅ 寫入 {target_day} 成功")
                 total += 1
             else:
                 print(f"{target_day} 已存在，略過")
         else:
             print(f"{target_day} 沒有在 API 回傳中，可能休市")
 
-    print(f"補抓完成，共新增 {total} 筆 TWII 資料")
+    print(f"\n📈 補抓完成，共新增 {total} 筆 TWII 資料")
+
 
 if __name__ == "__main__":
     main()

@@ -3,8 +3,8 @@ import time
 import random
 from datetime import datetime
 from bs4 import BeautifulSoup
-from crawler_utils.db import get_connection
-from tqdm import tqdm  # type: ignore
+from crawler_utils.db import get_cursor
+from tqdm import tqdm # type: ignore
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -13,54 +13,50 @@ def get_current_year_month():
     return today.year, today.month
 
 def get_all_listed_ids():
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT stock_id FROM stock_info WHERE listing_type = '上市' ORDER BY stock_id")
-    rows = cursor.fetchall()
-    conn.close()
-    return [row[0] for row in rows]
+    with get_cursor() as cursor:
+        cursor.execute("SELECT stock_id FROM stock_info WHERE listing_type = '上市' ORDER BY stock_id")
+        return [row[0] for row in cursor.fetchall()]
 
 def get_listed_date(stock_id):
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT listed_date FROM stock_info WHERE stock_id = %s", (stock_id,))
-    row = cursor.fetchone()
-    conn.close()
-    return row[0] if row and row[0] else datetime(2005, 1, 1).date()
+    with get_cursor() as cursor:
+        cursor.execute("SELECT listed_date FROM stock_info WHERE stock_id = %s", (stock_id,))
+        row = cursor.fetchone()
+        return row[0] if row and row[0] else datetime(2005, 1, 1).date()
 
-# ✅ 效能優化：一次撈出某檔股票當月所有已有日期
 def get_existing_dates(stock_id, year, month):
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT date FROM stock_daily_price
-        WHERE stock_id = %s AND YEAR(date) = %s AND MONTH(date) = %s
-    """, (stock_id, year, month))
-    rows = cursor.fetchall()
-    conn.close()
-    return set(row[0] for row in rows)
+    with get_cursor() as cursor:
+        cursor.execute("""
+            SELECT date, volume, close FROM stock_daily_price
+            WHERE stock_id = %s AND YEAR(date) = %s AND MONTH(date) = %s
+        """, (stock_id, year, month))
+        rows = cursor.fetchall()
+
+    complete_dates = set()
+    incomplete_dates = set()
+    for date, volume, close in rows:
+        if volume and close is not None:
+            complete_dates.add(date)
+        else:
+            incomplete_dates.add(date)
+    return complete_dates, incomplete_dates
 
 def insert_price_to_db(rows):
     if not rows:
-        print("⚠️ 沒有新資料需要寫入")
+        print("沒有新資料需要寫入")
         return 0
 
-    print(f"📝 準備寫入 {len(rows)} 筆資料，範例：{rows[0]}")
-    conn = get_connection()
-    cursor = conn.cursor()
-    query = """REPLACE INTO stock_daily_price (
-        stock_id, date, open, high, low, close, volume, amount, change_price, transaction_count
-    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
-    values = [
-        (
-            row["stock_id"], row["date"], row["open"], row["high"],
-            row["low"], row["close"], row["volume"], row["amount"],
-            row.get("change_price"), row.get("transaction_count")
-        ) for row in rows
-    ]
-    cursor.executemany(query, values)
-    conn.commit()
-    conn.close()
+    with get_cursor() as cursor:
+        query = """REPLACE INTO stock_daily_price (
+            stock_id, date, open, high, low, close, volume, amount, change_price, transaction_count
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+        values = [
+            (
+                row["stock_id"], row["date"], row["open"], row["high"],
+                row["low"], row["close"], row["volume"], row["amount"],
+                row.get("change_price"), row.get("transaction_count")
+            ) for row in rows
+        ]
+        cursor.executemany(query, values)
     return len(rows)
 
 def get_twse_monthly_html_prices(stock_id, year, month, max_retries=3):
@@ -78,7 +74,6 @@ def get_twse_monthly_html_prices(stock_id, year, month, max_retries=3):
             soup = BeautifulSoup(res.text, "html.parser")
             table = soup.find("table")
             if not table:
-                print(f"📭 沒有資料表格：{stock_id} {year}-{month:02d}")
                 return []
 
             rows = table.find_all("tr")[2:]
@@ -122,24 +117,21 @@ def get_twse_monthly_html_prices(stock_id, year, month, max_retries=3):
 
             return result
 
-        except requests.exceptions.Timeout:
-            print(f"⚠️ Timeout 第 {attempt}/{max_retries} 次：{stock_id} {year}-{month:02d}")
         except Exception as e:
             print(f"❌ 嘗試第 {attempt} 次失敗：{stock_id} {year}-{month:02d} → {e}")
-
         time.sleep(random.uniform(1.0, 2.0))
-
     return None
 
 def fetch_twse_current_month_prices():
     year, month = get_current_year_month()
     stock_ids = get_all_listed_ids()
-    total_inserted = 0
+    all_rows = []
     failed_ids = []
+    skipped_ids = []
 
     print(f"\U0001F4E6 開始抓取上市股票：{year}-{month:02d} 共 {len(stock_ids)} 檔")
 
-    for stock_id in tqdm(stock_ids, desc="\U0001F4CA 上市日線補抓中"):
+    for stock_id in tqdm(stock_ids, desc="📊 上市日線補抓中"):
         listed = get_listed_date(stock_id)
         if listed.year > year or (listed.year == year and listed.month > month):
             continue
@@ -148,20 +140,30 @@ def fetch_twse_current_month_prices():
         if rows is None:
             failed_ids.append(stock_id)
             continue
+        if not rows:
+            skipped_ids.append(stock_id)
+            continue
 
-        existing_dates = get_existing_dates(stock_id, year, month)
-        new_rows = [r for r in rows if r["date"] not in existing_dates]
-
-        inserted = insert_price_to_db(new_rows)
-        total_inserted += inserted
+        complete_dates, incomplete_dates = get_existing_dates(stock_id, year, month)
+        new_rows = [
+            r for r in rows
+            if r["date"] not in complete_dates or r["date"] in incomplete_dates
+        ]
+        all_rows.extend(new_rows)
         time.sleep(random.uniform(1, 1.2))
 
-    print(f"\n✅ 上市日線補抓完成，總共新增 {total_inserted} 筆資料")
+    inserted = insert_price_to_db(all_rows)
+
+    print(f"\n✅ 上市日線補抓完成，總共新增 {inserted} 筆資料")
     if failed_ids:
         print(f"❌ 有 {len(failed_ids)} 檔抓取失敗，已寫入 twse_failed_ids.txt")
         with open("twse_failed_ids.txt", "w", encoding="utf-8") as f:
-            for stock_id in failed_ids:
-                f.write(f"{stock_id}\n")
+            f.writelines(f"{sid}\n" for sid in failed_ids)
+
+    if skipped_ids:
+        print(f"⚠️ 有 {len(skipped_ids)} 檔查無資料表格，已寫入 twse_nodata_ids.txt")
+        with open("twse_nodata_ids.txt", "w", encoding="utf-8") as f:
+            f.writelines(f"{sid}\n" for sid in skipped_ids)
 
 if __name__ == "__main__":
     fetch_twse_current_month_prices()
