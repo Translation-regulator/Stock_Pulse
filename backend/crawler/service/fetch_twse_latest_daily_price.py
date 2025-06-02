@@ -4,7 +4,7 @@ import random
 from datetime import datetime
 from bs4 import BeautifulSoup
 from crawler_utils.db import get_cursor
-from tqdm import tqdm # type: ignore
+from tqdm import tqdm  # type: ignore
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -131,7 +131,7 @@ def fetch_twse_current_month_prices():
 
     print(f"\U0001F4E6 開始抓取上市股票：{year}-{month:02d} 共 {len(stock_ids)} 檔")
 
-    for stock_id in tqdm(stock_ids, desc="📊 上市日線補抓中"):
+    for idx, stock_id in enumerate(tqdm(stock_ids, desc="上市日線補抓中")):
         listed = get_listed_date(stock_id)
         if listed.year > year or (listed.year == year and listed.month > month):
             continue
@@ -150,20 +150,18 @@ def fetch_twse_current_month_prices():
             if r["date"] not in complete_dates or r["date"] in incomplete_dates
         ]
         all_rows.extend(new_rows)
-        time.sleep(random.uniform(1, 1.2))
+
+        # 每 50 檔 cooldown 休息一下
+        if idx > 0 and idx % 50 == 0:
+            print("⏸️ Cooldown 休息 8 秒...")
+            time.sleep(8)
+
+        # 每檔小休息，降低風險
+        time.sleep(random.uniform(0.5, 0.8))
 
     inserted = insert_price_to_db(all_rows)
 
     print(f"\n✅ 上市日線補抓完成，總共新增 {inserted} 筆資料")
-    if failed_ids:
-        print(f"❌ 有 {len(failed_ids)} 檔抓取失敗，已寫入 twse_failed_ids.txt")
-        with open("twse_failed_ids.txt", "w", encoding="utf-8") as f:
-            f.writelines(f"{sid}\n" for sid in failed_ids)
-
-    if skipped_ids:
-        print(f"⚠️ 有 {len(skipped_ids)} 檔查無資料表格，已寫入 twse_nodata_ids.txt")
-        with open("twse_nodata_ids.txt", "w", encoding="utf-8") as f:
-            f.writelines(f"{sid}\n" for sid in skipped_ids)
 
 if __name__ == "__main__":
     fetch_twse_current_month_prices()

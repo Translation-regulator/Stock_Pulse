@@ -4,13 +4,9 @@ import random
 from datetime import datetime
 from bs4 import BeautifulSoup
 from crawler_utils.db import get_cursor
-from tqdm import tqdm # type: ignore
+from tqdm import tqdm  # type: ignore
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-def get_current_year_month():
-    today = datetime.today()
-    return today.year, today.month
 
 def get_all_otc_ids():
     with get_cursor() as cursor:
@@ -116,12 +112,15 @@ def get_otc_monthly_html_prices(stock_id, year, month, max_retries=3):
         except Exception as e:
             print(f"❌ 嘗試第 {attempt} 次失敗：{stock_id} {year}-{month:02d} → {e}")
 
-        time.sleep(random.uniform(1.0, 2.0))
+        time.sleep(random.uniform(0.5, 0.8))
 
     return None
 
-def fetch_otc_current_month_prices():
-    year, month = get_current_year_month()
+def fetch_otc_latest_daily_price(year=None, month=None):
+    if year is None or month is None:
+        today = datetime.today()
+        year, month = today.year, today.month
+
     stock_ids = get_all_otc_ids()
     all_rows = []
     failed_ids = []
@@ -129,7 +128,7 @@ def fetch_otc_current_month_prices():
 
     print(f"\U0001F4E6 開始抓取上櫃股票：{year}-{month:02d} 共 {len(stock_ids)} 檔")
 
-    for stock_id in tqdm(stock_ids, desc="📊 上櫃日線補抓中"):
+    for idx, stock_id in enumerate(tqdm(stock_ids, desc="📊 上櫃日線補抓中")):
         listed = get_listed_date(stock_id)
         if listed.year > year or (listed.year == year and listed.month > month):
             continue
@@ -148,20 +147,15 @@ def fetch_otc_current_month_prices():
             if r["date"] not in complete_dates or r["date"] in incomplete_dates
         ]
         all_rows.extend(new_rows)
-        time.sleep(random.uniform(1, 1.2))
+
+        time.sleep(random.uniform(0.5, 0.8))
+        if (idx + 1) % 50 == 0:
+            print("已處理 50 檔，暫停幾秒避免被鎖")
+            time.sleep(random.uniform(3, 5))
 
     inserted = insert_price_to_db(all_rows)
 
-    print(f"\n✅ 上櫃日線補抓完成，總共新增 {inserted} 筆資料")
-    if failed_ids:
-        with open("otc_failed_ids.txt", "w", encoding="utf-8") as f:
-            f.writelines(f"{sid}\n" for sid in failed_ids)
-        print(f"❌ 有 {len(failed_ids)} 檔抓取失敗，已寫入 otc_failed_ids.txt")
-
-    if skipped_ids:
-        with open("otc_nodata_ids.txt", "w", encoding="utf-8") as f:
-            f.writelines(f"{sid}\n" for sid in skipped_ids)
-        print(f"⚠️ 有 {len(skipped_ids)} 檔無資料表格，已寫入 otc_nodata_ids.txt")
+    print(f"\n上櫃日線補抓完成，總共新增 {inserted} 筆資料")
 
 if __name__ == "__main__":
-    fetch_otc_current_month_prices()
+    fetch_otc_latest_daily_price()
