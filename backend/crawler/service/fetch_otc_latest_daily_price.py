@@ -150,8 +150,7 @@ def fetch_otc_latest_daily_price(year=None, month=None):
 
         time.sleep(random.uniform(0.5, 0.8))
         if (idx + 1) % 50 == 0:
-            print("已處理 50 檔，暫停幾秒避免被鎖")
-            time.sleep(random.uniform(3, 5))
+            time.sleep(random.uniform(2, 4))
 
     inserted = insert_price_to_db(all_rows)
 

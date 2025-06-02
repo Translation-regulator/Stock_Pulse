@@ -153,8 +153,7 @@ def fetch_twse_current_month_prices():
 
         # 每 50 檔 cooldown 休息一下
         if idx > 0 and idx % 50 == 0:
-            print("⏸️ Cooldown 休息 8 秒...")
-            time.sleep(8)
+            time.sleep(random.uniform(2, 4))
 
         # 每檔小休息，降低風險
         time.sleep(random.uniform(0.5, 0.8))
