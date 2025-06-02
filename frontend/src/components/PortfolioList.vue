@@ -25,7 +25,7 @@ async function loadPortfolio() {
     stocks.value = data.map(s => ({
       ...s,
       realtime_price: 0,
-      prev_close: 0
+      prev_close: s.current_price
     }))
   } catch (err) {
     console.error('❌ 載入投資組合失敗', err)

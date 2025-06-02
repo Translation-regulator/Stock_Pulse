@@ -5,7 +5,7 @@ import json
 from dotenv import load_dotenv
 from datetime import datetime, time as dt_time
 import time
-from app_utils.db import get_connection  
+from app_utils.db import get_connection
 
 load_dotenv()
 FUGLE_API_KEY = os.getenv("FUGLE_API_TOKEN", "").strip()
@@ -22,15 +22,15 @@ def is_market_open():
 def start_fugle_stream():
     def broadcast(obj):
         message = json.dumps(obj)
-        print("廣播:", message)
+        print("📢 廣播:", message)
         for callback in clients.copy():
             try:
                 callback(message)
             except Exception:
                 clients.discard(callback)
 
-    def real_worker():
-        print("啟動 Fugle WebSocket 即時資料")
+    def real_worker(stop_event: threading.Event):
+        print("✅ 啟動 Fugle WebSocket 即時資料")
         client = WebSocketClient(api_key=FUGLE_API_KEY)
 
         def handle_message(message):
@@ -50,25 +50,37 @@ def start_fugle_stream():
                 }
                 broadcast(parsed)
             except Exception as e:
-                print("處理 Fugle 資料失敗:", e)
+                print("❌ 處理 Fugle 資料失敗:", e)
 
         stock = client.stock
         stock.on('message', handle_message)
 
-        for i in range(3):
-            try:
-                stock.connect()
-                stock.subscribe({'channel': 'indices', 'symbol': 'IX0001'})
+        try:
+            for i in range(3):
+                try:
+                    stock.connect()
+                    stock.subscribe({'channel': 'indices', 'symbol': 'IX0001'})
+                    break
+                except Exception as e:
+                    print(f"❌ Fugle 第 {i+1} 次連線失敗:", e)
+                    time.sleep(3 + i * 2)
+            else:
+                print("🚫 放棄 Fugle WebSocket 嘗試")
                 return
-            except Exception as e:
-                print(f"❌ Fugle 第 {i+1} 次連線失敗:", e)
-                time.sleep(3 + i * 2)
 
-        print("放棄 Fugle WebSocket 嘗試")
+            # 等待直到 stop_event 被觸發
+            while not stop_event.is_set():
+                time.sleep(1)
 
-    def non_market_worker():
-        print("▶啟動非開盤模式（推送最近收盤價）")
-        while True:
+            print("🛑 停止 Fugle WebSocket")
+            stock.close()
+
+        except Exception as e:
+            print("❌ Fugle WebSocket 發生錯誤:", e)
+
+    def non_market_worker(stop_event: threading.Event):
+        print("▶ 啟動非開盤模式（推送最近收盤價）")
+        while not stop_event.is_set():
             try:
                 conn = get_connection()
                 cursor = conn.cursor(dictionary=True)
@@ -87,30 +99,44 @@ def start_fugle_stream():
                 else:
                     print("⚠️ 沒有資料可用")
             except Exception as e:
-                print("查詢收盤資料失敗:", e)
+                print("❌ 查詢收盤資料失敗:", e)
 
-            time.sleep(60)
+            stop_event.wait(timeout=60)
+
+        print("🛑 停止非開盤推播")
 
     def monitor_loop():
         current_mode = None  # 'real' or 'non'
-        print("啟動大盤資料監控中...")
+        current_thread = None
+        current_stop_event = None
+
+        print("🚀 啟動大盤資料監控...")
 
         while True:
             if USE_FAKE_TWII:
-                print("強制使用假資料（測試用）")
-                return  # 退出監控 loop（讓你改用 fake_worker() 也可以）
+                print("⚠️ 使用假資料模式，跳過 Fugle/WebSocket 啟動")
+                return
 
-            if is_market_open():
-                if current_mode != 'real':
-                    print("開盤，切換至 Fugle WebSocket")
-                    current_mode = 'real'
-                    threading.Thread(target=real_worker, daemon=True).start()
-            else:
-                if current_mode != 'non':
-                    print("非開盤時間，切換至收盤資料推播")
-                    current_mode = 'non'
-                    threading.Thread(target=non_market_worker, daemon=True).start()
-            time.sleep(60)  # 每分鐘判斷一次
+            new_mode = 'real' if is_market_open() else 'non'
+
+            if new_mode != current_mode:
+                # 停掉前一個 worker
+                if current_stop_event:
+                    print(f"🔁 切換模式（{current_mode} → {new_mode}），中止舊 worker")
+                    current_stop_event.set()
+                    if current_thread:
+                        current_thread.join(timeout=3)
+
+                current_stop_event = threading.Event()
+                if new_mode == 'real':
+                    current_thread = threading.Thread(target=real_worker, args=(current_stop_event,), daemon=True)
+                else:
+                    current_thread = threading.Thread(target=non_market_worker, args=(current_stop_event,), daemon=True)
+
+                current_thread.start()
+                current_mode = new_mode
+
+            time.sleep(30)
 
     threading.Thread(target=monitor_loop, daemon=True).start()
 
