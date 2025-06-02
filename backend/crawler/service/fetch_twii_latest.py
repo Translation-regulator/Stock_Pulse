@@ -10,7 +10,6 @@ def get_last_date_in_db():
     conn.close()
     return row[0] or datetime(2000, 1, 1).date()
 
-
 def is_twii_day_complete(date):
     conn = get_connection()
     cursor = conn.cursor()
@@ -22,7 +21,6 @@ def is_twii_day_complete(date):
     volume, close = row
     return bool(volume) and close is not None
 
-
 def get_workdays(start_date, end_date, check_db=True):
     current = start_date
     days = []
@@ -33,15 +31,19 @@ def get_workdays(start_date, end_date, check_db=True):
         current += timedelta(days=1)
     return days
 
-
 def main():
     today = datetime.today().date()
-    last_date = get_last_date_in_db()
+    # ✅ 強制從本月第一天開始補抓
+    first_day_this_month = today.replace(day=1)
+    last_date_in_db = get_last_date_in_db()
+    last_date = max(last_date_in_db, first_day_this_month)
 
-    print(f"最後一筆資料日期：{last_date}")
+    print("開始執行每日更新作業")
+    print(f"當前時間：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("\n===== 大盤指數補抓開始 =====")
+    print(f"最後一筆資料日期：{last_date_in_db}")
     print(f"補抓區間：{last_date + timedelta(days=1)} ～ {today}")
 
-    # ✅ 僅抓尚未存在或資料不完整的工作日
     workdays = get_workdays(last_date + timedelta(days=1), today, check_db=True)
     if not workdays:
         print("資料已是最新，無需補抓。")
@@ -77,7 +79,6 @@ def main():
             print(f"{target_day} 沒有在 API 回傳中，可能休市")
 
     print(f"\n📈 補抓完成，共新增 {total} 筆 TWII 資料")
-
 
 if __name__ == "__main__":
     main()
