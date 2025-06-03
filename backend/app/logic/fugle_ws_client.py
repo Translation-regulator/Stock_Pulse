@@ -30,7 +30,7 @@ def start_fugle_stream():
                 clients.discard(callback)
 
     def real_worker(stop_event: threading.Event):
-        print("✅ 啟動 Fugle WebSocket 即時資料")
+        print("啟動 Fugle WebSocket 即時資料")
         client = WebSocketClient(api_key=FUGLE_API_KEY)
 
         def handle_message(message):
@@ -84,7 +84,7 @@ def start_fugle_stream():
             try:
                 conn = get_connection()
                 cursor = conn.cursor(dictionary=True)
-                cursor.execute("SELECT date, close FROM twii_index ORDER BY date DESC LIMIT 1")
+                cursor.execute("SELECT date, close FROM twii_daily ORDER BY date DESC LIMIT 1")
                 row = cursor.fetchone()
                 conn.close()
 
@@ -101,7 +101,7 @@ def start_fugle_stream():
             except Exception as e:
                 print("❌ 查詢收盤資料失敗:", e)
 
-            stop_event.wait(timeout=60)
+            stop_event.wait(timeout=5)
 
         print("🛑 停止非開盤推播")
 

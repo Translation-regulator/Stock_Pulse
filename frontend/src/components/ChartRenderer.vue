@@ -17,7 +17,7 @@
 
         <div class="extra-info">
           <div>成交量：{{ (Number((hoverData.volume / 1e6).toFixed(2))).toLocaleString() }} 張</div>
-          <div>成交金額：{{ (hoverData.turnover / 1e6).toFixed(2) }} 千元</div>
+          <div>成交金額：{{ (Number((hoverData.turnover / 1e6).toFixed(2))).toLocaleString() }} 千元</div>
           <div>漲跌點數：
             <span :class="hoverData.change_point > 0 ? 'up' : 'down'">
               {{ hoverData.change_point.toFixed(2) }}

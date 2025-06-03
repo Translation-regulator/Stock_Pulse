@@ -5,12 +5,12 @@ import pandas as pd
 
 router = APIRouter()
 
-# 通用函式：處理日、週、月線 OHLC + 成交金額 + 漲跌點數/幅度 + MA
+# 通用函式：處理 OHLC + 成交金額 + 漲跌點數/幅度 + MA
 def fetch_ohlc(table: str):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(f"""
-        SELECT date, open, high, low, close, volume
+        SELECT date, open, high, low, close, volume, amount
         FROM {table}
         ORDER BY date ASC
     """)
@@ -24,10 +24,6 @@ def fetch_ohlc(table: str):
     df["ma5"] = df["close"].rolling(window=5).mean()
     df["ma20"] = df["close"].rolling(window=20).mean()
     df["ma60"] = df["close"].rolling(window=60).mean()
-
-    # ➤ 成交金額（平均價 × 成交量）
-    df["avg_price"] = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
-    df["turnover"] = (df["avg_price"] * df["volume"]).round()
 
     # ➤ 漲跌點數與漲跌幅（第一筆為 None）
     df["prev_close"] = df["close"].shift(1)
@@ -47,7 +43,7 @@ def fetch_ohlc(table: str):
             "ma5": round(row["ma5"], 2) if pd.notna(row["ma5"]) else None,
             "ma20": round(row["ma20"], 2) if pd.notna(row["ma20"]) else None,
             "ma60": round(row["ma60"], 2) if pd.notna(row["ma60"]) else None,
-            "turnover": int(row["turnover"]) if pd.notna(row["turnover"]) else None,
+            "turnover": int(row["amount"]) if row.get("amount") is not None else None,
             "change_point": row["change_point"] if pd.notna(row["change_point"]) else None,
             "change_percent": row["change_percent"] if pd.notna(row["change_percent"]) else None,
         })
@@ -56,7 +52,7 @@ def fetch_ohlc(table: str):
 # 大盤日線
 @router.get("/daily")
 async def get_twii_daily():
-    return fetch_ohlc("twii_index")
+    return fetch_ohlc("twii_daily")  
 
 # 大盤週線
 @router.get("/weekly")

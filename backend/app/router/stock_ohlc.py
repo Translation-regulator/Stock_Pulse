@@ -47,7 +47,7 @@ def fetch_stock_ohlc(table: str, stock_id: str):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(f"""
-        SELECT date, open, high, low, close, volume
+        SELECT date, open, high, low, close, volume, amount
         FROM {table}
         WHERE stock_id = %s
         ORDER BY date ASC
@@ -62,7 +62,7 @@ def fetch_stock_ohlc(table: str, stock_id: str):
     df = pd.DataFrame(rows)
 
     # ✅ 將 Decimal 轉為 float（避免乘法錯誤）
-    for col in ["open", "high", "low", "close", "volume"]:
+    for col in ["open", "high", "low", "close", "volume", "amount"]:
         if col in df.columns:
             df[col] = df[col].astype(float)
 
@@ -73,8 +73,6 @@ def fetch_stock_ohlc(table: str, stock_id: str):
     df["ma5"] = df["close"].rolling(5).mean()
     df["ma20"] = df["close"].rolling(20).mean()
     df["ma60"] = df["close"].rolling(60).mean()
-    df["avg_price"] = (df["open"] + df["high"] + df["low"] + df["close"]) / 4
-    df["turnover"] = (df["avg_price"] * df["volume"]).round()
     df["prev_close"] = df["close"].shift(1)
     df["change_point"] = (df["close"] - df["prev_close"]).round(2)
     df["change_percent"] = ((df["change_point"] / df["prev_close"]) * 100).round(2)
@@ -92,12 +90,12 @@ def fetch_stock_ohlc(table: str, stock_id: str):
             "ma5": round(row["ma5"], 2) if pd.notna(row["ma5"]) else None,
             "ma20": round(row["ma20"], 2) if pd.notna(row["ma20"]) else None,
             "ma60": round(row["ma60"], 2) if pd.notna(row["ma60"]) else None,
-            "turnover": int(row["turnover"]) if pd.notna(row["turnover"]) else None,
+            "turnover": int(row["amount"]) if pd.notna(row["amount"]) else None,
             "change_point": row["change_point"] if pd.notna(row["change_point"]) else None,
             "change_percent": row["change_percent"] if pd.notna(row["change_percent"]) else None,
         })
 
-    # ✅ 過濾 open/high/low/close 非數值
+    # 過濾 open/high/low/close 非數值
     result = [r for r in result if all(
         isinstance(r.get(k), (int, float)) for k in ['open', 'high', 'low', 'close']
     )]
@@ -105,7 +103,7 @@ def fetch_stock_ohlc(table: str, stock_id: str):
     return result
 
 
-# ✅ 路由：個股日/週/月線
+# 路由：個股日/週/月線
 @router.get("/stocks/{stock_id}/daily")
 async def get_stock_daily(stock_id: str):
     return fetch_stock_ohlc("stock_daily_price", stock_id)
