@@ -48,7 +48,12 @@ const handleSubmit = async () => {
     alert(msg)
   }
 }
-
+onMounted(() => {
+  window.addEventListener('open-login-modal', () => {
+    showPopup.value = true
+    isLoginMode.value = true
+  })
+})
 
 </script>
 

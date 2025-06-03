@@ -16,8 +16,8 @@
         </div>
 
         <div class="extra-info">
-          <div>成交量：{{ (hoverData.volume / 1e6).toFixed(2) }} 張</div>
-          <div>成交金額：{{ (hoverData.turnover / 1e3).toFixed(2) }} 千元</div>
+          <div>成交量：{{ (Number((hoverData.volume / 1e6).toFixed(2))).toLocaleString() }} 張</div>
+          <div>成交金額：{{ (hoverData.turnover / 1e6).toFixed(2) }} 千元</div>
           <div>漲跌點數：
             <span :class="hoverData.change_point > 0 ? 'up' : 'down'">
               {{ hoverData.change_point.toFixed(2) }}
@@ -57,7 +57,7 @@ const showMA20 = ref(true)
 const showMA60 = ref(true)
 const isHovering = ref(false)
 
-// 🔧 將 hoverData 設定為你想顯示的內容
+// 將 hoverData 設定為你想顯示的內容
 const updateHoverData = (data) => {
   const dt = new Date(data.time * 1000)
   hoverData.value = {

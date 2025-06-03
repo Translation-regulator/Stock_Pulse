@@ -54,6 +54,7 @@ const connectWebSocket = () => {
       // emit 給父層
       emit('update', {
         stock_id: props.stockId,
+        stock_name: stockName.value, 
         price: price.value,
         prev_close: data.prev_close,
       })

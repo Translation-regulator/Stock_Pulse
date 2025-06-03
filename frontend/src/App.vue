@@ -12,6 +12,7 @@ import Footer from './components/Footer.vue';
 
 <style>
 html, body, #app {
+  font-family: 'Noto Sans TC', Arial, sans-serif;
   margin: 0;
   padding: 0;
   height: 100%;

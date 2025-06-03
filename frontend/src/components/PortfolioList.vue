@@ -13,6 +13,10 @@ const showEditModal = ref(false)
 const selectedIndex = ref(null)
 const selectedStock = ref(null)
 
+function goToLogin() {
+  window.dispatchEvent(new Event('open-login-modal'))
+}
+
 async function loadPortfolio() {
   if (!accessToken.value) {
     stocks.value = []
@@ -55,7 +59,7 @@ async function updateStock(updatedStock) {
       note: null
     })
 
-    await loadPortfolio() // 更新完重載資料較保險
+    await loadPortfolio()
     showEditModal.value = false
   } catch (err) {
     const message = err?.response?.data?.detail || '更新失敗'
@@ -96,12 +100,14 @@ async function deleteStock(id, index) {
   }
 }
 
-function updateRealtime(data, index) {
-  const stock = stocks.value[index]
-  if (stock) {
-    stock.realtime_price = data.price
-    stock.prev_close = data.prev_close ?? stock.prev_close
-  }
+function updateRealtime(data) {
+  stocks.value
+    .filter(s => s.stock_id === data.stock_id)
+    .forEach(s => {
+      s.realtime_price = data.price
+      s.prev_close = data.prev_close ?? s.prev_close
+      s.stock_name = data.stock_name ?? s.stock_name
+    })
 }
 
 const totalValue = computed(() =>
@@ -135,72 +141,91 @@ function getProfitClass(stock) {
   const diff = (stock.realtime_price - stock.buy_price) * stock.shares
   return diff >= 0 ? 'loss' : 'gain'
 }
+
+const uniqueStockIds = computed(() => [...new Set(stocks.value.map(s => s.stock_id))])
 </script>
 
 <template>
   <div class="portfolio-box">
-    <div class="portfolio-header">
-      <h2>持有股票市值 <span class="value">{{ totalValue.toLocaleString() }} TWD</span></h2>
-      <div class="total-profit" :class="totalProfit >= 0 ? 'loss' : 'gain'">
-        {{ totalProfit >= 0 ? '+' : '' }}{{ totalProfit.toLocaleString() }}
+    <template v-if="isLoggedIn">
+      <div class="portfolio-header">
+        <h2>持有股票市值 <span class="value">{{ totalValue.toLocaleString() }} TWD</span></h2>
+        <div class="total-profit" :class="totalProfit >= 0 ? 'loss' : 'gain'">
+          {{ totalProfit >= 0 ? '+' : '' }}{{ totalProfit.toLocaleString() }}
+        </div>
       </div>
+
+      <table class="stock-table">
+        <thead>
+          <tr>
+            <th>股票</th>
+            <th>即時股價</th>
+            <th>漲跌</th>
+            <th>昨收</th>
+            <th>漲跌幅(%)</th>
+            <th>持有股數</th>
+            <th>持有價格</th>
+            <th>個股市值</th>
+            <th>損益</th>
+            <th>購買時間</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(stock, index) in stocks" :key="stock.id">
+            <td class="stock-id">
+              <span class="code">{{ stock.stock_id }}</span><br />
+              <span class="symbol">{{ stock.stock_name }}</span>
+            </td>
+            <td>
+              <span v-if="!stock.realtime_price" style="color: #aaa">尚無報價</span>
+              <span v-else>{{ stock.realtime_price }}</span>
+            </td>
+            <td :class="getChangeClass(stock)">{{ getChangeSymbol(stock) }} {{ getChangeValue(stock) }}</td>
+            <td>{{ stock.prev_close }}</td>
+            <td :class="getChangeClass(stock)">{{ getChangeSymbol(stock) }} {{ getChangePercent(stock) }}%</td>
+            <td>{{ stock.shares.toLocaleString() }}</td>
+            <td>{{ stock.buy_price.toLocaleString() }}</td>
+            <td>${{ (stock.realtime_price * stock.shares).toLocaleString() }}</td>
+            <td :class="getProfitClass(stock)">{{ getProfit(stock) }}</td>
+            <td>{{ stock.buy_date }}</td>
+            <td>
+              <button class="edit-row-button" @click="selectStock(index)">編輯</button>
+              <button class="delete-row-button" @click="deleteStock(stock.id, index)">刪除</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="footer-action">
+        <button class="add-button" @click="showAddModal = true">新增股票</button>
+      </div>
+
+      <AddStockModal :show="showAddModal" @close="showAddModal = false" @select="addStock" />
+      <EditStockModal :show="showEditModal" :stock="selectedStock" @close="showEditModal = false" @save="updateStock" />
+
+      <!-- 每個唯一股票代號綁定一條 WebSocket 監聽 -->
+      <template v-for="stockId in uniqueStockIds" :key="stockId">
+        <StockRealtime :stock-id="stockId" @update="updateRealtime" style="display: none" />
+          <div id="login-modal" class="login-modal" style="display: none">
     </div>
+  </template>
+    </template>
 
-    <table class="stock-table">
-      <thead>
-        <tr>
-          <th>股票</th>
-          <th>即時股價</th>
-          <th>漲跌</th>
-          <th>昨收</th>
-          <th>漲跌幅(%)</th>
-          <th>持有股數</th>
-          <th>持有價格</th>
-          <th>個股市值</th>
-          <th>損益</th>
-          <th>購買時間</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(stock, index) in stocks" :key="stock.id">
-          <td class="stock-id">
-            <span class="code">{{ stock.stock_id }}</span><br />
-            <span class="symbol">{{ stock.stock_name }}</span>
-          </td>
-          <td>
-            <span v-if="!stock.realtime_price" style="color: #aaa">尚無報價</span>
-            <span v-else>{{ stock.realtime_price }}</span>
-            <StockRealtime :stock-id="stock.stock_id" @update="(data) => updateRealtime(data, index)" style="display: none" />
-          </td>
-          <td :class="getChangeClass(stock)">{{ getChangeSymbol(stock) }} {{ getChangeValue(stock) }}</td>
-          <td>{{ stock.prev_close }}</td>
-          <td :class="getChangeClass(stock)">{{ getChangeSymbol(stock) }} {{ getChangePercent(stock) }}%</td>
-          <td>{{ stock.shares }}</td>
-          <td>{{ stock.buy_price }}</td>
-          <td>${{ (stock.realtime_price * stock.shares).toLocaleString() }}</td>
-          <td :class="getProfitClass(stock)">{{ getProfit(stock) }}</td>
-          <td>{{ stock.buy_date }}</td>
-          <td>
-            <button class="edit-row-button" @click="selectStock(index)">編輯</button>
-            <button class="delete-row-button" @click="deleteStock(stock.id, index)">刪除</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="footer-action">
-      <button class="add-button" @click="showAddModal = true">新增股票</button>
-    </div>
-
-    <AddStockModal :show="showAddModal" @close="showAddModal = false" @select="addStock" />
-    <EditStockModal :show="showEditModal" :stock="selectedStock" @close="showEditModal = false" @save="updateStock" />
+    <template v-else>
+      <div class="login-prompt">
+        <h2>尚未登入</h2>
+        <p>請先登入以查看您的投資組合</p>
+        <button class="login-button" @click="goToLogin">登入</button>
+      </div>
+    </template>
   </div>
 </template>
 
+
 <style scoped>
 .portfolio-box {
-  font-family: Arial, sans-serif;
+  font-family: 'Noto Sans TC', Arial, sans-serif;
   background: #1e1e1e;
   color: #eee;
   padding: 20px;
@@ -294,5 +319,57 @@ function getProfitClass(stock) {
   color: white;
   cursor: pointer;
   margin-left: 5px;
+}
+
+.login-prompt {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #ccc;
+}
+.login-button {
+  background: #3399ff;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 1.1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+.login-button:hover {
+  background: #1a73e8;
+}
+.login-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: #1e1e1e;
+  color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+  width: 300px;
+  border: 1px solid #444;
+}
+.modal-content button {
+  margin-top: 1rem;
+  padding: 0.4rem 1rem;
+  background: #555;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.modal-content button:hover {
+  background: #3399ff;
 }
 </style>
