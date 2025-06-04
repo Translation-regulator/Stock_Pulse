@@ -5,7 +5,7 @@ from crawler_utils.db import get_connection
 def get_last_date_in_db():
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT MAX(date) FROM twii_index")
+    cursor.execute("SELECT MAX(date) FROM twii_daily")
     row = cursor.fetchone()
     conn.close()
     return row[0] or datetime(2000, 1, 1).date()
@@ -13,7 +13,7 @@ def get_last_date_in_db():
 def is_twii_day_complete(date):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT volume, close FROM twii_index WHERE date = %s", (date,))
+    cursor.execute("SELECT volume, close FROM twii_daily WHERE date = %s", (date,))
     row = cursor.fetchone()
     conn.close()
     if not row:

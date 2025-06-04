@@ -59,13 +59,27 @@ def get_otc_monthly_html_prices(stock_id, year, month, max_retries=3):
     date_str = f"{year}/{month:02d}/01"
     url = f"https://www.tpex.org.tw/www/zh-tw/afterTrading/tradingStock?response=html&date={date_str}&code={stock_id}"
 
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/123.0.0.0 Safari/537.36"
+        ),
+        "Referer": "https://www.tpex.org.tw/"
+    }
+
     for attempt in range(1, max_retries + 1):
         try:
-            res = requests.get(url, timeout=20, verify=False)
+            res = requests.get(url, headers=headers, timeout=20, verify=False)
+            if res.status_code != 200:
+                print(f"⚠️ 回傳狀態碼 {res.status_code}，等待 retry")
+                raise Exception("非 200 回應")
+
             res.encoding = "utf-8"
             soup = BeautifulSoup(res.text, "html.parser")
             table = soup.find("table")
             if not table:
+                print(f"⚠️ {stock_id} 找不到資料表格")
                 return []
 
             rows = table.find_all("tr")[2:]
@@ -73,10 +87,7 @@ def get_otc_monthly_html_prices(stock_id, year, month, max_retries=3):
 
             for tr in rows:
                 tds = tr.find_all("td")
-                if len(tds) < 9:
-                    continue
-                raw_date = tds[0].text.strip()
-                if "/" not in raw_date:
+                if len(tds) < 9 or "/" not in tds[0].text:
                     continue
 
                 def parse(val):
@@ -86,7 +97,7 @@ def get_otc_monthly_html_prices(stock_id, year, month, max_retries=3):
                         return None
 
                 try:
-                    y, m, d = map(int, raw_date.split("/"))
+                    y, m, d = map(int, tds[0].text.strip().split("/"))
                     ad_date = datetime(y + 1911, m, d).date()
                 except:
                     continue
@@ -111,10 +122,10 @@ def get_otc_monthly_html_prices(stock_id, year, month, max_retries=3):
 
         except Exception as e:
             print(f"❌ 嘗試第 {attempt} 次失敗：{stock_id} {year}-{month:02d} → {e}")
-
-        time.sleep(random.uniform(0.5, 0.8))
+            time.sleep(3 * attempt + random.uniform(2, 4))  # 線性退避
 
     return None
+
 
 def fetch_otc_latest_daily_price(year=None, month=None):
     if year is None or month is None:
@@ -148,13 +159,13 @@ def fetch_otc_latest_daily_price(year=None, month=None):
         ]
         all_rows.extend(new_rows)
 
-        time.sleep(random.uniform(0.5, 0.8))
+        time.sleep(random.uniform(1.2, 2))
         if (idx + 1) % 50 == 0:
             time.sleep(random.uniform(2, 4))
 
     inserted = insert_price_to_db(all_rows)
 
-    print(f"\n上櫃日線補抓完成，總共新增 {inserted} 筆資料")
+    print(f"上櫃日線補抓完成，總共新增 {inserted} 筆資料")
 
 if __name__ == "__main__":
     fetch_otc_latest_daily_price()

@@ -63,17 +63,26 @@ def get_twse_monthly_html_prices(stock_id, year, month, max_retries=3):
     date_str = f"{year}{month:02d}01"
     url = f"https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY?date={date_str}&stockNo={stock_id}&response=html"
     headers = {
-        "User-Agent": "Mozilla/5.0",
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/123.0.0.0 Safari/537.36"
+        ),
         "Referer": "https://www.twse.com.tw/"
     }
 
     for attempt in range(1, max_retries + 1):
         try:
             res = requests.get(url, headers=headers, verify=False, timeout=20)
+            if res.status_code != 200:
+                print(f"⚠️ HTTP {res.status_code}，等待 retry")
+                raise Exception("HTTP 非 200 回應")
+
             res.encoding = "utf-8"
             soup = BeautifulSoup(res.text, "html.parser")
             table = soup.find("table")
             if not table:
+                print(f"⚠️ {stock_id} 找不到資料表格")
                 return []
 
             rows = table.find_all("tr")[2:]
@@ -119,8 +128,10 @@ def get_twse_monthly_html_prices(stock_id, year, month, max_retries=3):
 
         except Exception as e:
             print(f"❌ 嘗試第 {attempt} 次失敗：{stock_id} {year}-{month:02d} → {e}")
-        time.sleep(random.uniform(1.0, 2.0))
+            time.sleep(3 * attempt + random.uniform(2, 4))
+
     return None
+
 
 def fetch_twse_current_month_prices():
     year, month = get_current_year_month()
@@ -156,11 +167,11 @@ def fetch_twse_current_month_prices():
             time.sleep(random.uniform(2, 4))
 
         # 每檔小休息，降低風險
-        time.sleep(random.uniform(0.5, 0.8))
+        time.sleep(random.uniform(1.2, 2))
 
     inserted = insert_price_to_db(all_rows)
 
-    print(f"\n✅ 上市日線補抓完成，總共新增 {inserted} 筆資料")
+    print(f"上市日線補抓完成，總共新增 {inserted} 筆資料")
 
 if __name__ == "__main__":
     fetch_twse_current_month_prices()
