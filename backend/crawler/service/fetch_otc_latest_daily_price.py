@@ -72,14 +72,14 @@ def get_otc_monthly_html_prices(stock_id, year, month, max_retries=3):
         try:
             res = requests.get(url, headers=headers, timeout=20, verify=False)
             if res.status_code != 200:
-                print(f"⚠️ 回傳狀態碼 {res.status_code}，等待 retry")
+                print(f"回傳狀態碼 {res.status_code}，等待 retry")
                 raise Exception("非 200 回應")
 
             res.encoding = "utf-8"
             soup = BeautifulSoup(res.text, "html.parser")
             table = soup.find("table")
             if not table:
-                print(f"⚠️ {stock_id} 找不到資料表格")
+                print(f"{stock_id} 找不到資料表格")
                 return []
 
             rows = table.find_all("tr")[2:]
@@ -121,7 +121,7 @@ def get_otc_monthly_html_prices(stock_id, year, month, max_retries=3):
             return result
 
         except Exception as e:
-            print(f"❌ 嘗試第 {attempt} 次失敗：{stock_id} {year}-{month:02d} → {e}")
+            print(f"嘗試第 {attempt} 次失敗：{stock_id} {year}-{month:02d} → {e}")
             time.sleep(3 * attempt + random.uniform(2, 4))  # 線性退避
 
     return None

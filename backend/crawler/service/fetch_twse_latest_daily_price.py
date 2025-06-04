@@ -127,7 +127,7 @@ def get_twse_monthly_html_prices(stock_id, year, month, max_retries=3):
             return result
 
         except Exception as e:
-            print(f"❌ 嘗試第 {attempt} 次失敗：{stock_id} {year}-{month:02d} → {e}")
+            print(f"嘗試第 {attempt} 次失敗：{stock_id} {year}-{month:02d} → {e}")
             time.sleep(3 * attempt + random.uniform(2, 4))
 
     return None
@@ -140,7 +140,7 @@ def fetch_twse_current_month_prices():
     failed_ids = []
     skipped_ids = []
 
-    print(f"\U0001F4E6 開始抓取上市股票：{year}-{month:02d} 共 {len(stock_ids)} 檔")
+    print(f"開始抓取上市股票：{year}-{month:02d} 共 {len(stock_ids)} 檔")
 
     for idx, stock_id in enumerate(tqdm(stock_ids, desc="上市日線補抓中")):
         listed = get_listed_date(stock_id)
