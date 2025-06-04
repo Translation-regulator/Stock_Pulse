@@ -1,24 +1,9 @@
-<template>
-  <div class="stock-page">
-    <div class="input-group">
-      <StockSearchInput @select="handleStockSelect" />
-    </div>
-
-    <div v-if="loading">資料載入中...</div>
-    <StockChartSwitcher
-      v-else-if="stockId && stockName"
-      :stockId="stockId"
-      :stockName="stockName"
-    />
-    <p v-else-if="notFound">查無此股票</p>
-  </div>
-</template>
-
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import StockChartSwitcher from '../components/StockChartSwitcher.vue'
 import StockSearchInput from '../components/StockSearchInput.vue'
+import SlideChatDrawer from '../components/SlideChatDrawer.vue' // ✅ 加入
 
 const route = useRoute()
 const router = useRouter()
@@ -27,6 +12,7 @@ const stockId = ref('')
 const stockName = ref('')
 const notFound = ref(false)
 const loading = ref(false)
+const showChat = ref(false) // ✅ 控制聊天室抽屜
 
 async function fetchStockInfo(query) {
   if (!query) return
@@ -42,7 +28,6 @@ async function fetchStockInfo(query) {
     stockId.value = data.stock_id
     stockName.value = data.stock_name
 
-    // 路由同步更新
     if (route.params.stockId !== data.stock_id) {
       router.push(`/stock/${data.stock_id}`)
     }
@@ -60,7 +45,6 @@ function handleStockSelect(stock) {
   fetchStockInfo(stock.stock_id)
 }
 
-// 如果網址有 stockId 就自動查
 onMounted(() => {
   const paramId = route.params.stockId
   if (paramId) {
@@ -69,12 +53,46 @@ onMounted(() => {
 })
 </script>
 
+<template>
+  <div class="stock-page">
+    <div class="input-group">
+      <StockSearchInput @select="handleStockSelect" />
+    </div>
+
+    <div v-if="loading">資料載入中...</div>
+    <StockChartSwitcher
+      v-else-if="stockId && stockName"
+      :stockId="stockId"
+      :stockName="stockName"
+    />
+    <p v-else-if="notFound">查無此股票</p>
+
+    <!-- 💬 留言按鈕 -->
+    <button
+      v-if="stockId"
+      class="chat-toggle-button"
+      @click="showChat = true"
+    >
+      💬 留言
+    </button>
+
+    <!-- 🪟 抽屜聊天室 -->
+    <SlideChatDrawer
+      :isOpen="showChat"
+      :roomId="stockId"
+      :roomName="stockName"
+      @close="showChat = false"
+    />
+  </div>
+</template>
+
 <style scoped>
 .stock-page {
   margin-left: 10%;
   margin-right: 10%;
   box-sizing: border-box;
   color: white;
+  position: relative;
 }
 
 .input-group {
@@ -83,5 +101,20 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   gap: 1rem;
+}
+
+.chat-toggle-button {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 999;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.2rem;
+  border-radius: 999px;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 </style>

@@ -17,8 +17,9 @@ export function useAuth() {
       accessToken.value = data.access_token
       username.value = data.name
 
-      localStorage.setItem('accessToken', data.access_token)
-      localStorage.setItem('username', data.name)
+      localStorage.setItem('accessToken', res.data.access_token)
+      localStorage.setItem('username', res.data.name)   // 顯示名稱
+      localStorage.setItem('userId', res.data.user_id)  // 寫入留言時可備用
 
       alert('登入成功！')
       await router.push('/')
