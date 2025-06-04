@@ -148,3 +148,6 @@ playground/
 daily_price.csv
 weekly_price.csv
 monthly_price.csv
+
+# log
+logs
