@@ -1,38 +1,15 @@
-<template>
-  <div class="chatroom-container" ref="chatroomRef">
-    <h2>聊天室</h2>
-
-    <div class="chatbox" ref="chatboxRef">
-      <div
-        v-for="(msg, idx) in messages"
-        :key="idx"
-        :class="['chat-message', msg.fromSelf ? 'from-self' : 'from-other']"
-      >
-        <div class="chat-meta">
-          <span class="chat-username">{{ msg.username }}</span>
-          <span class="chat-timestamp">{{ msg.time }}</span>
-        </div>
-        <div class="chat-content">{{ msg.content }}</div>
-      </div>
-    </div>
-
-    <input
-      v-model="input"
-      @keyup.enter="sendMessage"
-      placeholder="輸入訊息並按 Enter"
-      class="chat-input"
-    />
-  </div>
-</template>
-
 <script setup>
 import { ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
-import { useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 
-const route = useRoute()
-const { accessToken, username } = useAuth()
+// 🟡 傳入 props：roomId（股票代號）、stockName（股票名稱）
+const props = defineProps({
+  roomId: String,
+  stockName: String
+})
+const emit = defineEmits(['close'])
 
+const { accessToken, username } = useAuth()
 const input = ref('')
 const messages = ref([])
 const chatboxRef = ref(null)
@@ -41,7 +18,6 @@ const chatroomRef = ref(null)
 let socket = null
 let connected = false
 let reconnectTimer = null
-
 const WS_BASE = import.meta.env.VITE_WS_BASE || 'ws://localhost:8000'
 
 function scrollToBottom() {
@@ -56,19 +32,16 @@ onMounted(scrollToBottom)
 
 const connectSocket = () => {
   if (connected || !accessToken.value) return
-
-  socket = new WebSocket(`${WS_BASE}/ws/chat?token=${accessToken.value}`)
+  socket = new WebSocket(`${WS_BASE}/ws/chat?token=${accessToken.value}&room=${props.roomId}`)
 
   socket.onopen = () => {
     connected = true
-    console.log('[WS] 已連線')
+    console.log(`[WS] 房間 ${props.roomId} 已連線`)
   }
 
   socket.onmessage = (event) => {
     try {
       const msg = JSON.parse(event.data)
-      console.log('[📨 收到訊息]', msg)
-
       messages.value.push({
         fromSelf: msg.username === username.value,
         username: msg.username,
@@ -86,11 +59,9 @@ const connectSocket = () => {
 
   socket.onclose = () => {
     connected = false
-    console.warn('[WS] 已關閉，5 秒後重新連線')
     reconnectTimer = setTimeout(connectSocket, 5000)
   }
 }
-
 
 let stopWatcher
 
@@ -115,6 +86,9 @@ onMounted(() => {
     const el = chatroomRef.value
     if (!el) return
 
+    el.style.left = `${100 + Math.random() * 200}px`
+    el.style.top = `${100 + Math.random() * 100}px`
+
     el.addEventListener('mousedown', (e) => {
       isDragging = true
       offsetX = e.clientX - el.offsetLeft
@@ -136,33 +110,50 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  if (socket) {
-    try {
-      socket.close()
-    } catch (e) {
-      console.warn('關閉 WebSocket 發生錯誤：', e)
-    }
-  }
+  if (socket) socket.close()
   if (reconnectTimer) clearTimeout(reconnectTimer)
 })
 
 function sendMessage() {
   if (!input.value.trim()) return
-
   if (socket && socket.readyState === WebSocket.OPEN) {
     socket.send(JSON.stringify({ content: input.value.trim() }))
     input.value = ''
-  } else {
-    console.warn('WebSocket 尚未連線，訊息未送出')
   }
 }
 </script>
 
+<template>
+  <div class="chatroom-container" ref="chatroomRef">
+    <button class="chat-close" @click="emit('close')">✖</button>
+    <h2>聊天室：{{ roomId }}（{{ stockName }}）</h2>
+
+    <div class="chatbox" ref="chatboxRef">
+      <div
+        v-for="(msg, idx) in messages"
+        :key="idx"
+        :class="['chat-message', msg.fromSelf ? 'from-self' : 'from-other']"
+      >
+        <div class="chat-meta">
+          <span class="chat-username">{{ msg.username }}</span>
+          <span class="chat-timestamp">{{ msg.time }}</span>
+        </div>
+        <div class="chat-content">{{ msg.content }}</div>
+      </div>
+    </div>
+
+    <input
+      v-model="input"
+      @keyup.enter="sendMessage"
+      placeholder="輸入訊息並按 Enter"
+      class="chat-input"
+    />
+  </div>
+</template>
+
 <style scoped>
 .chatroom-container {
   position: fixed;
-  top: 10%;
-  left: 15%;
   width: 400px;
   z-index: 999;
   cursor: move;
@@ -172,6 +163,17 @@ function sendMessage() {
   border-radius: 12px;
   color: white;
   user-select: none;
+}
+
+.chat-close {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  background: transparent;
+  color: white;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
 }
 
 .chatbox {

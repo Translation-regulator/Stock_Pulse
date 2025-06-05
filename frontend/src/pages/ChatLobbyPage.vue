@@ -1,27 +1,171 @@
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useStockList } from '@/composables/useStockList'
+import ChatroomWindow from '@/components/ChatroomWindow.vue'
+import { useAuth } from '@/composables/useAuth'
+
+const openWindows = ref([])
+const stockList = ref([])
+const searchQuery = ref('')
+const hasSearched = ref(false)
+
+const { isLoggedIn } = useAuth()
+
+const filteredStocks = computed(() => {
+  if (!searchQuery.value) return []
+  return stockList.value.filter(stock =>
+    stock.stock_id.includes(searchQuery.value) ||
+    stock.stock_name.includes(searchQuery.value)
+  )
+})
+
+onMounted(async () => {
+  try {
+    const result = await useStockList()
+    stockList.value = result.stockList
+  } catch (e) {
+    console.error('取得股票列表失敗', e)
+  }
+})
+
+function openChatroom(roomId) {
+  if (!openWindows.value.find(win => win.roomId === roomId)) {
+    let stockName = '聊天室'
+    if (roomId === 'default') {
+      stockName = '大盤聊天室'
+    } else {
+      if (stockList.value.length === 0) {
+        console.warn('股票清單尚未載入，無法開啟聊天室')
+        return
+      }
+      const stock = stockList.value.find(s => s.stock_id === roomId)
+      if (!stock) {
+        console.warn(`[ChatLobby] 找不到股票代號：${roomId}`)
+      }
+      stockName = stock?.stock_name || '未知股票'
+    }
+
+    openWindows.value.push({ roomId, stockName })
+  }
+}
+
+function closeChatroom(roomId) {
+  openWindows.value = openWindows.value.filter(win => win.roomId !== roomId)
+}
+</script>
+
 <template>
-  <div class="chat-lobby">
-    <h1>聊天室大廳</h1>
-    <p>請選擇一個聊天室進入：</p>
-    <ul>
-      <li v-for="stock in stockList" :key="stock">
-        <RouterLink :to="`/chat/${stock}`">進入 {{ stock }} 聊天室</RouterLink>
-      </li>
-    </ul>
+  <div class="chatroom-layout">
+    <aside class="channel-list">
+      <h2>聊天室頻道</h2>
+
+      <div v-if="!isLoggedIn" class="guest-warning">
+        請先登入以使用聊天室功能
+      </div>
+
+      <template v-else>
+        <input
+          v-model="searchQuery"
+          @input="hasSearched = true"
+          placeholder="搜尋股票代號或名稱"
+          class="search-input"
+        />
+        <ul>
+          <li>
+            <button @click="openChatroom('default')">大盤聊天室</button>
+          </li>
+          <li v-for="stock in filteredStocks" :key="stock.stock_id">
+            <button @click="openChatroom(stock.stock_id)">
+              {{ stock.stock_id }}（{{ stock.stock_name }}）聊天室
+            </button>
+          </li>
+        </ul>
+        <div v-if="hasSearched && filteredStocks.length === 0" class="no-result">
+          查無相關股票
+        </div>
+      </template>
+    </aside>
+
+    <Teleport to="body">
+      <ChatroomWindow
+        v-for="win in openWindows"
+        :key="win.roomId"
+        :room-id="win.roomId"
+        :stock-name="win.stockName"
+        @close="closeChatroom(win.roomId)"
+      />
+    </Teleport>
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-
-const stockList = ref(['2330', '2317', '2454', '0050'])  // 模擬熱門聊天室
-</script>
-
 <style scoped>
-.chat-lobby {
-  padding: 2rem;
+.chatroom-layout {
+  display: flex;
+  height: 100vh;
+}
+
+.channel-list {
+  width: 240px;
+  background-color: #1e293b;
+  padding: 1rem;
+  color: white;
+  border-right: 1px solid #334155;
+}
+
+.channel-list h2 {
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.channel-list ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 1rem;
+}
+
+.channel-list li {
+  margin: 0.5rem 0;
+}
+
+.channel-list button {
+  color: #94a3b8;
+  background: none;
+  border: none;
+  text-align: left;
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.channel-list button:hover {
+  background-color: #334155;
   color: white;
 }
-a {
-  color: #3b82f6;
+
+.search-input {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: white;
+  box-sizing: border-box;
+}
+
+.guest-warning {
+  color: #f87171;
+  font-size: 14px;
+  background: #1f2937;
+  padding: 0.75rem;
+  border-radius: 8px;
+}
+
+.no-result {
+  color: #94a3b8;
+  font-size: 13px;
+  margin-top: 1rem;
+  text-align: center;
 }
 </style>

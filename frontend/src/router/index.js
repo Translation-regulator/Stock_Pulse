@@ -3,7 +3,6 @@ import HomePage from '../pages/HomePage.vue'
 import TwiiPage from '../pages/TwiiPage.vue'
 import StockPage from '../pages/StockPage.vue'
 import PortfolioPage from '../pages/PortfolioPage.vue'
-import ChatroomPage from '../pages/ChatroomPage.vue'  
 import ChatLobbyPage from '../pages/ChatLobbyPage.vue'
 
 const routes = [
@@ -11,8 +10,7 @@ const routes = [
   { path: '/twii', component: TwiiPage },
   { path: '/stock/:stockId?', name: 'StockPage', component: StockPage, props: true },
   { path: '/portfolio', component: PortfolioPage },
-  // { path: '/chat', name: 'ChatLobby', component: ChatLobbyPage},
-  { path: '/chat', name: 'ChatRoom', component: ChatroomPage},
+  { path: '/chat', component: ChatLobbyPage } // ✅ 只保留大廳
 ]
 
 const router = createRouter({
