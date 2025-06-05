@@ -9,23 +9,44 @@
           <div>最高：{{ hoverData.high.toFixed(2) }}</div>
           <div>最低：{{ hoverData.low.toFixed(2) }}</div>
           <div>收盤：
-            <span :class="hoverData.close > hoverData.open ? 'up' : 'down'">
+            <span :class="hoverData.close > hoverData.open ? 'up' : hoverData.close < hoverData.open ? 'down' : ''">
               {{ hoverData.close.toFixed(2) }}
             </span>
           </div>
         </div>
 
         <div class="extra-info">
-          <div>成交量：{{ (Number((hoverData.volume / 1e6).toFixed(2))).toLocaleString() }} 張</div>
-          <div>成交金額：{{ (Number((hoverData.turnover / 1e6).toFixed(2))).toLocaleString() }} 千元</div>
-          <div>漲跌點數：
-            <span :class="hoverData.change_point > 0 ? 'up' : 'down'">
-              {{ hoverData.change_point.toFixed(2) }}
+          <div>
+            成交量：
+            <template v-if="props.type === 'stock'">
+              {{ (hoverData.volume / 1e6).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} 張
+            </template>
+            <template v-else>
+              {{ (hoverData.volume / 1e6).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} 百萬張
+            </template>
+          </div>
+
+          <div>
+            {{ props.type === 'stock' ? '成交金額' : '成交值' }}：
+            <template v-if="props.type === 'stock'">
+              {{ (hoverData.turnover / 1e3).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} 千元
+            </template>
+            <template v-else>
+              {{ (hoverData.turnover / 1e8).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} 億元
+            </template>
+          </div>
+
+          <div>
+            漲跌點數：
+            <span :class="hoverData.change_point > 0 ? 'up' : hoverData.change_point < 0 ? 'down' : ''">
+              {{ hoverData.change_point.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
             </span>
           </div>
-          <div>漲跌幅：
-            <span :class="hoverData.change_percent > 0 ? 'up' : 'down'">
-              {{ hoverData.change_percent.toFixed(2) }}%
+
+          <div>
+            漲跌幅：
+            <span :class="hoverData.change_percent > 0 ? 'up' : hoverData.change_percent < 0 ? 'down' : ''">
+              {{ hoverData.change_percent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
             </span>
           </div>
         </div>
@@ -48,6 +69,7 @@ import { createChart, CandlestickSeries, LineSeries, HistogramSeries } from 'lig
 
 const props = defineProps({
   candles: { type: Array, required: true },
+  type: { type: String, default: 'stock' }, // 可為 'stock' 或 'index'
 })
 
 const chartContainer = ref(null)
@@ -57,7 +79,6 @@ const showMA20 = ref(true)
 const showMA60 = ref(true)
 const isHovering = ref(false)
 
-// 將 hoverData 設定為你想顯示的內容
 const updateHoverData = (data) => {
   const dt = new Date(data.time * 1000)
   hoverData.value = {
@@ -75,6 +96,7 @@ const updateHoverData = (data) => {
     ma60: data.ma60,
   }
 }
+
 let chart = null
 let candleSeries = null
 let volumeSeries = null
@@ -92,11 +114,7 @@ const updateMAVisibility = () => {
 const initChart = () => {
   const width = chartContainer.value.clientWidth
   const height = chartContainer.value.clientHeight
-
-  if (!width || !height) {
-    console.warn('❗ Chart container has no size')
-    return
-  }
+  if (!width || !height) return
 
   chart = createChart(chartContainer.value, {
     width,
@@ -130,9 +148,14 @@ const initChart = () => {
 
   volumeSeries = chart.addSeries(HistogramSeries, {
     priceScaleId: 'volume',
-    priceFormat: { type: 'volume' },
+    priceFormat: {
+      type: 'custom',
+      formatter: () => '', // 不顯示任何數字
+    },
+    lastValueVisible: false, // 隱藏紅色標籤數字
     scaleMargins: { top: 0.8, bottom: 0 },
   })
+
   volumeSeries.setData(props.candles.map(c => ({
     time: c.time,
     value: c.volume || 0,
@@ -164,52 +187,41 @@ const initChart = () => {
 
   chart.timeScale().scrollToPosition(props.candles.length - 1, false)
 
-chart.subscribeCrosshairMove(param => {
-  const point = param?.point
-  const ohlc = param?.seriesData?.get(candleSeries)
-
-  // 滑鼠離開圖表 → 顯示最新一筆
-  if (!point || !param?.time || !ohlc) {
-    isHovering.value = false
-    const latest = props.candles.at(-1)
-    if (latest) updateHoverData({ ...latest, time: latest.time })
-    return
-  }
-
-  // 滑鼠移動中
-  isHovering.value = true
-  const index = props.candles.findIndex(c => c.time === param.time)
-  const current = props.candles[index]
-  if (!current) return
-
-  updateHoverData({
-    time: param.time,
-    open: ohlc.open,
-    high: ohlc.high,
-    low: ohlc.low,
-    close: ohlc.close,
-    volume: current.volume,
-    turnover: current.turnover,
-    change_point: current.change_point,
-    change_percent: current.change_percent,
-    ma5: current.ma5,
-    ma20: current.ma20,
-    ma60: current.ma60,
+  chart.subscribeCrosshairMove(param => {
+    const point = param?.point
+    const ohlc = param?.seriesData?.get(candleSeries)
+    if (!point || !param?.time || !ohlc) {
+      isHovering.value = false
+      const latest = props.candles.at(-1)
+      if (latest) updateHoverData({ ...latest, time: latest.time })
+      return
+    }
+    isHovering.value = true
+    const index = props.candles.findIndex(c => c.time === param.time)
+    const current = props.candles[index]
+    if (!current) return
+    updateHoverData({
+      time: param.time,
+      open: ohlc.open,
+      high: ohlc.high,
+      low: ohlc.low,
+      close: ohlc.close,
+      volume: current.volume,
+      turnover: current.turnover,
+      change_point: current.change_point,
+      change_percent: current.change_percent,
+      ma5: current.ma5,
+      ma20: current.ma20,
+      ma60: current.ma60,
+    })
   })
-})
-
 }
 
 onMounted(async () => {
   await nextTick()
-
-  // 初始顯示最新一筆
   if (props.candles.length > 0) {
     const latest = props.candles.at(-1)
-    updateHoverData({
-      ...latest,
-      time: latest.time,
-    })
+    updateHoverData({ ...latest, time: latest.time })
   }
 
   resizeObserver = new ResizeObserver(entries => {
@@ -217,19 +229,14 @@ onMounted(async () => {
       const width = entry.contentRect.width
       const height = entry.contentRect.height
       if (width > 0 && height > 0) {
-        if (!chart) {
-          initChart()
-        } else {
-          chart.resize(width, height)
-        }
+        if (!chart) initChart()
+        else chart.resize(width, height)
       }
     }
   })
   resizeObserver.observe(chartContainer.value)
-
   watch([showMA5, showMA20, showMA60], updateMAVisibility)
 })
-
 
 onUnmounted(() => {
   resizeObserver?.disconnect()

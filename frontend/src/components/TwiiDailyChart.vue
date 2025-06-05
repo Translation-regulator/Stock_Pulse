@@ -1,6 +1,6 @@
 <template>
   <div class="chart">
-    <ChartRenderer v-if="data.length" :candles="data" />
+    <ChartRenderer v-if="data.length" :candles="data" type="index" />
     <p v-else>📉 載入中...</p>
   </div>
 </template>
@@ -10,11 +10,10 @@ import { ref, onMounted } from 'vue'
 import api from '@/api'
 import ChartRenderer from './ChartRenderer.vue'
 
-const data = ref([])     
+const data = ref([])
 
 onMounted(async () => {
   const res = await api.get('/twii/daily')
   data.value = res.data
 })
 </script>
-

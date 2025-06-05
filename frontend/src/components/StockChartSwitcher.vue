@@ -12,7 +12,7 @@
     </div>
 
     <div v-if="loading">📊 資料載入中...</div>
-    <ChartRenderer v-else-if="ohlc.length" :candles="ohlc" />
+    <ChartRenderer v-else-if="ohlc.length" :candles="ohlc" type="stock" />
     <p v-else>❌ 找不到資料</p>
   </div>
 </template>

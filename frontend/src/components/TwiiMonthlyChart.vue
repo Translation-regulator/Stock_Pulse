@@ -1,6 +1,6 @@
 <template>
   <div class="chart">
-    <ChartRenderer v-if="data.length" :candles="data" />
+    <ChartRenderer v-if="data.length" :candles="data" type="index" />
   </div>
 </template>
 
