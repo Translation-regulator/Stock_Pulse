@@ -1,31 +1,25 @@
 from fastapi import APIRouter
 from datetime import datetime, time as dt_time
-from app_utils.db import get_connection
+from app_utils.db import get_cursor
 import pandas as pd
 
 router = APIRouter()
 
-# 通用函式：處理 OHLC + 成交金額 + 漲跌點數/幅度 + MA
+# ✅ 通用函式：處理 OHLC + MA + 漲跌點幅
 def fetch_ohlc(table: str):
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute(f"""
-        SELECT date, open, high, low, close, volume, amount
-        FROM {table}
-        ORDER BY date ASC
-    """)
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
+    with get_cursor() as cursor:
+        cursor.execute(f"""
+            SELECT date, open, high, low, close, volume, amount
+            FROM {table}
+            ORDER BY date ASC
+        """)
+        rows = cursor.fetchall()
 
     df = pd.DataFrame(rows)
 
-    # ➤ 計算移動平均
     df["ma5"] = df["close"].rolling(window=5).mean()
     df["ma20"] = df["close"].rolling(window=20).mean()
     df["ma60"] = df["close"].rolling(window=60).mean()
-
-    # ➤ 漲跌點數與漲跌幅（第一筆為 None）
     df["prev_close"] = df["close"].shift(1)
     df["change_point"] = (df["close"] - df["prev_close"]).round(2)
     df["change_percent"] = ((df["change_point"] / df["prev_close"]) * 100).round(2)
@@ -49,10 +43,11 @@ def fetch_ohlc(table: str):
         })
     return result
 
+
 # 大盤日線
 @router.get("/daily")
 async def get_twii_daily():
-    return fetch_ohlc("twii_daily")  
+    return fetch_ohlc("twii_daily")
 
 # 大盤週線
 @router.get("/weekly")

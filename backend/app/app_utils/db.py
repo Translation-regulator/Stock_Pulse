@@ -6,7 +6,7 @@ import mysql.connector
 
 load_dotenv()
 
-# 初始化連線池（只會建立一次）
+#  初始化連線池（設計合理）
 connection_pool = pooling.MySQLConnectionPool(
     pool_name="mypool",
     pool_size=30,
@@ -18,6 +18,7 @@ connection_pool = pooling.MySQLConnectionPool(
     charset="utf8mb4"
 )
 
+#  單獨取得連線（不推薦直接用）
 def get_connection():
     try:
         return connection_pool.get_connection()
@@ -25,13 +26,18 @@ def get_connection():
         print(f"MySQL connection fail: {e}")
         raise
 
+#  建議統一使用 get_cursor 寫法
 @contextmanager
-def get_cursor():
+def get_cursor(dictionary=True):
     conn = get_connection()
-    cursor = conn.cursor()
     try:
+        cursor = conn.cursor(dictionary=dictionary)  # 預設回傳 dict
         yield cursor
         conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"DB Error: {e}")
+        raise
     finally:
-        cursor.close()   
-        conn.close()     
+        cursor.close()
+        conn.close()

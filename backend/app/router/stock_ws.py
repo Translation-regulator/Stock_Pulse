@@ -6,30 +6,30 @@ from app_utils.db import get_connection
 
 router = APIRouter()
 
+from app_utils.db import get_cursor
+
 @router.websocket("/stock/{stock_id}")
 async def stock_ws(websocket: WebSocket, stock_id: str):
     print(f"WebSocket 連線：{stock_id}")
     await websocket.accept()
 
-    # === 查詢股票上市類型與昨日收盤 ===
-    conn = get_connection()
-    cursor = conn.cursor()
+    # ===  查詢股票上市類型與昨日收盤 ===
+    with get_cursor(dictionary=False) as cursor:
+        cursor.execute("SELECT listing_type FROM stock_info WHERE stock_id = %s", (stock_id,))
+        stock_row = cursor.fetchone()
+        if not stock_row:
+            await websocket.send_json({"error": "查無此股票代號"})
+            await websocket.close()
+            return
 
-    cursor.execute("SELECT listing_type FROM stock_info WHERE stock_id = %s", (stock_id,))
-    stock_row = cursor.fetchone()
-    if not stock_row:
-        await websocket.send_json({"error": "查無此股票代號"})
-        await websocket.close()
-        return
+        cursor.execute("""
+            SELECT close FROM stock_daily_price
+            WHERE stock_id = %s AND close IS NOT NULL
+            ORDER BY date DESC
+            LIMIT 1
+        """, (stock_id,))
+        close_row = cursor.fetchone()
 
-    cursor.execute("""
-        SELECT close FROM stock_daily_price
-        WHERE stock_id = %s AND close IS NOT NULL
-        ORDER BY date DESC
-        LIMIT 1
-    """, (stock_id,))
-    close_row = cursor.fetchone()
-    conn.close()
 
     yesterday_close = float(close_row[0]) if close_row else 0
     prefix = "tse" if stock_row[0] == "上市" else "otc"
