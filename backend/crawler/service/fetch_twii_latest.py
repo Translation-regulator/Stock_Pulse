@@ -1,31 +1,31 @@
 from datetime import datetime, timedelta
 from service.insert_twii_index import fetch_twii_by_month, insert_twii_data
-from crawler_utils.db import get_connection
+from crawler_utils.db import engine
+import pandas as pd
+from sqlalchemy import text
 
 def get_last_date_in_db():
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT MAX(date) FROM twii_daily")
-    row = cursor.fetchone()
-    conn.close()
-    return row[0] or datetime(2000, 1, 1).date()
+    with engine.connect() as conn:
+        result = conn.execute(text("SELECT MAX(date) FROM twii_daily"))
+        last_date = result.scalar()
+        return last_date or datetime(2000, 1, 1).date()
 
 def is_twii_day_complete(date):
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT volume, close FROM twii_daily WHERE date = %s", (date,))
-    row = cursor.fetchone()
-    conn.close()
-    if not row:
-        return False
-    volume, close = row
-    return bool(volume) and close is not None
+    with engine.connect() as conn:
+        result = conn.execute(
+            text("SELECT volume, close FROM twii_daily WHERE date = :date"),
+            {"date": date}
+        ).fetchone()
+        if not result:
+            return False
+        volume, close = result
+        return bool(volume) and close is not None
 
 def get_workdays(start_date, end_date, check_db=True):
     current = start_date
     days = []
     while current <= end_date:
-        if current.weekday() < 5:  # 週一到週五為工作日
+        if current.weekday() < 5:
             if not check_db or not is_twii_day_complete(current):
                 days.append(current)
         current += timedelta(days=1)
@@ -33,7 +33,6 @@ def get_workdays(start_date, end_date, check_db=True):
 
 def main():
     today = datetime.today().date()
-    # ✅ 強制從本月第一天開始補抓
     first_day_this_month = today.replace(day=1)
     last_date_in_db = get_last_date_in_db()
     last_date = max(last_date_in_db, first_day_this_month)

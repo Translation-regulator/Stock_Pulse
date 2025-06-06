@@ -1,7 +1,7 @@
 from datetime import datetime
 from service.fetch_twii_latest import main as fetch_twii
 from service.fetch_twse_latest_daily_price import fetch_twse_current_month_prices
-from service.fetch_otc_latest_daily_price import fetch_otc_latest_daily_price
+from service.fetch_otc_latest_daily_price import fetch_otc_current_month_prices
 from service.generate_stock_ohlc import generate_stock_ohlc
 from service.generate_twii_ohlc import generate_twii_ohlc
 
@@ -26,7 +26,7 @@ def main():
     # 上櫃個股日線股價
     print("===== 上櫃個股資料補抓開始 =====")
     try:
-        fetch_otc_latest_daily_price()
+        fetch_otc_current_month_prices()
     except Exception as e:
         print(f"上櫃個股補抓失敗：{e}")
 

@@ -3,9 +3,13 @@ import time
 import random
 from datetime import datetime
 from bs4 import BeautifulSoup
-from crawler_utils.db import get_cursor
 from tqdm import tqdm  # type: ignore
 import urllib3
+
+from sqlalchemy import Table, MetaData, text
+from sqlalchemy.dialects.mysql import insert as mysql_insert
+from crawler_utils.db import engine
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def get_current_year_month():
@@ -13,23 +17,30 @@ def get_current_year_month():
     return today.year, today.month
 
 def get_all_listed_ids():
-    with get_cursor() as cursor:
-        cursor.execute("SELECT stock_id FROM stock_info WHERE listing_type = '上市' ORDER BY stock_id")
-        return [row[0] for row in cursor.fetchall()]
+    with engine.connect() as conn:
+        result = conn.execute(text("""
+            SELECT stock_id FROM stock_info 
+            WHERE listing_type = '上市' 
+            ORDER BY stock_id
+        """))
+        return [row[0] for row in result.fetchall()]
 
 def get_listed_date(stock_id):
-    with get_cursor() as cursor:
-        cursor.execute("SELECT listed_date FROM stock_info WHERE stock_id = %s", (stock_id,))
-        row = cursor.fetchone()
+    with engine.connect() as conn:
+        result = conn.execute(
+            text("SELECT listed_date FROM stock_info WHERE stock_id = :stock_id"),
+            {"stock_id": stock_id}
+        )
+        row = result.fetchone()
         return row[0] if row and row[0] else datetime(2005, 1, 1).date()
 
 def get_existing_dates(stock_id, year, month):
-    with get_cursor() as cursor:
-        cursor.execute("""
+    with engine.connect() as conn:
+        result = conn.execute(text("""
             SELECT date, volume, close FROM stock_daily_price
-            WHERE stock_id = %s AND YEAR(date) = %s AND MONTH(date) = %s
-        """, (stock_id, year, month))
-        rows = cursor.fetchall()
+            WHERE stock_id = :stock_id AND YEAR(date) = :year AND MONTH(date) = :month
+        """), {"stock_id": stock_id, "year": year, "month": month})
+        rows = result.fetchall()
 
     complete_dates = set()
     incomplete_dates = set()
@@ -45,19 +56,32 @@ def insert_price_to_db(rows):
         print("沒有新資料需要寫入")
         return 0
 
-    with get_cursor() as cursor:
-        query = """REPLACE INTO stock_daily_price (
-            stock_id, date, open, high, low, close, volume, amount, change_price, transaction_count
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
-        values = [
-            (
-                row["stock_id"], row["date"], row["open"], row["high"],
-                row["low"], row["close"], row["volume"], row["amount"],
-                row.get("change_price"), row.get("transaction_count")
-            ) for row in rows
-        ]
-        cursor.executemany(query, values)
-    return len(rows)
+    metadata = MetaData()
+    metadata.reflect(bind=engine)
+    table = Table("stock_daily_price", metadata, autoload_with=engine)
+
+    inserted_count = 0
+
+    with engine.begin() as conn:
+        for row in rows:
+            try:
+                stmt = mysql_insert(table).values(**row)
+                stmt = stmt.on_duplicate_key_update(
+                    open=stmt.inserted.open,
+                    high=stmt.inserted.high,
+                    low=stmt.inserted.low,
+                    close=stmt.inserted.close,
+                    volume=stmt.inserted.volume,
+                    amount=stmt.inserted.amount,
+                    change_price=stmt.inserted.change_price,
+                    transaction_count=stmt.inserted.transaction_count
+                )
+                conn.execute(stmt)
+                inserted_count += 1
+            except Exception as e:
+                print(f"❌ 存入失敗 {row['stock_id']} {row['date']} → {e}")
+
+    return inserted_count
 
 def get_twse_monthly_html_prices(stock_id, year, month, max_retries=3):
     date_str = f"{year}{month:02d}01"
@@ -132,7 +156,6 @@ def get_twse_monthly_html_prices(stock_id, year, month, max_retries=3):
 
     return None
 
-
 def fetch_twse_current_month_prices():
     year, month = get_current_year_month()
     stock_ids = get_all_listed_ids()
@@ -140,9 +163,9 @@ def fetch_twse_current_month_prices():
     failed_ids = []
     skipped_ids = []
 
-    print(f"開始抓取上市股票：{year}-{month:02d} 共 {len(stock_ids)} 檔")
+    print(f"📦 開始抓取上市股票：{year}-{month:02d} 共 {len(stock_ids)} 檔")
 
-    for idx, stock_id in enumerate(tqdm(stock_ids, desc="上市日線補抓中")):
+    for idx, stock_id in enumerate(tqdm(stock_ids, desc="📊 上市日線補抓中")):
         listed = get_listed_date(stock_id)
         if listed.year > year or (listed.year == year and listed.month > month):
             continue
@@ -162,11 +185,9 @@ def fetch_twse_current_month_prices():
         ]
         all_rows.extend(new_rows)
 
-        # 每 50 檔 cooldown 休息一下
         if idx > 0 and idx % 50 == 0:
             time.sleep(random.uniform(2, 4))
 
-        # 每檔小休息，降低風險
         time.sleep(random.uniform(1.2, 2))
 
     inserted = insert_price_to_db(all_rows)

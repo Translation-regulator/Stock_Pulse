@@ -1,10 +1,13 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
-from crawler_utils.db import get_connection
+from crawler_utils.db import engine  
 import urllib3
 import time
 import random
+
+from sqlalchemy import Table, MetaData
+from sqlalchemy.dialects.mysql import insert as mysql_insert
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -134,35 +137,33 @@ def fetch_twii_by_month(year, month):
     return result
 
 def insert_twii_data(data):
-    conn = get_connection()
-    cursor = conn.cursor()
-    for item in data:
-        try:
-            cursor.execute("""
-                INSERT INTO twii_daily
-                (date, open, high, low, close, volume, trade_count, amount, change_point )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON DUPLICATE KEY UPDATE
-                    open=VALUES(open),
-                    high=VALUES(high),
-                    low=VALUES(low),
-                    close=VALUES(close),
-                    volume=VALUES(volume),
-                    change_point=VALUES(change_point),
-                    trade_count=VALUES(trade_count),
-                    amount=VALUES(amount)
-            """, (
-                item["date"],
-                item["open"],
-                item["high"],
-                item["low"],
-                item["close"],
-                item["volume"],
-                item["trade_count"],
-                item["amount"],
-                item["change_point"]
-            ))
-        except Exception as e:
-            print(f"寫入失敗 {item['date']} -> {e}")
-    conn.commit()
-    conn.close()
+    if not data:
+        return []
+
+    metadata = MetaData()
+    metadata.reflect(bind=engine)
+    twii_daily = Table("twii_daily", metadata, autoload_with=engine)
+
+    inserted_dates = []
+
+    with engine.begin() as conn:
+        for item in data:
+            try:
+                stmt = mysql_insert(twii_daily).values(**item)
+                update_dict = {
+                    "open": stmt.inserted.open,
+                    "high": stmt.inserted.high,
+                    "low": stmt.inserted.low,
+                    "close": stmt.inserted.close,
+                    "volume": stmt.inserted.volume,
+                    "change_point": stmt.inserted.change_point,
+                    "trade_count": stmt.inserted.trade_count,
+                    "amount": stmt.inserted.amount
+                }
+                stmt = stmt.on_duplicate_key_update(**update_dict)
+                conn.execute(stmt)
+                inserted_dates.append(item["date"])
+            except Exception as e:
+                print(f"寫入失敗 {item['date']} -> {e}")
+
+    return inserted_dates
