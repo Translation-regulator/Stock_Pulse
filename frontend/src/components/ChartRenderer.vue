@@ -19,7 +19,7 @@
           <div>
             成交量：
             <template v-if="props.type === 'stock'">
-              {{ (hoverData.volume / 1e6).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} 張
+              {{ (hoverData.volume / 1e3).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} 張
             </template>
             <template v-else>
               {{ (hoverData.volume / 1e6).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} 百萬張
@@ -129,6 +129,7 @@ const initChart = () => {
       rightOffset: 5,
       barSpacing: 14,
       fixRightEdge: true,
+      fixLeftEdge: true, // 加這行防止左邊滑出空白
     },
     crosshair: {
       mode: 0,

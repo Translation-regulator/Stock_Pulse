@@ -142,7 +142,7 @@ def get_twse_monthly_html_prices(stock_id, year, month, max_retries=3):
                     "high": parse(tds[4].text),
                     "low": parse(tds[5].text),
                     "close": parse(tds[6].text),
-                    "volume": int(parse(tds[1].text) * 1000) if parse(tds[1].text) else None,
+                    "volume": int(parse(tds[1].text)) if parse(tds[1].text) else None,
                     "amount": int(parse(tds[2].text)) if parse(tds[2].text) else None,
                     "change_price": parse(tds[7].text),
                     "transaction_count": int(parse(tds[8].text)) if parse(tds[8].text) else None
