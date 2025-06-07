@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useAuth } from '@/composables/useAuth'
+import axios from 'axios'
 
 // 🟡 傳入 props：roomId（股票代號）、stockName（股票名稱）
 const props = defineProps({
@@ -65,7 +66,19 @@ const connectSocket = () => {
 
 let stopWatcher
 
-onMounted(() => {
+onMounted(async () => {
+  // ✅ 載入歷史訊息
+  try {
+    const res = await axios.get(`/api/chat/history/${props.roomId}`)
+    messages.value = res.data.map(msg => ({
+      fromSelf: msg.username === username.value,
+      ...msg
+    }))
+  } catch (e) {
+    console.error('❌ 載入歷史訊息失敗', e)
+  }
+
+  // ✅ 建立 WebSocket 即時連線
   stopWatcher = watch(
     () => accessToken.value,
     (token) => {

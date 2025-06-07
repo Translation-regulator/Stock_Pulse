@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from router import twii_ws, twii_ohlc, stock_ohlc, auth, stock_ws, stock_portfolio, chatroom, comments, stock_router
+from router import twii_ws, twii_ohlc, stock_ohlc, auth, stock_ws, stock_portfolio, chatroom, chatroom_api, comments, stock_router
 
 app = FastAPI()
 # "http://stockpulse-frontend-vue.s3-website-ap-northeast-1.amazonaws.com"
@@ -27,7 +27,8 @@ app.include_router(stock_ohlc.router, prefix="/api")
 app.include_router(auth.router)
 app.include_router(stock_ws.router, prefix="/ws", tags=["stock_ws"])
 app.include_router(stock_portfolio.router)
-app.include_router(chatroom.router)
+app.include_router(chatroom_api.router, prefix="/api", tags=["chatroom_api"])
+app.include_router(chatroom.router, tags=["chatroom_ws"])
 app.include_router(comments.router, prefix="/api", tags=["comments"])
 app.include_router(stock_router.router)
 # 加上主程式跑法
