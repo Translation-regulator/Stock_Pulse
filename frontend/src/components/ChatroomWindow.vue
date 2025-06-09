@@ -65,11 +65,11 @@ const connectSocket = () => {
 }
 
 let stopWatcher
-
+const API_BASE = import.meta.env.VITE_API_BASE
 onMounted(async () => {
   // ✅ 載入歷史訊息
   try {
-    const res = await axios.get(`/api/chat/history/${props.roomId}`)
+    const res = await axios.get(`${API_BASE}/chat/history/${props.roomId}`)
     messages.value = res.data.map(msg => ({
       fromSelf: msg.username === username.value,
       ...msg
