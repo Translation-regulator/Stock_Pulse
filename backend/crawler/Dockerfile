@@ -2,9 +2,11 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+ENV TZ Asia/Taipei
+
 # 安裝套件
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # 複製程式碼與 .env
 COPY . .
