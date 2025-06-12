@@ -102,9 +102,11 @@ const save = () => {
   border-radius: 8px;
   width: 400px;
   max-width: 90%;
+  box-sizing: border-box;
 }
 .form-group {
   margin-bottom: 1rem;
+  box-sizing: border-box;
 }
 input {
   width: 100%;
@@ -113,6 +115,7 @@ input {
   color: #fff;
   border: 1px solid #555;
   border-radius: 4px;
+  box-sizing: border-box;
 }
 .suggestions {
   background: #444;
