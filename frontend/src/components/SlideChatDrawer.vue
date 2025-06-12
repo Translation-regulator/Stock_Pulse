@@ -5,7 +5,7 @@
       <button @click="$emit('close')">✖</button>
     </div>
 
-    <div class="chat-messages">
+    <div class="chat-messages" ref="messageContainer">
       <div
         v-for="msg in messages"
         :key="msg.id"
@@ -31,11 +31,10 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import api from '@/api'
 
-// ✅ 接收 props
 const props = defineProps({
   isOpen: Boolean,
   roomId: String,
@@ -43,56 +42,57 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close'])
-
 const { isLoggedIn } = useAuth()
 
-// ✅ 狀態管理
 const newMessage = ref('')
 const messages = ref([])
 const guestName = ref(`訪客${Math.random().toString(36).slice(-4).toUpperCase()}`)
 
-// ✅ 每次 roomId 變動時取得留言
+// 加入 ref 以便滾動控制
+const messageContainer = ref(null)
+
+function scrollToBottom() {
+  if (messageContainer.value) {
+    messageContainer.value.scrollTop = messageContainer.value.scrollHeight
+  }
+}
+
+// 每次 roomId 變動時取得留言
 watch(() => props.roomId, fetchComments, { immediate: true })
 
-// ✅ 取得留言清單
+// 取得留言清單
 async function fetchComments() {
   if (!props.roomId) return
   try {
     const res = await api.get(`/comments/${props.roomId}`)
     messages.value = res.data
+    await nextTick() // 等 DOM 更新完成再滾動
+    scrollToBottom()
   } catch (err) {
     console.error('取得留言失敗', err)
   }
 }
 
-// ✅ 傳送留言
+// 傳送留言
 async function sendMessage() {
   if (!newMessage.value.trim()) return
 
   try {
-    const payload = {
-      content: newMessage.value,
-    }
+    const payload = { content: newMessage.value }
 
-    // 若未登入，加上訪客名稱
     if (!isLoggedIn.value) {
       payload.guest_name = guestName.value
     }
 
-    // 送出留言
     await api.post(`/comments/${props.roomId}`, payload)
-
-    // 重新抓留言清單（保證 user_name 正確）
     await fetchComments()
-
-    // 清空輸入框
     newMessage.value = ''
   } catch (err) {
     console.error('送出留言失敗', err)
   }
 }
 
-// ✅ 格式化時間
+// 格式化時間
 function formatTime(ts) {
   if (!ts || typeof ts !== 'string') return ''
   return ts.replace('T', ' ').slice(0, 16)
@@ -101,18 +101,16 @@ function formatTime(ts) {
 
 <style scoped>
 .chat-drawer {
-  position: fixed;
-  top: 0;
-  right: -400px;
   width: 400px;
   height: 100%;
   background: #1e1e1e;
   color: white;
-  box-shadow: -2px 0 5px rgba(0,0,0,0.3);
-  transition: right 0.3s ease-in-out;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   z-index: 1000;
+  box-sizing: border-box;
+  margin-left: 20px;
 }
 
 .chat-drawer.open {
@@ -166,5 +164,22 @@ function formatTime(ts) {
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 4px;
+}
+  .chat-messages::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: #2c2c2c; /* 卷軸背景軌道顏色 */
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background-color: #555;       /* 卷軸滑塊顏色 */
+  border-radius: 4px;
+  border: 2px solid #2c2c2c;    /* 加點邊框讓滑塊有空間感 */
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background-color: #888;       /* 滑塊 hover 效果 */
 }
 </style>

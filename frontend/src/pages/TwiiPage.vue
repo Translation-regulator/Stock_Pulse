@@ -8,27 +8,40 @@ const showChat = ref(false)
 
 <template>
   <div class="twii-page">
-    <TwiiChartSwitcher />
+    <!-- 左側圖表區 -->
+    <div class="chart-area">
+      <TwiiChartSwitcher />
+    </div>
 
-    <!-- 💬 留言按鈕 -->
-    <button class="chat-toggle-button" @click="showChat = true">
-      💬 留言
-    </button>
-
-    <!-- 🪟 抽屜聊天室 -->
+    <!-- 右側聊天室區（可選擇是否顯示） -->
     <SlideChatDrawer
-      :isOpen="showChat"
+      v-if="showChat"
+      :isOpen="true"
       roomId="twii"
       roomName="台灣加權指數"
       @close="showChat = false"
     />
+
+    <!-- 浮動留言按鈕 -->
+    <button v-if="!showChat" class="chat-toggle-button" @click="showChat = true">
+      💬 留言
+    </button>
   </div>
 </template>
 
 <style scoped>
 .twii-page {
+  display: flex;
+  height: calc(100vh - 60px);
+  background-color: #121212;
   position: relative;
-  padding: 1rem;
+  padding-left: 10%;
+  padding-right: 10%;
+}
+
+.chart-area {
+  flex: 1;
+  overflow: hidden;
 }
 
 .chat-toggle-button {

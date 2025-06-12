@@ -39,8 +39,6 @@ const mode = ref('daily')
 <style scoped>
 .twii-switcher {
   box-sizing: border-box;
-  margin-left: 10%;
-  margin-right: 10%;
 }
 
 /* 上方按鈕與即時股價一排 */

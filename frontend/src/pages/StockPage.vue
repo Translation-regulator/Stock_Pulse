@@ -1,9 +1,9 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import StockChartSwitcher from '../components/StockChartSwitcher.vue'
 import StockSearchInput from '../components/StockSearchInput.vue'
-import SlideChatDrawer from '../components/SlideChatDrawer.vue' // ✅ 加入
+import SlideChatDrawer from '../components/SlideChatDrawer.vue' 
 
 const route = useRoute()
 const router = useRouter()
@@ -12,7 +12,7 @@ const stockId = ref('')
 const stockName = ref('')
 const notFound = ref(false)
 const loading = ref(false)
-const showChat = ref(false) // ✅ 控制聊天室抽屜
+const showChat = ref(false)
 
 async function fetchStockInfo(query) {
   if (!query) return
@@ -55,51 +55,63 @@ onMounted(() => {
 
 <template>
   <div class="stock-page">
-    <div class="input-group">
-      <StockSearchInput @select="handleStockSelect" />
+    <!-- 左側圖表＋搜尋 -->
+    <div class="chart-area">
+      <div class="input-group">
+        <StockSearchInput @select="handleStockSelect" />
+      </div>
+
+      <div v-if="loading">資料載入中...</div>
+      <StockChartSwitcher
+        v-else-if="stockId && stockName"
+        :stockId="stockId"
+        :stockName="stockName"
+      />
+      <p v-else-if="notFound">查無此股票</p>
     </div>
 
-    <div v-if="loading">資料載入中...</div>
-    <StockChartSwitcher
-      v-else-if="stockId && stockName"
-      :stockId="stockId"
-      :stockName="stockName"
+    <!-- 右側聊天室 -->
+    <SlideChatDrawer
+      v-if="showChat && stockId"
+      :isOpen="true"
+      :roomId="stockId"
+      :roomName="stockName"
+      @close="showChat = false"
     />
-    <p v-else-if="notFound">查無此股票</p>
 
-    <!-- 💬 留言按鈕 -->
+    <!-- 浮動留言按鈕 -->
     <button
-      v-if="stockId"
+      v-if="stockId && !showChat"
       class="chat-toggle-button"
       @click="showChat = true"
     >
       💬 留言
     </button>
-
-    <!-- 🪟 抽屜聊天室 -->
-    <SlideChatDrawer
-      :isOpen="showChat"
-      :roomId="stockId"
-      :roomName="stockName"
-      @close="showChat = false"
-    />
   </div>
 </template>
 
 <style scoped>
 .stock-page {
-  margin-left: 10%;
-  margin-right: 10%;
-  box-sizing: border-box;
+  display: flex;
+  height: 100vh;
+  background-color: #121212;
   color: white;
-  position: relative;
+  padding-left: 10%;
+  padding-right: 10%;
+}
+
+.chart-area {
+  flex: 1;
+  padding: 1rem rem;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .input-group {
-  margin-top: 0.5rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
   display: flex;
   justify-content: center;
-  align-items: center;
   gap: 1rem;
 }
 

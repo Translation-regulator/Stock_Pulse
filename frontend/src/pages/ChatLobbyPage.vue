@@ -31,7 +31,7 @@ onMounted(async () => {
 function openChatroom(roomId) {
   if (!openWindows.value.find(win => win.roomId === roomId)) {
     let stockName = '聊天室'
-    if (roomId === 'default') {
+    if (roomId === 'Twii') {
       stockName = '大盤聊天室'
     } else {
       if (stockList.value.length === 0) {
@@ -72,7 +72,7 @@ function closeChatroom(roomId) {
         />
         <ul>
           <li>
-            <button @click="openChatroom('default')">大盤聊天室</button>
+            <button @click="openChatroom('Twii')">大盤聊天室</button>
           </li>
           <li v-for="stock in filteredStocks" :key="stock.stock_id">
             <button @click="openChatroom(stock.stock_id)">

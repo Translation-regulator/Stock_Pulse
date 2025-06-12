@@ -11,7 +11,7 @@
       <StockRealtime :stockId="stockId" />
     </div>
 
-    <div v-if="loading">📊 資料載入中...</div>
+    <div v-if="loading" class="loading-overlay">💸 散財中...</div>
     <ChartRenderer v-else-if="ohlc.length" :candles="ohlc" type="stock" />
     <p v-else>❌ 找不到資料</p>
   </div>
@@ -56,7 +56,7 @@ onMounted(fetchData)
 .stock-switcher {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 160px); /* 或依你頁面需要調整 */
+  height: calc(100vh - 170px); /* 依頁面做調整 */
   padding: 1rem;
   background-color: #0d1117;
   border-radius: 12px;
@@ -99,4 +99,25 @@ button.active {
   background-color: #6366f1;
   border-color: #6366f1;
 }
+
+.loading-overlay {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #facc15;
+  animation: bounce 1s infinite;
+}
+
+/* 簡單跳動動畫 */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
 </style>

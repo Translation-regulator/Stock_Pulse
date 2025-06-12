@@ -3,7 +3,6 @@ import { ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import axios from 'axios'
 
-// 🟡 傳入 props：roomId（股票代號）、stockName（股票名稱）
 const props = defineProps({
   roomId: String,
   stockName: String
@@ -28,8 +27,6 @@ function scrollToBottom() {
     }
   })
 }
-watch(messages, scrollToBottom)
-onMounted(scrollToBottom)
 
 const connectSocket = () => {
   if (connected || !accessToken.value) return
@@ -49,8 +46,9 @@ const connectSocket = () => {
         content: msg.content,
         time: msg.time,
       })
+      scrollToBottom() // ⬅️ 每次新訊息手動捲到底
     } catch (e) {
-      console.error('❌ 無法解析訊息格式：', event.data)
+      console.error('無法解析訊息格式：', event.data)
     }
   }
 
@@ -67,18 +65,17 @@ const connectSocket = () => {
 let stopWatcher
 const API_BASE = import.meta.env.VITE_API_BASE
 onMounted(async () => {
-  // ✅ 載入歷史訊息
   try {
     const res = await axios.get(`${API_BASE}/chat/history/${props.roomId}`)
     messages.value = res.data.map(msg => ({
       fromSelf: msg.username === username.value,
       ...msg
     }))
+    scrollToBottom()
   } catch (e) {
     console.error('❌ 載入歷史訊息失敗', e)
   }
 
-  // ✅ 建立 WebSocket 即時連線
   stopWatcher = watch(
     () => accessToken.value,
     (token) => {
@@ -90,35 +87,27 @@ onMounted(async () => {
     { immediate: true, flush: 'post' }
   )
 
-  // ✅ 拖曳功能
+  // 拖曳 + 初始位置
+  const el = chatroomRef.value
+  el.style.left = `${100 + Math.random() * 200}px`
+  el.style.top = `${100 + Math.random() * 100}px`
+
   let isDragging = false
-  let offsetX = 0
-  let offsetY = 0
-
-  nextTick(() => {
-    const el = chatroomRef.value
-    if (!el) return
-
-    el.style.left = `${100 + Math.random() * 200}px`
-    el.style.top = `${100 + Math.random() * 100}px`
-
-    el.addEventListener('mousedown', (e) => {
-      isDragging = true
-      offsetX = e.clientX - el.offsetLeft
-      offsetY = e.clientY - el.offsetTop
-      document.body.style.userSelect = 'none'
-    })
-
-    document.addEventListener('mousemove', (e) => {
-      if (!isDragging) return
-      el.style.left = `${e.clientX - offsetX}px`
-      el.style.top = `${e.clientY - offsetY}px`
-    })
-
-    document.addEventListener('mouseup', () => {
-      isDragging = false
-      document.body.style.userSelect = ''
-    })
+  let offsetX = 0, offsetY = 0
+  el.addEventListener('mousedown', (e) => {
+    isDragging = true
+    offsetX = e.clientX - el.offsetLeft
+    offsetY = e.clientY - el.offsetTop
+    document.body.style.userSelect = 'none'
+  })
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return
+    el.style.left = `${e.clientX - offsetX}px`
+    el.style.top = `${e.clientY - offsetY}px`
+  })
+  document.addEventListener('mouseup', () => {
+    isDragging = false
+    document.body.style.userSelect = ''
   })
 })
 
@@ -139,7 +128,7 @@ function sendMessage() {
 <template>
   <div class="chatroom-container" ref="chatroomRef">
     <button class="chat-close" @click="emit('close')">✖</button>
-    <h2>聊天室：{{ roomId }}（{{ stockName }}）</h2>
+    <h2 style="text-align: center;">聊天室：{{ roomId }}（{{ stockName }}）</h2>
 
     <div class="chatbox" ref="chatboxRef">
       <div
@@ -148,8 +137,8 @@ function sendMessage() {
         :class="['chat-message', msg.fromSelf ? 'from-self' : 'from-other']"
       >
         <div class="chat-meta">
+          <span class="chat-time">{{ msg.time }}</span>
           <span class="chat-username">{{ msg.username }}</span>
-          <span class="chat-timestamp">{{ msg.time }}</span>
         </div>
         <div class="chat-content">{{ msg.content }}</div>
       </div>
@@ -168,14 +157,17 @@ function sendMessage() {
 .chatroom-container {
   position: fixed;
   width: 400px;
+  height: 520px;
   z-index: 999;
-  cursor: move;
+  cursor: pointer;
   border: 1px solid #333;
   padding: 1rem;
   background: #1e1e1e;
   border-radius: 12px;
   color: white;
   user-select: none;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .chat-close {
@@ -211,18 +203,19 @@ function sendMessage() {
   max-width: 80%;
   word-wrap: break-word;
   line-height: 1.4;
-  background: #2a2a2a;
 }
 
 .from-self {
   align-self: flex-end;
   background: #3b82f6;
   color: white;
+  text-align: right;
 }
 
 .from-other {
   align-self: flex-start;
   background: #2a2a2a;
+  color: white;
 }
 
 .chat-meta {
@@ -231,6 +224,15 @@ function sendMessage() {
   font-size: 12px;
   color: #ccc;
   margin-bottom: 2px;
+}
+
+.chat-meta .chat-time {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.chat-content {
+  white-space: pre-wrap;
 }
 
 .chat-input {
@@ -242,5 +244,22 @@ function sendMessage() {
   border-radius: 6px;
   background: #1a1a1a;
   color: white;
+}
+
+.chatbox::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chatbox::-webkit-scrollbar-track {
+  background: #1a1a1a; /* 軌道背景 */
+}
+
+.chatbox::-webkit-scrollbar-thumb {
+  background: #444; /* 卷軸顏色 */
+  border-radius: 4px;
+}
+
+.chatbox::-webkit-scrollbar-thumb:hover {
+  background: #666; /* 滑鼠 hover 時的顏色 */
 }
 </style>
