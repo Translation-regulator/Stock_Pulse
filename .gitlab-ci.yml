@@ -6,6 +6,8 @@ stages:
 # 全域變數放在最外層（不能放在 default 裡）
 variables:
   DOCKER_DRIVER: overlay2
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_TLS_CERTDIR: ""
 
 # 全域預設設定：使用 Docker 環境
 default:
@@ -18,7 +20,7 @@ build-fastapi:
   stage: build
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-    - changes:
+      changes:
         - backend/app/**
   script:
     - docker build -t stockpulse-api ./backend/app
@@ -28,7 +30,7 @@ build-crawler:
   stage: build
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-    - changes:
+      changes:
         - backend/crawler/**
   script:
     - docker build -t stockpulse-crawler ./backend/crawler
@@ -36,9 +38,10 @@ build-crawler:
 # Build Vue 前端（打包產出 dist）
 build-frontend:
   stage: build
+  image: node:18
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-    - changes:
+      changes:
         - frontend/**
   script:
     - cd frontend
@@ -70,16 +73,16 @@ deploy-backend:
         docker build -t stockpulse-api ./app
         docker run -d --name fastapi-app -p 8000:8000 stockpulse-api
 
-        # 只更新 Crawler image，不啟動
+        # 更新 Crawler image（不啟動）
         docker build -t stockpulse-crawler ./crawler
 
         echo "後端部署完成"
       EOF
 
-
 # 部署前端 Vue 到 S3 + CloudFront
 deploy-frontend:
   stage: deploy
+  image: amazon/aws-cli:2.15.33
   needs: [build-frontend]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
