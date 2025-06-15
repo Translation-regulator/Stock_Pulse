@@ -1,15 +1,12 @@
-# 定義 CI/CD 所有階段（照順序執行）
 stages:
   - build
   - deploy
 
-# 全域變數放在最外層（不能放在 default 裡）
 variables:
   DOCKER_DRIVER: overlay2
   DOCKER_HOST: tcp://docker:2375/
   DOCKER_TLS_CERTDIR: ""
 
-# 全域預設設定：使用 Docker 環境
 default:
   image: docker:latest
   services:
@@ -20,8 +17,6 @@ build-fastapi:
   stage: build
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-      changes:
-        - backend/app/**
   script:
     - docker build -t stockpulse-api ./backend/app
 
@@ -30,8 +25,6 @@ build-crawler:
   stage: build
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-      changes:
-        - backend/crawler/**
   script:
     - docker build -t stockpulse-crawler ./backend/crawler
 
@@ -41,8 +34,6 @@ build-frontend:
   image: node:18
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-      changes:
-        - frontend/**
   script:
     - cd frontend
     - npm install
@@ -67,13 +58,11 @@ deploy-backend:
         tar -xzf backend.tar.gz
         cd backend
 
-        # 重啟 FastAPI 容器
         docker stop fastapi-app || true
         docker rm fastapi-app || true
         docker build -t stockpulse-api ./app
         docker run -d --name fastapi-app -p 8000:8000 stockpulse-api
 
-        # 更新 Crawler image（不啟動）
         docker build -t stockpulse-crawler ./crawler
 
         echo "後端部署完成"
