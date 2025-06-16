@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11.0-slim
 
 ENV TZ=Asia/Taipei
 RUN apt-get update && apt-get install -y tzdata && \
