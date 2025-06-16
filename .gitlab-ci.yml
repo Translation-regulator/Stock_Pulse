@@ -114,6 +114,7 @@ deploy-frontend:
     - echo "✅ 部署完成"
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
+    
 
 
 
