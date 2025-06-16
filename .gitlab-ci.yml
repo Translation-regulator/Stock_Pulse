@@ -89,6 +89,8 @@ deploy-frontend:
   image: amazon/aws-cli:2.15.33
   needs: [build-frontend]
   script:
+    - aws --version
+    - aws sts get-caller-identity
     - aws s3 sync frontend/dist/ s3://$AWS_S3_BUCKET --region $AWS_DEFAULT_REGION --delete
     - aws cloudfront create-invalidation --distribution-id $AWS_CLOUDFRONT_ID --paths "/*"
   rules:
