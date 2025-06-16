@@ -29,22 +29,6 @@ build-crawler:
   script:
     - docker build -t stockpulse-crawler ./backend/crawler
 
-# Build Frontend (Vue)
-build-frontend:
-  stage: build
-  image: node:18
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-      changes:
-        - frontend/**/*
-  script:
-    - cd frontend
-    - npm install
-    - npm run build
-  artifacts:
-    paths:
-      - frontend/dist
-
 # Deploy Backend on EC2
 deploy-backend:
   stage: deploy
@@ -81,34 +65,43 @@ deploy-backend:
 
     - echo "後端部署完成"
 
-# Deploy Frontend to S3 + CloudFront
-deploy-frontend:
-  stage: deploy
-  image: amazon/aws-cli:2.15.33
-  needs: [build-frontend]
+
+# 建置前端 Vue 專案
+build-frontend:
+  stage: build
+  image: node:18
+  script:
+    - cd frontend
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/dist
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
         - frontend/**/*
         - .gitlab-ci.yml
+
+# 部署到 AWS S3 + CloudFront
+deploy-frontend:
+  stage: deploy
+  image: amazon/aws-cli:2.15.33
+  needs: [build-frontend]
   script:
-    - echo "✅ 環境變數:"
-    - echo " - AWS_S3_BUCKET = $AWS_S3_BUCKET"
-    - echo " - AWS_DEFAULT_REGION = $AWS_DEFAULT_REGION"
-    - ls -al frontend/dist || (echo "❌ frontend/dist 不存在" && exit 1)
-
-    # 檢查環境變數
-    - |
-      for var in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION AWS_S3_BUCKET AWS_CLOUDFRONT_ID; do
-        if [ -z "${!var}" ]; then
-          echo "❌ 環境變數 $var 未設定";
-          exit 1;
-        fi;
-      done
-
+    # 部署到 S3
     - aws s3 sync frontend/dist/ s3://$AWS_S3_BUCKET --region $AWS_DEFAULT_REGION --delete
+
+    # 清除 CloudFront 快取
     - aws cloudfront create-invalidation --distribution-id $AWS_CLOUDFRONT_ID --paths "/*"
-    - echo "🚀 前端部署完成"
+
+    - echo "部署成功！"
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - frontend/**/*
+        - .gitlab-ci.yml
 
 
 
