@@ -12,6 +12,9 @@ build-fastapi:
   stage: build
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - backend/app/**/*
+
   script:
     - docker build -t stockpulse-api ./backend/app
 
@@ -20,6 +23,9 @@ build-crawler:
   stage: build
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - backend/crawler/**/*
+
   script:
     - docker build -t stockpulse-crawler ./backend/crawler
 
@@ -29,6 +35,9 @@ build-frontend:
   image: node:18
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - frontend/**/*
+
   script:
     - cd frontend
     - npm install
@@ -38,10 +47,13 @@ build-frontend:
 deploy-backend:
   stage: deploy
   tags:
-    - ec2   # 使用 EC2 Runner
+    - ec2
   needs: [build-fastapi, build-crawler]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - backend/**/*
+
   script:
     - echo "使用 EC2 Runner 直接部署後端"
 
@@ -58,13 +70,11 @@ deploy-backend:
       ACCESS_TOKEN_EXPIRE_MINUTES=$ACCESS_TOKEN_EXPIRE_MINUTES
       EOF
 
-    # 重建 FastAPI 容器
     - docker stop fastapi-app || true
     - docker rm fastapi-app || true
     - docker build -t stockpulse-api ./backend/app
     - docker run -d --name fastapi-app -p 8000:8000 --env-file ./backend/app/.env stockpulse-api
 
-    # Crawler image（僅建置不執行）
     - docker build -t stockpulse-crawler ./backend/crawler
 
     - echo "後端部署完成"
@@ -76,8 +86,10 @@ deploy-frontend:
   needs: [build-frontend]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - frontend/**/*
+
   script:
-    # 驗證環境變數
     - >
       MISSING_VAR=0; 
       for var in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION AWS_S3_BUCKET AWS_CLOUDFRONT_ID; do
@@ -91,11 +103,6 @@ deploy-frontend:
         exit 1;
       fi
 
-    # 部署到 S3
     - aws s3 sync frontend/dist/ s3://$AWS_S3_BUCKET --region $AWS_DEFAULT_REGION --delete
-
-    # CloudFront 快取失效
     - aws cloudfront create-invalidation --distribution-id $AWS_CLOUDFRONT_ID --paths "/*"
-
     - echo "前端部署完成！"
-
