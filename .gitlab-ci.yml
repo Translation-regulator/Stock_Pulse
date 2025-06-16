@@ -2,17 +2,20 @@ stages:
   - build
   - deploy
 
+# ✅ 只有 build 階段用 shared runner + docker:dind
 variables:
   DOCKER_DRIVER: overlay2
-  DOCKER_HOST: tcp://docker:2375/
   DOCKER_TLS_CERTDIR: ""
+  DOCKER_HOST: tcp://docker:2375/
 
 default:
   image: docker:latest
   services:
     - docker:dind
 
-# Build FastAPI
+###########################
+# 📦 Build FastAPI
+###########################
 build-fastapi:
   stage: build
   rules:
@@ -20,7 +23,9 @@ build-fastapi:
   script:
     - docker build -t stockpulse-api ./backend/app
 
-# Build Crawler
+###########################
+# 🐍 Build Crawler
+###########################
 build-crawler:
   stage: build
   rules:
@@ -28,7 +33,9 @@ build-crawler:
   script:
     - docker build -t stockpulse-crawler ./backend/crawler
 
-# Build Frontend
+###########################
+# 🎨 Build Frontend (Vue)
+###########################
 build-frontend:
   stage: build
   image: node:18
@@ -39,18 +46,20 @@ build-frontend:
     - npm install
     - npm run build
 
-# Deploy Backend to EC2 Runner
+###########################
+# 🚀 Deploy Backend on EC2
+###########################
 deploy-backend:
   stage: deploy
   tags:
-    - ec2 
+    - ec2   # ✅ 僅讓 EC2 Shell Runner 執行這段
   needs: [build-fastapi, build-crawler]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
   script:
     - echo "🎯 使用 EC2 Runner 直接部署"
 
-    # 產生 .env 檔案供 FastAPI 使用
+    # 產生 FastAPI .env
     - |
       cat <<EOF > ./backend/app/.env
       DB_HOST=$DB_HOST
@@ -63,18 +72,20 @@ deploy-backend:
       ACCESS_TOKEN_EXPIRE_MINUTES=$ACCESS_TOKEN_EXPIRE_MINUTES
       EOF
 
-    # 部署 FastAPI
+    # 直接在 EC2 本機操作 Docker
     - docker stop fastapi-app || true
     - docker rm fastapi-app || true
     - docker build -t stockpulse-api ./backend/app
     - docker run -d --name fastapi-app -p 8000:8000 --env-file ./backend/app/.env stockpulse-api
 
-    # build Crawler image
+    # Crawler image（不啟動）
     - docker build -t stockpulse-crawler ./backend/crawler
 
-    - echo "後端部署完成"
+    - echo "✅ 後端部署完成"
 
-# Deploy Frontend to S3
+###########################
+# ☁️ Deploy Frontend to S3
+###########################
 deploy-frontend:
   stage: deploy
   image: amazon/aws-cli:2.15.33
