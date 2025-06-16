@@ -37,11 +37,13 @@ build-frontend:
     - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
         - frontend/**/*
-
   script:
     - cd frontend
     - npm install
     - npm run build
+  artifacts:
+    paths:
+      - frontend/dist
 
 # Deploy Backend on EC2
 deploy-backend:
