@@ -2,12 +2,6 @@ stages:
   - build
   - deploy
 
-# ✅ 只有 build 階段用 shared runner + docker:dind
-variables:
-  DOCKER_DRIVER: overlay2
-  DOCKER_TLS_CERTDIR: ""
-  DOCKER_HOST: tcp://docker:2375/
-
 default:
   image: docker:latest
   services:
