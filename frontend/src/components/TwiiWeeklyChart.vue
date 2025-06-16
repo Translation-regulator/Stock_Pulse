@@ -15,4 +15,5 @@ onMounted(async () => {
   const res = await api.get('/twii/weekly')
   data.value = res.data
 })
+
 </script>
