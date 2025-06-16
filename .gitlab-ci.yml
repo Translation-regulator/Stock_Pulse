@@ -12,7 +12,7 @@ default:
   services:
     - docker:dind
 
-# Build FastAPI Docker image
+# Build FastAPI
 build-fastapi:
   stage: build
   rules:
@@ -20,7 +20,7 @@ build-fastapi:
   script:
     - docker build -t stockpulse-api ./backend/app
 
-# Build Crawler Docker image
+# Build Crawler
 build-crawler:
   stage: build
   rules:
@@ -28,7 +28,7 @@ build-crawler:
   script:
     - docker build -t stockpulse-crawler ./backend/crawler
 
-# Build Vue 前端（打包產出 dist）
+# Build Frontend
 build-frontend:
   stage: build
   image: node:18
@@ -39,16 +39,16 @@ build-frontend:
     - npm install
     - npm run build
 
-# 部署 FastAPI + 爬蟲到 EC2
+# Deploy Backend to EC2 Runner
 deploy-backend:
   stage: deploy
+  tags:
+    - ec2 
   needs: [build-fastapi, build-crawler]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
   script:
-    - mkdir -p ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
+    - echo "🎯 使用 EC2 Runner 直接部署"
 
     # 產生 .env 檔案供 FastAPI 使用
     - |
@@ -63,29 +63,18 @@ deploy-backend:
       ACCESS_TOKEN_EXPIRE_MINUTES=$ACCESS_TOKEN_EXPIRE_MINUTES
       EOF
 
-    # 打包並部署到 EC2
-    - tar --exclude="__pycache__" -czf backend.tar.gz backend
-    - scp -o StrictHostKeyChecking=no backend.tar.gz $SSH_USER@$SSH_HOST:~/
-    - |
-      ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << 'EOF'
-        set -e
-        rm -rf backend
-        tar -xzf backend.tar.gz
-        cd backend
+    # 部署 FastAPI
+    - docker stop fastapi-app || true
+    - docker rm fastapi-app || true
+    - docker build -t stockpulse-api ./backend/app
+    - docker run -d --name fastapi-app -p 8000:8000 --env-file ./backend/app/.env stockpulse-api
 
-        # 重新啟動 FastAPI container
-        docker stop fastapi-app || true
-        docker rm fastapi-app || true
-        docker build -t stockpulse-api ./app
-        docker run -d --name fastapi-app -p 8000:8000 stockpulse-api
+    # build Crawler image
+    - docker build -t stockpulse-crawler ./backend/crawler
 
-        # 重新 build Crawler image（不啟動）
-        docker build -t stockpulse-crawler ./crawler
+    - echo "後端部署完成"
 
-        echo "後端部署完成"
-      EOF
-
-# 部署前端 Vue 到 S3 + CloudFront
+# Deploy Frontend to S3
 deploy-frontend:
   stage: deploy
   image: amazon/aws-cli:2.15.33
