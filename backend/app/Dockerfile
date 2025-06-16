@@ -10,7 +10,8 @@ RUN apt-get update && apt-get install -y tzdata && \
 # 工作目錄與檔案
 WORKDIR /app
 COPY . /app
-COPY .env /app/.env
+# 移除 COPY .env（不從 repo 拷貝）
+# COPY .env /app/.env
 
 # 安裝依賴
 RUN pip install --no-cache-dir -r requirements.txt
