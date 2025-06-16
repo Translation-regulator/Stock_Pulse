@@ -49,6 +49,21 @@ deploy-backend:
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
+
+    # 產生 .env 檔案供 FastAPI 使用
+    - |
+      cat <<EOF > ./backend/app/.env
+      DB_HOST=$DB_HOST
+      DB_USER=$DB_USER
+      DB_PASSWORD=$DB_PASSWORD
+      DB_NAME=$DB_NAME
+      FUGLE_API_TOKEN=$FUGLE_API_TOKEN
+      SECRET_KEY=$SECRET_KEY
+      ALGORITHM=$ALGORITHM
+      ACCESS_TOKEN_EXPIRE_MINUTES=$ACCESS_TOKEN_EXPIRE_MINUTES
+      EOF
+
+    # 打包並部署到 EC2
     - tar --exclude="__pycache__" -czf backend.tar.gz backend
     - scp -o StrictHostKeyChecking=no backend.tar.gz $SSH_USER@$SSH_HOST:~/
     - |
@@ -58,11 +73,13 @@ deploy-backend:
         tar -xzf backend.tar.gz
         cd backend
 
+        # 重新啟動 FastAPI container
         docker stop fastapi-app || true
         docker rm fastapi-app || true
         docker build -t stockpulse-api ./app
         docker run -d --name fastapi-app -p 8000:8000 stockpulse-api
 
+        # 重新 build Crawler image（不啟動）
         docker build -t stockpulse-crawler ./crawler
 
         echo "後端部署完成"
