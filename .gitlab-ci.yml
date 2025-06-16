@@ -23,7 +23,6 @@ build-crawler:
   script:
     - docker build -t stockpulse-crawler ./backend/crawler
 
-
 # Build Frontend (Vue)
 build-frontend:
   stage: build
@@ -35,18 +34,18 @@ build-frontend:
     - npm install
     - npm run build
 
-# 🚀 Deploy Backend on EC2
+# Deploy Backend on EC2
 deploy-backend:
   stage: deploy
   tags:
-    - ec2   # 僅讓 EC2 Shell Runner 執行這段
+    - ec2   # 使用 EC2 Runner
   needs: [build-fastapi, build-crawler]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
   script:
-    - echo "使用 EC2 Runner 直接部署"
+    - echo "使用 EC2 Runner 直接部署後端"
 
-    # 產生 FastAPI .env
+    # 產生 FastAPI 用的 .env
     - |
       cat <<EOF > ./backend/app/.env
       DB_HOST=$DB_HOST
@@ -59,27 +58,28 @@ deploy-backend:
       ACCESS_TOKEN_EXPIRE_MINUTES=$ACCESS_TOKEN_EXPIRE_MINUTES
       EOF
 
-    # 直接在 EC2 本機操作 Docker
+    # 重建 FastAPI 容器
     - docker stop fastapi-app || true
     - docker rm fastapi-app || true
     - docker build -t stockpulse-api ./backend/app
     - docker run -d --name fastapi-app -p 8000:8000 --env-file ./backend/app/.env stockpulse-api
 
-    # Crawler image（不啟動）
+    # Crawler image（僅建置不執行）
     - docker build -t stockpulse-crawler ./backend/crawler
 
     - echo "後端部署完成"
 
+# Deploy Frontend to S3 + CloudFront
 deploy-frontend:
   stage: deploy
-  image: amazon/aws-cli:2.15.33
+  image: node:18
   needs: [build-frontend]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
   script:
     - cd frontend
 
-    # ✅ 驗證環境變數是否存在
+    # 驗證環境變數是否存在
     - >
       MISSING_VAR=0; 
       for var in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION AWS_S3_BUCKET AWS_CLOUDFRONT_ID; do
@@ -93,12 +93,15 @@ deploy-frontend:
         exit 1;
       fi
 
-    # ✅ 同步到 S3
+    # 安裝 AWS CLI
+    - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    - unzip awscliv2.zip
+    - sudo ./aws/install
+
+    # 部署到 S3
     - aws s3 sync dist/ s3://$AWS_S3_BUCKET --region $AWS_DEFAULT_REGION --delete
 
-    # ✅ 建立 CloudFront 快取失效
+    # CloudFront 快取失效
     - aws cloudfront create-invalidation --distribution-id $AWS_CLOUDFRONT_ID --paths "/*"
 
-    - echo "✅ 前端部署完成！"
-
-
+    - echo "前端部署完成！"
