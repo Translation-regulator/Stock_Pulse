@@ -88,34 +88,6 @@ build-frontend:
         - frontend/package*.json
         - .gitlab-ci.yml
 
-# 部署前端到 AWS
-deploy-frontend:
-  stage: deploy
-  image: amazon/aws-cli:2.15.33
-  needs: [build-frontend]
-  script:
-    - echo "確認環境變數內容"
-    - echo "S3_BUCKET = $AWS_S3_BUCKET"
-    - echo "REGION    = $AWS_DEFAULT_REGION"
-    - echo "CLOUDFRONT_ID = $AWS_CLOUDFRONT_ID"
-
-    - echo "驗證 AWS 身份"
-    - aws sts get-caller-identity || (echo "AWS 認證失敗" && exit 1)
-
-    - echo "檢查 frontend/dist 是否存在"
-    - ls -al frontend/dist || (echo "dist 不存在" && exit 1)
-
-    - echo "上傳至 S3..."
-    - aws s3 sync frontend/dist/ s3://$AWS_S3_BUCKET --region $AWS_DEFAULT_REGION --delete || (echo "❌ S3 上傳失敗" && exit 1)
-
-    - echo "CloudFront 快取清除..."
-    - aws cloudfront create-invalidation --distribution-id $AWS_CLOUDFRONT_ID --paths "/*" || (echo "❌ CloudFront 清除失敗" && exit 1)
-
-    - echo "部署完成"
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-    
-
 
 
 
