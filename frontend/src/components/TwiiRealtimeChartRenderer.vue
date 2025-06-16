@@ -89,4 +89,5 @@ watch(
   border-radius: 8px;
   background-color: #fff;
 }
+
 </style>
