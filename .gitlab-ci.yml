@@ -92,11 +92,12 @@ deploy-frontend:
         - frontend/**/*
         - .gitlab-ci.yml
   script:
-    # Debug 環境變數是否存在
+    # Debug 用
     - echo "✅ AWS_S3_BUCKET = $AWS_S3_BUCKET"
     - echo "✅ AWS_DEFAULT_REGION = $AWS_DEFAULT_REGION"
+    - ls -al frontend/dist || echo "❌ frontend/dist 不存在"
 
-    # 防呆：檢查變數
+    # 檢查環境變數
     - >
       MISSING_VAR=0;
       for var in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION AWS_S3_BUCKET AWS_CLOUDFRONT_ID; do
@@ -110,11 +111,9 @@ deploy-frontend:
         exit 1;
       fi
 
-    # 檢查是否有 dist 資料夾
-    - ls -al frontend/dist || echo "❌ frontend/dist 不存在"
-
-    # 執行部署
+    # ✅ 正確格式，一行一條指令
     - aws s3 sync frontend/dist/ s3://$AWS_S3_BUCKET --region $AWS_DEFAULT_REGION --delete
     - aws cloudfront create-invalidation --distribution-id $AWS_CLOUDFRONT_ID --paths "/*"
-    - echo "🚀 部署完成"
+    - echo "🚀 前端部署完成"
+
 
