@@ -104,6 +104,7 @@ deploy-frontend:
       changes:
         - frontend/**/*
         - .gitlab-ci.yml
+        
 
 
 
