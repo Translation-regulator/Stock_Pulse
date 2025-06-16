@@ -70,7 +70,6 @@ deploy-backend:
 
     - echo "後端部署完成"
 
-# Deploy Frontend to S3
 deploy-frontend:
   stage: deploy
   image: amazon/aws-cli:2.15.33
@@ -79,5 +78,27 @@ deploy-frontend:
     - if: '$CI_COMMIT_BRANCH == "main"'
   script:
     - cd frontend
-    - aws s3 sync dist/ s3://$AWS_S3_BUCKET --delete
+
+    # ✅ 驗證環境變數是否存在
+    - >
+      MISSING_VAR=0; 
+      for var in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION AWS_S3_BUCKET AWS_CLOUDFRONT_ID; do
+        if [ -z "${!var}" ]; then
+          echo "❌ 環境變數 $var 未設定";
+          MISSING_VAR=1;
+        fi;
+      done;
+      if [ "$MISSING_VAR" -eq 1 ]; then
+        echo "🛑 停止部署，請補齊上方缺少的變數";
+        exit 1;
+      fi
+
+    # ✅ 同步到 S3
+    - aws s3 sync dist/ s3://$AWS_S3_BUCKET --region $AWS_DEFAULT_REGION --delete
+
+    # ✅ 建立 CloudFront 快取失效
     - aws cloudfront create-invalidation --distribution-id $AWS_CLOUDFRONT_ID --paths "/*"
+
+    - echo "✅ 前端部署完成！"
+
+
