@@ -71,6 +71,7 @@ build-frontend:
   stage: build
   image: node:18
   script:
+    - cd frontend
     - npm install
     - npm run build
   artifacts:
