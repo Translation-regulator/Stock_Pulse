@@ -72,36 +72,30 @@ deploy-backend:
 # Deploy Frontend to S3 + CloudFront
 deploy-frontend:
   stage: deploy
-  image: node:18
+  image: amazon/aws-cli:2.15.33
   needs: [build-frontend]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
   script:
-    - cd frontend
-
-    # 驗證環境變數是否存在
+    # 驗證環境變數
     - >
       MISSING_VAR=0; 
       for var in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION AWS_S3_BUCKET AWS_CLOUDFRONT_ID; do
         if [ -z "${!var}" ]; then
-          echo "❌ 環境變數 $var 未設定";
+          echo "環境變數 $var 未設定";
           MISSING_VAR=1;
         fi;
       done;
       if [ "$MISSING_VAR" -eq 1 ]; then
-        echo "🛑 停止部署，請補齊上方缺少的變數";
+        echo "停止部署，請補齊上方缺少的變數";
         exit 1;
       fi
 
-    # 安裝 AWS CLI
-    - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-    - unzip awscliv2.zip
-    - sudo ./aws/install
-
     # 部署到 S3
-    - aws s3 sync dist/ s3://$AWS_S3_BUCKET --region $AWS_DEFAULT_REGION --delete
+    - aws s3 sync frontend/dist/ s3://$AWS_S3_BUCKET --region $AWS_DEFAULT_REGION --delete
 
     # CloudFront 快取失效
     - aws cloudfront create-invalidation --distribution-id $AWS_CLOUDFRONT_ID --paths "/*"
 
     - echo "前端部署完成！"
+
