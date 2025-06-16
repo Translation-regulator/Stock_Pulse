@@ -71,17 +71,20 @@ build-frontend:
   stage: build
   image: node:18
   script:
-    - cd frontend
     - npm install
     - npm run build
   artifacts:
     paths:
-      - frontend/dist
+      - dist
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
-        - frontend/**/*
+        - src/**/*
         - .gitlab-ci.yml
+        - vite.config.js
+        - package*.json
+        - .gitlab-ci.yml
+
 
 # 部署前端到 AWS S3 + CloudFront
 deploy-frontend:
