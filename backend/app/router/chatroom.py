@@ -3,6 +3,7 @@ from app_utils.jwt import decode_token
 from app_utils.db import get_cursor
 from collections import defaultdict
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 import json
 
 router = APIRouter()
@@ -51,7 +52,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str, room: str = "defa
             message_data = {
                 "username": username,
                 "content": content,
-                "time": datetime.now(timezone.utc).isoformat()
+                "time": datetime.now(ZoneInfo("Asia/Taipei")).isoformat()
             }
 
             for conn in list(room_connections[room_id]):
@@ -63,3 +64,4 @@ async def websocket_endpoint(websocket: WebSocket, token: str, room: str = "defa
     except WebSocketDisconnect:
         room_connections[room_id].discard(websocket)
         print(f"[WS] 使用者 {username} 離開房間 {room_id}，剩餘人數：{len(room_connections[room_id])}")
+        

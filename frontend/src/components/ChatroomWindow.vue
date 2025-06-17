@@ -149,13 +149,18 @@ function sendMessage() {
       <div
         v-for="(msg, idx) in messages"
         :key="idx"
-        :class="['chat-message', msg.fromSelf ? 'from-self' : 'from-other']"
+        :class="['chat-wrapper', msg.fromSelf ? 'from-self' : 'from-other']"
       >
-        <div class="chat-meta">
-          <span class="chat-time">{{ msg.time }}</span>
-          <span class="chat-username">{{ msg.username }}</span>
+        <!-- 顯示使用者名稱（只顯示對方） -->
+        <div v-if="!msg.fromSelf" class="chat-username">{{ msg.username }}</div>
+
+        <!-- 訊息氣泡 -->
+        <div class="chat-bubble">
+          {{ msg.content }}
         </div>
-        <div class="chat-content">{{ msg.content }}</div>
+
+        <!-- 時間顯示在泡泡左下角（泡泡外） -->
+        <div class="chat-time">{{ msg.time }}</div>
       </div>
     </div>
 
@@ -167,6 +172,7 @@ function sendMessage() {
     />
   </div>
 </template>
+
 
 <style scoped>
 .chatroom-container {
@@ -210,46 +216,58 @@ function sendMessage() {
   gap: 6px;
 }
 
-.chat-message {
+/* 每則訊息容器 */
+.chat-wrapper {
   display: flex;
   flex-direction: column;
-  padding: 6px 10px;
-  border-radius: 8px;
-  max-width: 80%;
-  word-wrap: break-word;
-  line-height: 1.4;
+  max-width: 70%;
+  margin-bottom: 10px;
 }
 
 .from-self {
   align-self: flex-end;
-  background: #3b82f6;
-  color: white;
   text-align: right;
 }
 
 .from-other {
   align-self: flex-start;
-  background: #2a2a2a;
-  color: white;
+  text-align: left;
 }
 
-.chat-meta {
-  display: flex;
-  justify-content: space-between;
+/* 使用者名稱 */
+.chat-username {
   font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  margin-left: 4px;
   color: #ccc;
-  margin-bottom: 2px;
 }
 
-.chat-meta .chat-time {
-  font-size: 11px;
-  opacity: 0.7;
-}
-
-.chat-content {
+/* 泡泡本體 */
+.chat-bubble {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #3b82f6; /* 自己的藍色 */
+  color: white;
+  font-size: 14px;
   white-space: pre-wrap;
+  word-break: break-word;
 }
 
+.from-other .chat-bubble {
+  background: #2a2a2a; /* 對方的灰色 */
+}
+
+/* 泡泡左下角時間（泡泡外） */
+.chat-time {
+  font-size: 11px;
+  opacity: 0.6;
+  margin-top: 3px;
+  margin-left: 4px;
+  align-self: flex-start;
+}
+
+/* 訊息輸入框 */
 .chat-input {
   width: 100%;
   box-sizing: border-box;
@@ -261,20 +279,22 @@ function sendMessage() {
   color: white;
 }
 
+/* 自訂卷軸樣式 */
 .chatbox::-webkit-scrollbar {
   width: 8px;
 }
 
 .chatbox::-webkit-scrollbar-track {
-  background: #1a1a1a; /* 軌道背景 */
+  background: #1a1a1a;
 }
 
 .chatbox::-webkit-scrollbar-thumb {
-  background: #444; /* 卷軸顏色 */
+  background: #444;
   border-radius: 4px;
 }
 
 .chatbox::-webkit-scrollbar-thumb:hover {
-  background: #666; /* 滑鼠 hover 時的顏色 */
+  background: #666;
 }
+
 </style>

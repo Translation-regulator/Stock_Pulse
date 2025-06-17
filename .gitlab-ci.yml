@@ -14,7 +14,6 @@ build-fastapi:
     - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
         - backend/app/**/*
-
   script:
     - docker build -t stockpulse-api ./backend/app
 
@@ -25,25 +24,22 @@ build-crawler:
     - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
         - backend/crawler/**/*
-
   script:
     - docker build -t stockpulse-crawler ./backend/crawler
 
-# Deploy Backend on EC2
-deploy-backend:
+# Deploy FastAPI
+deploy-fastapi:
   stage: deploy
   tags:
     - ec2
-  needs: [build-fastapi, build-crawler]
+  needs:
+    - build-fastapi
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
-        - backend/**/*
-
+        - backend/app/**/*
   script:
-    - echo "使用 EC2 Runner 直接部署後端"
-
-    # 產生 FastAPI 用的 .env
+    - echo "部署 FastAPI 後端"
     - |
       cat <<EOF > ./backend/app/.env
       DB_HOST=$DB_HOST
@@ -55,18 +51,29 @@ deploy-backend:
       ALGORITHM=$ALGORITHM
       ACCESS_TOKEN_EXPIRE_MINUTES=$ACCESS_TOKEN_EXPIRE_MINUTES
       EOF
-
     - docker stop fastapi-app || true
     - docker rm fastapi-app || true
     - docker build -t stockpulse-api ./backend/app
     - docker run -d --name fastapi-app -p 8000:8000 --env-file ./backend/app/.env stockpulse-api
 
+# Deploy Crawler
+deploy-crawler:
+  stage: deploy
+  tags:
+    - ec2
+  needs:
+    - build-crawler
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - backend/crawler/**/*
+  script:
+    - echo "部署 Crawler"
     - docker build -t stockpulse-crawler ./backend/crawler
 
-    - echo "後端部署完成"
 
 
-# 建置前端
+# 建置前端（Vite + Node）
 build-frontend:
   stage: build
   image: node:18
@@ -74,21 +81,41 @@ build-frontend:
     - cd frontend
     - npm install
     - npm run build
-    - echo "打包結果："
-    - ls -R dist
+    - echo "打包完成，移動 dist"
+    - mv dist ../dist
+    - ls -al ../dist
   artifacts:
     paths:
-      - frontend/dist
-    expire_in: 1 hour  # 保證你能在 GitLab UI 上看到下載按鈕
+      - dist
+    expire_in: 1 hour
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-      changes:
-        - frontend/src/**/*
-        - frontend/vite.config.js
-        - frontend/package*.json
-        - .gitlab-ci.yml
 
+# 部署前端（使用 python:3.11 自行安裝 AWS CLI）
+deploy-frontend:
+  stage: deploy
+  image: python:3.11
+  needs: [build-frontend]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  before_script:
+    - pip install --upgrade pip
+    - pip install awscli
+  script:
+    - echo "驗證 AWS CLI 是否正常"
+    - aws --version
 
+    - echo "驗證 IAM 身分"
+    - aws sts get-caller-identity
+
+    - echo "驗證 dist 路徑"
+    - ls -al dist
+
+    - echo "同步到 S3"
+    - aws s3 sync ./dist s3://$AWS_S3_BUCKET --region $AWS_DEFAULT_REGION --delete
+
+    - echo "清除 CloudFront 快取"
+    - aws cloudfront create-invalidation --distribution-id $AWS_CLOUDFRONT_ID --paths "/*"
 
 
 

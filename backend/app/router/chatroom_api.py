@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from app_utils.db import get_cursor
 from datetime import timezone
+from zoneinfo import ZoneInfo
 
 router = APIRouter()
 
@@ -20,6 +21,6 @@ def get_chat_history(room_id: str, limit: int = 50):
             {
                 "username": row["username"],
                 "content": row["content"],
-                "time": row["created_at"].astimezone(timezone.utc).isoformat()
+                "time": row["created_at"].astimezone(ZoneInfo("Asia/Taipei")).isoformat()
             } for row in rows
         ]))
