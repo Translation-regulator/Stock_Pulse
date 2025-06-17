@@ -2,7 +2,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app_utils.jwt import decode_token
 from app_utils.db import get_cursor
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 
 router = APIRouter()
@@ -51,7 +51,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str, room: str = "defa
             message_data = {
                 "username": username,
                 "content": content,
-                "time": datetime.now().strftime("%H:%M")
+                "time": datetime.now(timezone.utc).isoformat()
             }
 
             for conn in list(room_connections[room_id]):

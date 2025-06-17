@@ -28,6 +28,18 @@ function scrollToBottom() {
   })
 }
 
+// ✅ 格式化 UTC 字串為台灣時區的 HH:mm
+function formatTime(utcString) {
+  if (!utcString || isNaN(Date.parse(utcString))) return 'Invalid'
+  const date = new Date(utcString)
+  return date.toLocaleTimeString('zh-TW', {
+    timeZone: 'Asia/Taipei',
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
 const connectSocket = () => {
   if (connected || !accessToken.value) return
   socket = new WebSocket(`${WS_BASE}/ws/chat?token=${accessToken.value}&room=${props.roomId}`)
@@ -44,9 +56,9 @@ const connectSocket = () => {
         fromSelf: msg.username === username.value,
         username: msg.username,
         content: msg.content,
-        time: msg.time,
+        time: formatTime(msg.time)  // ✅ WebSocket 時間處理
       })
-      scrollToBottom() // ⬅️ 每次新訊息手動捲到底
+      scrollToBottom()
     } catch (e) {
       console.error('無法解析訊息格式：', event.data)
     }
@@ -64,12 +76,15 @@ const connectSocket = () => {
 
 let stopWatcher
 const API_BASE = import.meta.env.VITE_API_BASE
+
 onMounted(async () => {
   try {
     const res = await axios.get(`${API_BASE}/chat/history/${props.roomId}`)
     messages.value = res.data.map(msg => ({
       fromSelf: msg.username === username.value,
-      ...msg
+      username: msg.username,
+      content: msg.content,
+      time: formatTime(msg.time)  // ✅ 歷史訊息時間處理
     }))
     scrollToBottom()
   } catch (e) {
