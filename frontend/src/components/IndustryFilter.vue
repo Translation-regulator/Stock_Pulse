@@ -35,8 +35,8 @@ onMounted(async () => {
 .industry-buttons {
   display: grid;
   grid-template-columns: repeat(4, 1fr); /* 每列 4 個 */
-  gap: 12px;
-  max-width: 900px;  /* 限制區塊寬度以置中效果更好 */
+  gap: 10px;
+  max-width: 900px;  
 }
 
 .industry-btn {
@@ -45,7 +45,7 @@ onMounted(async () => {
   border: none;
   width: 200px;
   height: 40px;
-  font-size: 20px;
+  font-size: 16px;
   border-radius: 8px;
   cursor: pointer;
   display: flex;
