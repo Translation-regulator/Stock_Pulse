@@ -1,19 +1,22 @@
 <template>
-  <div class="industry-buttons">
-    <button
-      v-for="industry in industries"
-      :key="industry"
-      @click="$emit('select', industry)"
-      class="industry-btn"
-    >
-      {{ industry }}
-    </button>
+  <div class="industry-wrapper">
+    <div class="industry-buttons">
+      <button
+        v-for="industry in industries"
+        :key="industry"
+        @click="$emit('select', industry)"
+        class="industry-btn"
+      >
+        {{ industry }}
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import api from '@/api' 
+import api from '@/api'
+
 const industries = ref([])
 
 onMounted(async () => {
@@ -23,26 +26,31 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.industry-buttons {
+.industry-wrapper {
   display: flex;
-  flex-wrap: wrap;
+  justify-content: center;  /* 讓整塊按鈕區塊置中 */
+  width: 100%;
+}
+
+.industry-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 每列 4 個 */
   gap: 12px;
-  justify-content: center;
-  margin-bottom: 1rem;
+  max-width: 900px;  /* 限制區塊寬度以置中效果更好 */
 }
 
 .industry-btn {
   background: #333;
   color: white;
   border: none;
-  width: 200px;             
-  height: 40px;             
-  font-size: 20px;          
+  width: 200px;
+  height: 40px;
+  font-size: 20px;
   border-radius: 8px;
   cursor: pointer;
-  display: flex;            
-  align-items: center;      
-  justify-content: center;  
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: 0.2s;
 }
 
@@ -50,4 +58,3 @@ onMounted(async () => {
   background: #555;
 }
 </style>
-

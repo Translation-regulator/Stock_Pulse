@@ -1,18 +1,19 @@
 <template>
   <div v-if="stocks.length">
     <h4>{{ category }}：共 {{ stocks.length }} 檔</h4>
-    <div class="stock-list">
-      <button
-        v-for="s in pagedStocks"
-        :key="s.stock_id"
-        class="stock-btn"
-        @click="$emit('select', s)"
-      >
-        {{ s.stock_id }} {{ s.stock_name }}
-      </button>
+    <div class="stock-wrapper">
+      <div class="stock-list">
+        <button
+          v-for="s in pagedStocks"
+          :key="s.stock_id"
+          class="stock-btn"
+          @click="$emit('select', s)"
+        >
+          {{ s.stock_id }} {{ s.stock_name }}
+        </button>
+      </div>
     </div>
 
-    <!-- 分頁按鈕 -->
     <div class="pagination-controls">
       <button @click="prevPage" :disabled="page === 1">⬅ 上一頁</button>
       <span>第 {{ page }} 頁 / 共 {{ totalPages }} 頁</span>
@@ -20,6 +21,7 @@
     </div>
   </div>
 </template>
+
 
 
 <script setup>
@@ -69,24 +71,27 @@ h4 {
   text-align: center;
 }
 
-.stock-list {
+.stock-wrapper {
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
+}
+
+.stock-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
-  padding: 0.5rem 0;
+  max-width: 900px;  /* 限制寬度以達成置中 */
 }
 
 .stock-btn {
   background: #333;
   color: white;
   border: none;
-  width: 200px;            
-  height: 40px;            
+  width: 200px;
+  height: 40px;
   font-size: 18px;
   border-radius: 8px;
   cursor: pointer;
-  flex-shrink: 0;          
   display: flex;
   align-items: center;
   justify-content: center;
@@ -119,4 +124,6 @@ h4 {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+
 </style>
