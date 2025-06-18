@@ -78,7 +78,7 @@ h4 {
 
 .stock-list {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 10px;
   max-width: 900px;  /* 限制寬度以達成置中 */
 }
@@ -87,8 +87,8 @@ h4 {
   background: #333;
   color: white;
   border: none;
-  width: 200px;
-  height: 40px;
+  width: 150px;
+  height: 30px;
   font-size: 16px;
   border-radius: 8px;
   cursor: pointer;

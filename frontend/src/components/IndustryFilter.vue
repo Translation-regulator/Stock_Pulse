@@ -34,7 +34,7 @@ onMounted(async () => {
 
 .industry-buttons {
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* 每列 4 個 */
+  grid-template-columns: repeat(5, 1fr); /* 每列 4 個 */
   gap: 10px;
   max-width: 900px;  
 }
@@ -43,8 +43,8 @@ onMounted(async () => {
   background: #333;
   color: white;
   border: none;
-  width: 200px;
-  height: 40px;
+  width: 150px;
+  height: 30px;
   font-size: 16px;
   border-radius: 8px;
   cursor: pointer;
