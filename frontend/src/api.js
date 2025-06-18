@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-// ✅ API base 來自環境變數（開發預設為 localhost）
+// API base 來自環境變數（開發預設為 localhost）
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || 'http://localhost:8000/api',
   headers: {
@@ -8,7 +8,7 @@ const api = axios.create({
   },
 })
 
-// ✅ 自動附加 JWT token
+// 自動附加 JWT token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken')
   if (token) {
@@ -17,7 +17,7 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// ✅ 遇到 401 → 清除登入資訊並導向首頁
+// 遇到 401 → 清除登入資訊並導向首頁
 api.interceptors.response.use(
   (res) => res,
   (err) => {

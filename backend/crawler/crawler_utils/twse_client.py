@@ -37,8 +37,9 @@ def get_twse_listed_companies():
             continue
 
         stock_id, stock_name = stock_info[0], stock_info[1]
-        if not stock_id.isdigit():
-            continue  # 篩掉非數字開頭的項目（如ETF、債券）
+        if not stock_id.isdigit() or len(stock_id) != 4:
+            continue  # 篩掉非四碼普通股（如ETF、債券、特別股）
+
 
         isin_code = cols[1].text.strip()
         listed_date_raw = cols[2].text.strip()
@@ -61,7 +62,7 @@ def get_twse_listed_companies():
             "stock_id": stock_id,
             "stock_name": stock_name,
             "isin_code": isin_code,
-            "security_type": security_type,
+            "listing_type": security_type,
             "industry": industry,
             "listed_date": listed_date,
             "cfi_code": cfi_code

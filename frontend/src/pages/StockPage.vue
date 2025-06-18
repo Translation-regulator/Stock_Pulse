@@ -3,7 +3,9 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import StockChartSwitcher from '../components/StockChartSwitcher.vue'
 import StockSearchInput from '../components/StockSearchInput.vue'
-import SlideChatDrawer from '../components/SlideChatDrawer.vue' 
+import SlideChatDrawer from '../components/SlideChatDrawer.vue'
+import IndustryFilter from '../components/IndustryFilter.vue'
+import StockList from '../components/StockList.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -14,9 +16,11 @@ const notFound = ref(false)
 const loading = ref(false)
 const showChat = ref(false)
 
+const selectedIndustry = ref('')
+const hasSelected = ref(false) // 是否已選定個股（來自分類）
+
 async function fetchStockInfo(query) {
   if (!query) return
-
   loading.value = true
   notFound.value = false
 
@@ -42,12 +46,14 @@ async function fetchStockInfo(query) {
 function handleStockSelect(stock) {
   stockId.value = stock.stock_id
   stockName.value = stock.stock_name
+  hasSelected.value = true // 點了某支股票就隱藏分類
   fetchStockInfo(stock.stock_id)
 }
 
 onMounted(() => {
   const paramId = route.params.stockId
   if (paramId) {
+    hasSelected.value = true
     fetchStockInfo(paramId)
   }
 })
@@ -55,12 +61,19 @@ onMounted(() => {
 
 <template>
   <div class="stock-page">
-    <!-- 左側圖表＋搜尋 -->
     <div class="chart-area">
+      <!-- 搜尋輸入框 -->
       <div class="input-group">
         <StockSearchInput @select="handleStockSelect" />
       </div>
 
+      <!-- 產業分類與股票清單：未選擇股票時才顯示 -->
+      <template v-if="!hasSelected">
+        <IndustryFilter @select="selectedIndustry = $event" />
+        <StockList :category="selectedIndustry" @select="handleStockSelect" />
+      </template>
+
+      <!-- 走勢圖區 -->
       <div v-if="loading">資料載入中...</div>
       <StockChartSwitcher
         v-else-if="stockId && stockName"
@@ -70,7 +83,7 @@ onMounted(() => {
       <p v-else-if="notFound">查無此股票</p>
     </div>
 
-    <!-- 右側聊天室 -->
+    <!-- 聊天室 -->
     <SlideChatDrawer
       v-if="showChat && stockId"
       :isOpen="true"
@@ -79,13 +92,13 @@ onMounted(() => {
       @close="showChat = false"
     />
 
-    <!-- 浮動留言按鈕 -->
+    <!-- 留言按鈕 -->
     <button
       v-if="stockId && !showChat"
       class="chat-toggle-button"
       @click="showChat = true"
     >
-      💬 留言
+      留言
     </button>
   </div>
 </template>
@@ -102,8 +115,7 @@ onMounted(() => {
 
 .chart-area {
   flex: 1;
-  padding: 1rem rem;
-  overflow: hidden;
+  overflow: auto;
   box-sizing: border-box;
 }
 

@@ -17,9 +17,9 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 
-// 👉 接收 props + emit
+// 接收 props + emit
 const props = defineProps({ stockId: String })
-const emit = defineEmits(['update'])  // ⭐ 定義事件
+const emit = defineEmits(['update'])  // 定義事件
 
 const stockName = ref('')
 const price = ref(null)
@@ -35,13 +35,13 @@ const connectWebSocket = () => {
   socket = new WebSocket(`${base}/ws/stock/${props.stockId}`)
 
   socket.onopen = () => {
-    console.log(`✅ WebSocket 已連線: /ws/stock/${props.stockId}`)
+    console.log(`WebSocket 已連線: /ws/stock/${props.stockId}`)
   }
 
   socket.onmessage = (event) => {
     const data = JSON.parse(event.data)
     if (data.error) {
-      console.error('⚠️ 後端錯誤:', data.error)
+      console.error('後端錯誤:', data.error)
       return
     }
 
@@ -66,11 +66,11 @@ const connectWebSocket = () => {
   }
 
   socket.onerror = (err) => {
-    console.error("⚠️ WebSocket 錯誤：", err)
+    console.error("WebSocket 錯誤：", err)
   }
 
   socket.onclose = () => {
-    console.warn("❌ WebSocket 關閉")
+    console.warn("WebSocket 關閉")
   }
 }
 
