@@ -9,7 +9,7 @@ load_dotenv()
 #  初始化連線池（設計合理）
 connection_pool = pooling.MySQLConnectionPool(
     pool_name="mypool",
-    pool_size=30,
+    pool_size=10,
     pool_reset_session=True,
     host=os.getenv("DB_HOST"),
     user=os.getenv("DB_USER"),
