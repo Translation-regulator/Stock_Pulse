@@ -10,7 +10,7 @@ const routes = [
   { path: '/twii', component: TwiiPage },
   { path: '/stock/:stockId?', name: 'StockPage', component: StockPage, props: true },
   { path: '/portfolio', component: PortfolioPage },
-  { path: '/chat', component: ChatLobbyPage } // ✅ 只保留大廳
+  { path: '/chat', component: ChatLobbyPage }
 ]
 
 const router = createRouter({

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import StockChartSwitcher from '../components/StockChartSwitcher.vue'
 import StockSearchInput from '../components/StockSearchInput.vue'
@@ -17,8 +17,9 @@ const loading = ref(false)
 const showChat = ref(false)
 
 const selectedIndustry = ref('')
-const hasSelected = ref(false) // 是否已選定個股（來自分類）
+const hasSelected = ref(false)
 
+// 根據參數載入股票資訊
 async function fetchStockInfo(query) {
   if (!query) return
   loading.value = true
@@ -43,37 +44,59 @@ async function fetchStockInfo(query) {
   }
 }
 
+// 點選某支股票（搜尋或分類）
 function handleStockSelect(stock) {
   stockId.value = stock.stock_id
   stockName.value = stock.stock_name
-  hasSelected.value = true // 點了某支股票就隱藏分類
+  hasSelected.value = true
   fetchStockInfo(stock.stock_id)
 }
 
-onMounted(() => {
-  const paramId = route.params.stockId
-  if (paramId) {
+// 監看路由變化：進入股票 or 回搜尋
+watch(() => route.params.stockId, (newId) => {
+  if (newId) {
     hasSelected.value = true
-    fetchStockInfo(paramId)
+    fetchStockInfo(newId)
+  } else {
+    // 返回搜尋狀態
+    stockId.value = ''
+    stockName.value = ''
+    hasSelected.value = false
+    notFound.value = false
   }
-})
+}, { immediate: true })
 </script>
 
 <template>
   <div class="stock-page">
     <div class="chart-area">
       <!-- 搜尋輸入框 -->
-      <div class="input-group">
-        <StockSearchInput @select="handleStockSelect" />
+      <div class="input-group-wrapper">
+        <!-- 返回搜尋按鈕靠左 -->
+        <div class="back-button-wrapper">
+          <button
+            v-if="hasSelected && stockId"
+            class="back-button"
+            @click="router.push('/stock')"
+          >
+            返回搜尋
+          </button>
+        </div>
+
+        <!-- 輸入框絕對置中 -->
+        <div class="input-absolute-center">
+          <StockSearchInput @select="handleStockSelect" />
+        </div>
       </div>
 
-      <!-- 產業分類與股票清單：未選擇股票時才顯示 -->
+
+      <!-- 搜尋分類列表 -->
       <template v-if="!hasSelected">
         <IndustryFilter @select="selectedIndustry = $event" />
         <StockList :category="selectedIndustry" @select="handleStockSelect" />
       </template>
 
-      <!-- 走勢圖區 -->
+      <!-- 主圖表內容 -->
       <div v-if="loading">資料載入中...</div>
       <StockChartSwitcher
         v-else-if="stockId && stockName"
@@ -92,7 +115,7 @@ onMounted(() => {
       @close="showChat = false"
     />
 
-    <!-- 留言按鈕 -->
+    <!-- 開啟留言按鈕 -->
     <button
       v-if="stockId && !showChat"
       class="chat-toggle-button"
@@ -119,13 +142,50 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
-.input-group {
-  margin-top: 1rem;
-  margin-bottom: 1rem;
+.input-group-wrapper {
+  position: relative;
+  height: 30px; /* 調整這個高度使容器有空間 */
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.back-button-wrapper {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.input-absolute-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+
+.input-center {
+  flex: 1;
   display: flex;
   justify-content: center;
-  gap: 1rem;
 }
+
+.back-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  background-color: #444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.back-button:hover {
+  background-color: #666;
+}
+
+
 
 .chat-toggle-button {
   position: fixed;

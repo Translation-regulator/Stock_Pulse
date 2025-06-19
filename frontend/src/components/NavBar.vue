@@ -59,18 +59,20 @@ onMounted(() => {
 
 <template>
   <nav class="navbar">
-    <RouterLink to="/" class="left">
-      <img :src="logo" alt="StockPulse Logo" class="logo" />
-    </RouterLink>
+    <div class="navbar-left">
+      <RouterLink to="/">
+        <img :src="logo" alt="StockPulse Logo" class="logo" />
+      </RouterLink>
+    </div>
 
-    <div class="center">
+    <div class="navbar-center">
       <RouterLink to="/twii" class="menu">大盤指數</RouterLink>
       <RouterLink to="/stock" class="menu">個股資訊</RouterLink>
       <RouterLink to="/portfolio" class="menu">投資組合</RouterLink>
       <RouterLink to="/chat" class="menu">聊天室</RouterLink>
     </div>
 
-    <div>
+    <div class="navbar-right">
       <div v-if="isLoggedIn" class="user-menu">
         <button class="signinup" @click="showDropdown = !showDropdown">
           歡迎，{{ username }} ▼
@@ -82,6 +84,7 @@ onMounted(() => {
       <button v-else class="signinup" @click="togglePopup">登入/註冊</button>
     </div>
   </nav>
+
 
   <div v-if="showPopup" class="popup-overlay" @click.self="showPopup = false">
     <div class="popup-content">
@@ -107,6 +110,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: relative;
   height: 60px;
   width: 100%;
   background-color: #000;
@@ -114,23 +118,28 @@ onMounted(() => {
   box-sizing: border-box;
   color: white;
   font-family: 'Segoe UI', sans-serif;
-  padding-left: 10%;
-  padding-right: 10%;
+  padding: 0 10%; 
 }
 
-.left .logo {
-  height: 40px;
-  cursor: pointer;
-}
-
-.center {
-  flex: 1;
+.navbar-left,
+.navbar-right {
+  flex: 0 0 auto;
   display: flex;
-  justify-content: center;
+  align-items: center;
+}
+
+.navbar-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
   gap: clamp(1rem, 4vw, 3rem);
   font-size: clamp(16px, 2vw, 26px);
-  width: 100%;
-  max-width: 800px;
+}
+
+.logo {
+  height: 40px;
+  cursor: pointer;
 }
 
 .menu {
@@ -234,4 +243,5 @@ onMounted(() => {
 .dropdown button:hover {
   background-color: #222;
 }
+
 </style>

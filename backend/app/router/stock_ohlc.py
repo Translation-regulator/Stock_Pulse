@@ -5,7 +5,7 @@ import pandas as pd
 
 router = APIRouter()
 
-# ✅ 查詢個股基本資料（前端用於自動完成）
+# 查詢個股基本資料（前端用於自動完成）
 @router.get("/stocks/info/{query}")
 async def get_stock_info(query: str):
     with get_cursor() as cursor:
@@ -22,7 +22,7 @@ async def get_stock_info(query: str):
     return row
 
 
-# ✅ 搜尋個股列表
+# 搜尋個股列表
 @router.get("/stocks/search")
 async def search_stocks(q: str):
     with get_cursor() as cursor:
@@ -32,13 +32,13 @@ async def search_stocks(q: str):
             WHERE stock_id LIKE %s OR stock_name LIKE %s
             ORDER BY stock_id
             LIMIT 10
-        """, (f"%{q}%", f"%{q}%"))
+        """, (f"{q}%", f"{q}%"))  # 改成從頭開始比對
         rows = cursor.fetchall()
 
     return rows
 
 
-# ✅ 通用：取得個股 ohlc + 技術線
+# 通用：取得個股 ohlc + 技術線
 def fetch_stock_ohlc(table: str, stock_id: str):
     with get_cursor() as cursor:
         cursor.execute(f"""
