@@ -76,3 +76,4 @@ if __name__ == "__main__":
     data = get_twse_listed_companies()
     for r in data[:5]:
         print(r)
+

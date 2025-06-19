@@ -33,3 +33,4 @@ def login_user(email: str, password: str):
         return {"error": "登入失敗"}
     token = create_access_token({"sub": user["email"]})
     return {"access_token": token, "token_type": "bearer"}
+
