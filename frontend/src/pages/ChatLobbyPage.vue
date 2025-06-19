@@ -13,9 +13,10 @@ const { isLoggedIn } = useAuth()
 
 const filteredStocks = computed(() => {
   if (!searchQuery.value) return []
+  const q = searchQuery.value.toLowerCase()
   return stockList.value.filter(stock =>
-    stock.stock_id.includes(searchQuery.value) ||
-    stock.stock_name.includes(searchQuery.value)
+    stock.stock_id.toLowerCase().startsWith(q) ||
+    stock.stock_name.toLowerCase().startsWith(q)
   )
 })
 
