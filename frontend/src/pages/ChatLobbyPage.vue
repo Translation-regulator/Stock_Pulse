@@ -11,14 +11,29 @@ const hasSearched = ref(false)
 
 const { isLoggedIn } = useAuth()
 
+// 工具函數：隨機取 20 筆
+function getRandom20(list) {
+  return [...list].sort(() => Math.random() - 0.5).slice(0, 20)
+}
+
 const filteredStocks = computed(() => {
-  if (!searchQuery.value) return []
   const q = searchQuery.value.toLowerCase()
-  return stockList.value.filter(stock =>
+
+  if (!q) {
+    // 無搜尋字串 → 隨機取 20 筆
+    return getRandom20(stockList.value)
+  }
+
+  // 有搜尋字串 → 篩選後取前 20 筆
+  const matched = stockList.value.filter(stock =>
     stock.stock_id.toLowerCase().startsWith(q) ||
     stock.stock_name.toLowerCase().startsWith(q)
   )
+
+  return matched.slice(0, 20)
 })
+
+
 
 onMounted(async () => {
   try {
