@@ -11,26 +11,26 @@ const hasSearched = ref(false)
 
 const { isLoggedIn } = useAuth()
 
-// 工具函數：隨機取 20 筆
+// 工具函數：隨機取 10 筆
 function getRandom15(list) {
-  return [...list].sort(() => Math.random() - 0.5).slice(0, 15)
+  return [...list].sort(() => Math.random() - 0.5).slice(0, 10)
 }
 
 const filteredStocks = computed(() => {
   const q = searchQuery.value.toLowerCase()
 
   if (!q) {
-    // 無搜尋字串 → 隨機取 20 筆
+    // 無搜尋字串 → 隨機取 10 筆
     return getRandom15(stockList.value)
   }
 
-  // 有搜尋字串 → 篩選後取前 20 筆
+  // 有搜尋字串 → 篩選後取前 10 筆
   const matched = stockList.value.filter(stock =>
     stock.stock_id.toLowerCase().startsWith(q) ||
     stock.stock_name.toLowerCase().startsWith(q)
   )
 
-  return matched.slice(0, 15)
+  return matched.slice(0, 10)
 })
 
 
