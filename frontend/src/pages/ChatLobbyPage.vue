@@ -12,8 +12,8 @@ const hasSearched = ref(false)
 const { isLoggedIn } = useAuth()
 
 // 工具函數：隨機取 20 筆
-function getRandom20(list) {
-  return [...list].sort(() => Math.random() - 0.5).slice(0, 20)
+function getRandom15(list) {
+  return [...list].sort(() => Math.random() - 0.5).slice(0, 15)
 }
 
 const filteredStocks = computed(() => {
@@ -21,7 +21,7 @@ const filteredStocks = computed(() => {
 
   if (!q) {
     // 無搜尋字串 → 隨機取 20 筆
-    return getRandom20(stockList.value)
+    return getRandom15(stockList.value)
   }
 
   // 有搜尋字串 → 篩選後取前 20 筆
@@ -30,7 +30,7 @@ const filteredStocks = computed(() => {
     stock.stock_name.toLowerCase().startsWith(q)
   )
 
-  return matched.slice(0, 20)
+  return matched.slice(0, 15)
 })
 
 
