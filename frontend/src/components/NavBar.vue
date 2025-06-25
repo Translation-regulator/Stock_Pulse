@@ -153,7 +153,7 @@ onMounted(() => {
   box-sizing: border-box;
   color: white;
   font-family: 'Segoe UI', sans-serif;
-  padding: 0 10%; 
+  padding: 0 2%; 
 }
 
 .navbar-left,

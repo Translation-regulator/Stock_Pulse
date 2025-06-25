@@ -24,7 +24,7 @@ const showChat = ref(false)
 
     <!-- 浮動留言按鈕 -->
     <button v-if="!showChat" class="chat-toggle-button" @click="showChat = true">
-      💬 留言
+      留言
     </button>
   </div>
 </template>
@@ -35,8 +35,8 @@ const showChat = ref(false)
   height: calc(100vh - 60px);
   background-color: #121212;
   position: relative;
-  padding-left: 10%;
-  padding-right: 10%;
+  padding-left: 2%;
+  padding-right: 2%;
 }
 
 .chart-area {
@@ -46,16 +46,18 @@ const showChat = ref(false)
 
 .chat-toggle-button {
   position: fixed;
-  right: 20px;
-  bottom: 20px;
-  z-index: 999;
-  background-color: #4caf50;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  writing-mode: vertical-rl;
+  background-color: #2e6b30;
   color: white;
   border: none;
-  padding: 0.75rem 1.2rem;
-  border-radius: 999px;
-  font-size: 1rem;
+  border-radius: 8px 0 0 8px;
+  padding: 0.5rem 0.3rem;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  z-index: 999;
+  font-size: 0.9rem;
+  opacity: 0.6;
 }
 </style>

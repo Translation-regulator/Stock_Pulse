@@ -6,10 +6,12 @@ import Footer from '../components/Footer.vue'
 
 <template>
   <div class="home-page">
+    <div class="bg-container">
     <div class="content">
       <HeroSection />
-      <HomepageVideo />
+      <!--<HomepageVideo />-->
     </div>
+  </div>
     <Footer />
   </div>
 </template>
@@ -29,6 +31,17 @@ import Footer from '../components/Footer.vue'
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
+  margin-top: 80px;
+}
+
+.bg-container {
+  background-image: url('@/assets/homepagebackground.png');
+  background-size: cover;         /* 拉滿容器 */
+  background-position: center;    /* 置中 */
+  background-repeat: no-repeat;   /* 不重複 */
+  width: 100vw;
+  height: 100vh;
 }
 </style>
 
