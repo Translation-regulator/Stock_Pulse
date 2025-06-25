@@ -11,6 +11,7 @@ default:
 build-fastapi:
   stage: build
   script:
+    - echo "$CI_JOB_TOKEN" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
     - docker build -t $CI_REGISTRY_IMAGE/stockpulse-api:latest ./backend/app
     - docker push $CI_REGISTRY_IMAGE/stockpulse-api:latest
   rules:
@@ -22,6 +23,7 @@ build-fastapi:
 build-crawler:
   stage: build
   script:
+    - echo "$CI_JOB_TOKEN" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
     - docker build -t $CI_REGISTRY_IMAGE/stockpulse-crawler:latest ./backend/crawler
     - docker push $CI_REGISTRY_IMAGE/stockpulse-crawler:latest
   rules:
@@ -113,7 +115,7 @@ deploy-frontend:
     - pip install --upgrade pip
     - pip install awscli
   script:
-    - echo "🧪 驗證變數"
+    - echo "驗證變數"
     - '[ -z "$AWS_S3_BUCKET" ] && echo "S3 bucket 未設定" && exit 1'
     - '[ -z "$AWS_CLOUDFRONT_ID" ] && echo "CloudFront ID 未設定" && exit 1'
     - '[ -d dist ] || (echo "dist 資料夾不存在" && exit 1)'
