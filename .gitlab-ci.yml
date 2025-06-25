@@ -47,16 +47,7 @@ deploy-fastapi:
     - docker stop fastapi-app || true
     - docker rm fastapi-app || true
     - docker pull $CI_REGISTRY_IMAGE/stockpulse-api:latest
-    - docker run -d --name fastapi-app -p 8000:8000 \
-        -e DB_HOST=$DB_HOST \
-        -e DB_USER=$DB_USER \
-        -e DB_PASSWORD=$DB_PASSWORD \
-        -e DB_NAME=$DB_NAME \
-        -e FUGLE_API_TOKEN=$FUGLE_API_TOKEN \
-        -e SECRET_KEY=$SECRET_KEY \
-        -e ALGORITHM=$ALGORITHM \
-        -e ACCESS_TOKEN_EXPIRE_MINUTES=$ACCESS_TOKEN_EXPIRE_MINUTES \
-        $CI_REGISTRY_IMAGE/stockpulse-api:latest
+    - docker run -d --name fastapi-app -p 8000:8000 -e DB_HOST=$DB_HOST -e DB_USER=$DB_USER -e DB_PASSWORD=$DB_PASSWORD -e DB_NAME=$DB_NAME -e FUGLE_API_TOKEN=$FUGLE_API_TOKEN -e SECRET_KEY=$SECRET_KEY -e ALGORITHM=$ALGORITHM -e ACCESS_TOKEN_EXPIRE_MINUTES=$ACCESS_TOKEN_EXPIRE_MINUTES $CI_REGISTRY_IMAGE/stockpulse-api:latest
   retry:
     max: 2
     when:
