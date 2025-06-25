@@ -210,6 +210,7 @@ onMounted(() => {
 }
 
 .popup-content {
+  position: relative; /* 讓 close-btn 可相對定位 */
   background: #111;
   color: white;
   padding: 2rem;
@@ -281,13 +282,18 @@ onMounted(() => {
 
 .close-btn {
   position: absolute;
-  top: 470px;
-  right: 460px;
+  top: 1rem;
+  right: 1rem;
   background: transparent;
   color: white;
   border: none;
   font-size: 20px;
   cursor: pointer;
 }
+
+.close-btn:hover {
+  color: #f87171;
+}
+
 
 </style>
