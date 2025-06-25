@@ -47,11 +47,13 @@ deploy-fastapi:
 
     # 檢查並釋放 port（避免殘留）
     - |
-      PID=$(lsof -t -i:8000)
+      PID=$(lsof -t -i:8000 || true)
       if [ -n "$PID" ]; then
         echo "8000 port 被佔用，釋放中..."
         docker ps --filter "publish=8000" --format "{{.ID}}" | xargs -r docker stop
         docker ps -a --filter "publish=8000" --format "{{.ID}}" | xargs -r docker rm
+      else
+        echo "8000 port 是空的"
       fi
 
     # 停止與刪除舊 container
@@ -82,6 +84,7 @@ deploy-fastapi:
     when:
       - script_failure
       - runner_system_failure
+
 
 # === Deploy Crawler ===
 deploy-crawler:
