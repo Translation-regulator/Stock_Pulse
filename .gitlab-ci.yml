@@ -7,27 +7,29 @@ default:
   services:
     - docker:dind
 
-# Build FastAPI
+# === Build FastAPI ===
 build-fastapi:
   stage: build
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/stockpulse-api:latest ./backend/app
+    - docker push $CI_REGISTRY_IMAGE/stockpulse-api:latest
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
         - backend/app/**/*
-  script:
-    - docker build -t stockpulse-api ./backend/app
 
-# Build Crawler
+# === Build Crawler ===
 build-crawler:
   stage: build
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/stockpulse-crawler:latest ./backend/crawler
+    - docker push $CI_REGISTRY_IMAGE/stockpulse-crawler:latest
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
         - backend/crawler/**/*
-  script:
-    - docker build -t stockpulse-crawler ./backend/crawler
 
-# Deploy FastAPI
+# === Deploy FastAPI ===
 deploy-fastapi:
   stage: deploy
   tags:
@@ -39,24 +41,27 @@ deploy-fastapi:
       changes:
         - backend/app/**/*
   script:
-    - echo "部署 FastAPI 後端"
-    - |
-      cat <<EOF > ./backend/app/.env
-      DB_HOST=$DB_HOST
-      DB_USER=$DB_USER
-      DB_PASSWORD=$DB_PASSWORD
-      DB_NAME=$DB_NAME
-      FUGLE_API_TOKEN=$FUGLE_API_TOKEN
-      SECRET_KEY=$SECRET_KEY
-      ALGORITHM=$ALGORITHM
-      ACCESS_TOKEN_EXPIRE_MINUTES=$ACCESS_TOKEN_EXPIRE_MINUTES
-      EOF
+    - echo "部署 FastAPI"
     - docker stop fastapi-app || true
     - docker rm fastapi-app || true
-    - docker build -t stockpulse-api ./backend/app
-    - docker run -d --name fastapi-app -p 8000:8000 --env-file ./backend/app/.env stockpulse-api
+    - docker pull $CI_REGISTRY_IMAGE/stockpulse-api:latest
+    - docker run -d --name fastapi-app -p 8000:8000 \
+        -e DB_HOST=$DB_HOST \
+        -e DB_USER=$DB_USER \
+        -e DB_PASSWORD=$DB_PASSWORD \
+        -e DB_NAME=$DB_NAME \
+        -e FUGLE_API_TOKEN=$FUGLE_API_TOKEN \
+        -e SECRET_KEY=$SECRET_KEY \
+        -e ALGORITHM=$ALGORITHM \
+        -e ACCESS_TOKEN_EXPIRE_MINUTES=$ACCESS_TOKEN_EXPIRE_MINUTES \
+        $CI_REGISTRY_IMAGE/stockpulse-api:latest
+  retry:
+    max: 2
+    when:
+      - script_failure
+      - runner_system_failure
 
-# Deploy Crawler
+# === Deploy Crawler ===
 deploy-crawler:
   stage: deploy
   tags:
@@ -69,11 +74,17 @@ deploy-crawler:
         - backend/crawler/**/*
   script:
     - echo "部署 Crawler"
-    - docker build -t stockpulse-crawler ./backend/crawler
+    - docker pull $CI_REGISTRY_IMAGE/stockpulse-crawler:latest
+    - docker stop crawler || true
+    - docker rm crawler || true
+    - docker run -d --name crawler $CI_REGISTRY_IMAGE/stockpulse-crawler:latest
+  retry:
+    max: 2
+    when:
+      - script_failure
+      - runner_system_failure
 
-
-
-# 建置前端（Vite + Node）
+# === Build Frontend ===
 build-frontend:
   stage: build
   image: node:18
@@ -81,7 +92,6 @@ build-frontend:
     - cd frontend
     - npm install
     - npm run build
-    - echo "打包完成，移動 dist"
     - mv dist ../dist
     - ls -al ../dist
   artifacts:
@@ -91,32 +101,34 @@ build-frontend:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
 
-# 部署前端（使用 python:3.11 自行安裝 AWS CLI）
+# === Deploy Frontend to S3 + CloudFront ===
 deploy-frontend:
   stage: deploy
   image: python:3.11
-  needs: [build-frontend]
+  needs:
+    - build-frontend
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
   before_script:
     - pip install --upgrade pip
     - pip install awscli
   script:
-    - echo "驗證 AWS CLI 是否正常"
-    - aws --version
+    - echo "🧪 驗證變數"
+    - '[ -z "$AWS_S3_BUCKET" ] && echo "S3 bucket 未設定" && exit 1'
+    - '[ -z "$AWS_CLOUDFRONT_ID" ] && echo "CloudFront ID 未設定" && exit 1'
+    - '[ -d dist ] || (echo "dist 資料夾不存在" && exit 1)'
 
-    - echo "驗證 IAM 身分"
+    - echo "驗證 AWS CLI"
+    - aws --version
     - aws sts get-caller-identity
 
-    - echo "驗證 dist 路徑"
-    - ls -al dist
-
-    - echo "同步到 S3"
-    - aws s3 sync ./dist s3://$AWS_S3_BUCKET --region $AWS_DEFAULT_REGION --delete
+    - echo "上傳至 S3 並強制刷新"
+    - aws s3 sync ./dist s3://$AWS_S3_BUCKET --region $AWS_DEFAULT_REGION --delete --cache-control "no-cache"
 
     - echo "清除 CloudFront 快取"
     - aws cloudfront create-invalidation --distribution-id $AWS_CLOUDFRONT_ID --paths "/*"
-
-
-
-
+  retry:
+    max: 2
+    when:
+      - script_failure
+      - runner_system_failure
