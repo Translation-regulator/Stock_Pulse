@@ -6,7 +6,7 @@ import pandas as pd
 router = APIRouter()
 
 # 查詢個股基本資料（前端用於自動完成）
-@router.get("/stocks/info/{query}")
+@router.get("/info/{query}")
 async def get_stock_info(query: str):
     with get_cursor() as cursor:
         cursor.execute("""
@@ -23,7 +23,7 @@ async def get_stock_info(query: str):
 
 
 # 搜尋個股列表
-@router.get("/stocks/search")
+@router.get("/search")
 async def search_stocks(q: str):
     with get_cursor() as cursor:
         cursor.execute("""
@@ -96,14 +96,14 @@ def fetch_stock_ohlc(table: str, stock_id: str):
 
 
 # 個股日週月線路由
-@router.get("/stocks/{stock_id}/daily")
+@router.get("/{stock_id}/daily")
 async def get_stock_daily(stock_id: str):
     return fetch_stock_ohlc("stock_daily_price", stock_id)
 
-@router.get("/stocks/{stock_id}/weekly")
+@router.get("/{stock_id}/weekly")
 async def get_stock_weekly(stock_id: str):
     return fetch_stock_ohlc("stock_weekly_price", stock_id)
 
-@router.get("/stocks/{stock_id}/monthly")
+@router.get("/{stock_id}/monthly")
 async def get_stock_monthly(stock_id: str):
     return fetch_stock_ohlc("stock_monthly_price", stock_id)

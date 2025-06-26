@@ -7,7 +7,7 @@ from app_utils.jwt import get_current_user
 
 router = APIRouter()
 
-# ✅ shares 與 buy_price 加預設值
+# shares 與 buy_price 加預設值
 class PortfolioCreate(BaseModel):
     stock_id: str
     stock_name: str
@@ -23,7 +23,7 @@ class PortfolioOut(PortfolioCreate):
     profit: Optional[float] = None
 
 
-@router.post("/api/portfolio", response_model=PortfolioOut)
+@router.post("/", response_model=PortfolioOut)
 def create_portfolio(p: PortfolioCreate, user=Depends(get_current_user)):
     try:
         print("📥 請求內容:", p)
@@ -69,8 +69,8 @@ def create_portfolio(p: PortfolioCreate, user=Depends(get_current_user)):
 
 
 
-# ✅ 查詢所有持股
-@router.get("/api/portfolio/me", response_model=List[PortfolioOut])
+# 查詢所有持股
+@router.get("/me", response_model=List[PortfolioOut])
 def get_user_portfolio(user=Depends(get_current_user)):
     result = []
     with get_cursor() as cursor:
@@ -107,8 +107,8 @@ def get_user_portfolio(user=Depends(get_current_user)):
     return result
 
 
-# ✅ 編輯持股
-@router.put("/api/portfolio/{id}", response_model=PortfolioOut)
+# 編輯持股
+@router.put("/{id}", response_model=PortfolioOut)
 def update_portfolio(id: int, p: PortfolioCreate, user=Depends(get_current_user)):
     with get_cursor() as cursor:
         cursor.execute("""
@@ -129,8 +129,8 @@ def update_portfolio(id: int, p: PortfolioCreate, user=Depends(get_current_user)
     return PortfolioOut(id=id, user_id=user['id'], current_price=current_price, profit=profit, **p.dict())
 
 
-# ✅ 刪除持股
-@router.delete("/api/portfolio/{id}")
+# 刪除持股
+@router.delete("/{id}")
 def delete_portfolio(id: int, user=Depends(get_current_user)):
     with get_cursor() as cursor:
         cursor.execute("DELETE FROM user_portfolio WHERE id = %s AND user_id = %s", (id, user['id']))

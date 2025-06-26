@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query, HTTPException
 from app_utils.db import get_cursor
 
-router = APIRouter(prefix="/api/stocks", tags=["stocks"])
+router = APIRouter()
 
 @router.get("/all")
 def get_all_stocks(q: str = ""):

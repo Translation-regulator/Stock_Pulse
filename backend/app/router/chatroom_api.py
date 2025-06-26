@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 
 router = APIRouter()
 
-@router.get("/chat/history/{room_id}")
+@router.get("/history/{room_id}")
 def get_chat_history(room_id: str, limit: int = 50):
     with get_cursor() as cursor:
         cursor.execute("""

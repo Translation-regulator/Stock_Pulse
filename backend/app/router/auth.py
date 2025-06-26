@@ -2,9 +2,9 @@ from fastapi import APIRouter, HTTPException, Request
 from models.user_model import RegisterForm, LoginForm
 from logic.auth_service import register_user, login_user, verify_password, create_access_token
 from app_utils.jwt import decode_token
-from app_utils.db import get_cursor  # ✅ 用安全版本
+from app_utils.db import get_cursor  
 
-router = APIRouter(prefix="/api/auth", tags=["auth"])
+router = APIRouter()
 
 @router.post("/register")
 def register(form: RegisterForm):
@@ -15,7 +15,7 @@ def register(form: RegisterForm):
 
 @router.post("/login")
 def login(form: LoginForm):
-    with get_cursor() as cursor:  # ✅ 使用 context manager
+    with get_cursor() as cursor:  # 使用 context manager
         cursor.execute("SELECT * FROM users WHERE email = %s", (form.email,))
         user = cursor.fetchone()
 

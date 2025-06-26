@@ -11,8 +11,8 @@ class CommentCreate(BaseModel):
     content: str
     guest_name: Optional[str] = None
 
-# ✅ 發送留言
-@router.post("/comments/{room_id}")
+# 發送留言
+@router.post("/{room_id}")
 async def post_comment(room_id: str, body: CommentCreate, request: Request):
     token = request.headers.get("Authorization", "").replace("Bearer ", "")
     user = decode_token(token) if token else None
@@ -37,7 +37,7 @@ async def post_comment(room_id: str, body: CommentCreate, request: Request):
 
     now = datetime.now()
 
-    # ✅ 自動 commit 並釋放連線
+    # 自動 commit 並釋放連線
     with get_cursor() as cursor:
         cursor.execute("""
             INSERT INTO chat_message (room_id, user_id, guest_name, content, created_at)
@@ -47,8 +47,8 @@ async def post_comment(room_id: str, body: CommentCreate, request: Request):
     return {"message": "留言成功", "created_at": now.isoformat()}
 
 
-# ✅ 取得留言清單
-@router.get("/comments/{room_id}")
+# 取得留言清單
+@router.get("/{room_id}")
 async def get_comments(room_id: str):
     with get_cursor() as cursor:
         cursor.execute("""

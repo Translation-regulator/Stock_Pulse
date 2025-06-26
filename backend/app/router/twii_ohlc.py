@@ -5,7 +5,7 @@ import pandas as pd
 
 router = APIRouter()
 
-# ✅ 通用函式：處理 OHLC + MA + 漲跌點幅
+# 通用函式：處理 OHLC + MA + 漲跌點幅
 def fetch_ohlc(table: str):
     with get_cursor() as cursor:
         cursor.execute(f"""

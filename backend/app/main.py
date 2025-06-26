@@ -1,37 +1,39 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from router import twii_ws, twii_ohlc, stock_ohlc, auth, stock_ws, stock_portfolio, chatroom, chatroom_api, comments, stock_router
+from router import (
+    auth, stock_router, stock_ohlc, twii_ohlc, stock_portfolio,
+    comments, chatroom, chatroom_api, stock_ws, twii_ws
+)
 
-app = FastAPI()
-# "http://stockpulse-frontend-vue.s3-website-ap-northeast-1.amazonaws.com"
-# CORS 設定（給前端 Vue S3 使用）
+app = FastAPI(title="StockPulse API")
+
+# CORS 設定：允許前端站點跨域請求
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://stock-pulse.site",
-        "http://localhost:5173"
+        "http://localhost:5173",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.get("/")
-def read_root():
-    return {"message": "FastAPI backend is running"}
-
-# 路由掛載
+# API 路由區塊（有 prefix & tag）
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(stock_router.router, prefix="/api/stocks", tags=["industry"])
+app.include_router(stock_ohlc.router, prefix="/api/stocks", tags=["stocks_ohlc"])
 app.include_router(twii_ohlc.router, prefix="/api/twii", tags=["twii_ohlc"])
-app.include_router(twii_ws.router, prefix="/ws", tags=["websocket"])
-app.include_router(stock_ohlc.router, prefix="/api")
-app.include_router(auth.router)
-app.include_router(stock_ws.router, prefix="/ws", tags=["stock_ws"])
-app.include_router(stock_portfolio.router)
-app.include_router(chatroom_api.router, prefix="/api", tags=["chatroom_api"])
+app.include_router(stock_portfolio.router, prefix="/api/portfolio", tags=["portfolio"])
+app.include_router(comments.router, prefix="/api/comments", tags=["comments"])
+app.include_router(chatroom_api.router, prefix="/api/chat", tags=["chatroom"])
+
+# WebSocket
 app.include_router(chatroom.router, tags=["chatroom_ws"])
-app.include_router(comments.router, prefix="/api", tags=["comments"])
-app.include_router(stock_router.router)
-# 加上主程式跑法
+app.include_router(twii_ws.router, prefix="/ws", tags=["twii_ws"])
+app.include_router(stock_ws.router, prefix="/ws", tags=["stock_ws"])
+
+# 執行主程式
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000)
