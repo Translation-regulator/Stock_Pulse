@@ -7,7 +7,7 @@ default:
   services:
     - docker:dind
 
-# === Build FastAPI ===
+# ========== Build FastAPI ==========
 build-fastapi:
   stage: build
   script:
@@ -15,37 +15,23 @@ build-fastapi:
     - docker build -t $CI_REGISTRY_IMAGE/stockpulse-api:latest ./backend/app
     - docker push $CI_REGISTRY_IMAGE/stockpulse-api:latest
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-      changes:
+    - changes:
         - backend/app/**/*
+        - .gitlab-ci.yml
 
-# === Build Crawler ===
-build-crawler:
-  stage: build
-  script:
-    - echo "$CI_JOB_TOKEN" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
-    - docker build -t $CI_REGISTRY_IMAGE/stockpulse-crawler:latest ./backend/crawler
-    - docker push $CI_REGISTRY_IMAGE/stockpulse-crawler:latest
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-      changes:
-        - backend/crawler/**/*
-
-# === Deploy FastAPI ===
+# ========== Deploy FastAPI ==========
 deploy-fastapi:
   stage: deploy
   tags:
     - ec2
-  needs:
+  dependencies:
     - build-fastapi
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-      changes:
+    - changes:
         - backend/app/**/*
+        - .gitlab-ci.yml
   script:
     - echo "部署 FastAPI"
-
-    # 檢查並釋放 port（避免殘留）
     - |
       PID=$(lsof -t -i:8000 || true)
       if [ -n "$PID" ]; then
@@ -55,18 +41,10 @@ deploy-fastapi:
       else
         echo "8000 port 是空的"
       fi
-
-    # 停止與刪除舊 container
     - docker stop fastapi-app || true
     - docker rm fastapi-app || true
-
-    # 刪除舊 image 避免堆積
     - docker rmi $CI_REGISTRY_IMAGE/stockpulse-api:latest || true
-
-    # 拉最新 image
     - docker pull $CI_REGISTRY_IMAGE/stockpulse-api:latest
-
-    # 執行新 container
     - >
       docker run -d --name fastapi-app -p 8000:8000
       -e DB_HOST=$DB_HOST
@@ -78,25 +56,33 @@ deploy-fastapi:
       -e ALGORITHM=$ALGORITHM
       -e ACCESS_TOKEN_EXPIRE_MINUTES=$ACCESS_TOKEN_EXPIRE_MINUTES
       $CI_REGISTRY_IMAGE/stockpulse-api:latest
-
   retry:
     max: 2
-    when:
-      - script_failure
-      - runner_system_failure
+    when: [script_failure, runner_system_failure]
 
+# ========== Build Crawler ==========
+build-crawler:
+  stage: build
+  script:
+    - echo "$CI_JOB_TOKEN" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+    - docker build -t $CI_REGISTRY_IMAGE/stockpulse-crawler:latest ./backend/crawler
+    - docker push $CI_REGISTRY_IMAGE/stockpulse-crawler:latest
+  rules:
+    - changes:
+        - backend/crawler/**/*
+        - .gitlab-ci.yml
 
-# === Deploy Crawler ===
+# ========== Deploy Crawler ==========
 deploy-crawler:
   stage: deploy
   tags:
     - ec2
-  needs:
+  dependencies:
     - build-crawler
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-      changes:
+    - changes:
         - backend/crawler/**/*
+        - .gitlab-ci.yml
   script:
     - echo "部署 Crawler"
     - docker stop crawler || true
@@ -106,11 +92,9 @@ deploy-crawler:
     - docker run -d --name crawler $CI_REGISTRY_IMAGE/stockpulse-crawler:latest
   retry:
     max: 2
-    when:
-      - script_failure
-      - runner_system_failure
+    when: [script_failure, runner_system_failure]
 
-# === Build Frontend ===
+# ========== Build Frontend ==========
 build-frontend:
   stage: build
   image: node:18
@@ -121,30 +105,32 @@ build-frontend:
     - mv dist ../dist
     - ls -al ../dist
   artifacts:
-    paths:
-      - dist
+    paths: [dist]
     expire_in: 1 hour
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - changes:
+        - frontend/**/*
+        - .gitlab-ci.yml
 
-# === Deploy Frontend to S3 + CloudFront ===
+# ========== Deploy Frontend ==========
 deploy-frontend:
   stage: deploy
   image: python:3.11
-  needs:
+  dependencies:
     - build-frontend
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - changes:
+        - frontend/**/*
+        - .gitlab-ci.yml
   before_script:
     - pip install --upgrade pip
     - pip install awscli
   script:
-    - echo "🧪 驗證變數"
+    - echo "驗證變數"
     - '[ -z "$AWS_S3_BUCKET" ] && echo "S3 bucket 未設定" && exit 1'
     - '[ -z "$AWS_CLOUDFRONT_ID" ] && echo "CloudFront ID 未設定" && exit 1'
     - '[ -d dist ] || (echo "dist 資料夾不存在" && exit 1)'
 
-    - echo "驗證 AWS CLI"
     - aws --version
     - aws sts get-caller-identity
 
@@ -153,9 +139,6 @@ deploy-frontend:
 
     - echo "清除 CloudFront 快取"
     - aws cloudfront create-invalidation --distribution-id $AWS_CLOUDFRONT_ID --paths "/*"
-
   retry:
     max: 2
-    when:
-      - script_failure
-      - runner_system_failure
+    when: [script_failure, runner_system_failure]
