@@ -43,5 +43,12 @@ import Footer from '../components/Footer.vue'
   width: 100vw;
   height: 100vh;
 }
+
+@media (max-width: 768px) {
+  .bg-container {
+    background-size: contain;
+    background-color: #000; /* 補上背景色避免空白太突兀 */
+  }
+}
 </style>
 

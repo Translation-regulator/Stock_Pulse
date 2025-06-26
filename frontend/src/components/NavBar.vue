@@ -5,6 +5,7 @@ import { RouterLink } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import api from '@/api'
 import Toast from '@/components/Toast.vue'
+import burgerIcon from '@/assets/burger_menu.png'
 
 const { accessToken, username, isLoggedIn, login, logout } = useAuth()
 
@@ -89,6 +90,11 @@ onMounted(() => {
     isLoginMode.value = true
   })
 })
+
+const showMobileMenu = ref(false)
+const toggleMobileMenu = () => {
+  showMobileMenu.value = !showMobileMenu.value
+}
 </script>
 
 <template>
@@ -99,17 +105,25 @@ onMounted(() => {
       </RouterLink>
     </div>
 
-    <div class="navbar-center">
+    <!-- 中間選單：大螢幕用 -->
+    <div class="navbar-center desktop-menu">
       <RouterLink to="/twii" class="menu">大盤指數</RouterLink>
       <RouterLink to="/stock" class="menu">個股資訊</RouterLink>
       <RouterLink to="/portfolio" class="menu">投資組合</RouterLink>
       <RouterLink to="/chat" class="menu">聊天室</RouterLink>
     </div>
 
+    <!-- 中間選單：小螢幕用 -->
+    <div class="navbar-center mobile-menu-button">
+      <button class="hamburger" @click="toggleMobileMenu">
+        <img :src="burgerIcon" alt="menu" />
+      </button>
+    </div>
+
     <div class="navbar-right">
       <div v-if="isLoggedIn" class="user-menu">
         <button class="signinup" @click="showDropdown = !showDropdown">
-          歡迎，{{ username }} ▼
+          {{ username }}
         </button>
         <div v-if="showDropdown" class="dropdown">
           <button @click="handleLogout">登出</button>
@@ -138,6 +152,17 @@ onMounted(() => {
   </div>
 
   <Toast :message="toastMsg" :type="toastType" />
+
+  <div v-if="showMobileMenu" class="mobile-menu-overlay" @click.self="showMobileMenu = false">
+    <div class="mobile-menu">
+      <RouterLink to="/twii" @click="showMobileMenu = false">大盤指數</RouterLink>
+      <RouterLink to="/stock" @click="showMobileMenu = false">個股資訊</RouterLink>
+      <RouterLink to="/portfolio" @click="showMobileMenu = false">投資組合</RouterLink>
+      <RouterLink to="/chat" @click="showMobileMenu = false">聊天室</RouterLink>
+      <button v-if="isLoggedIn" @click="handleLogout">登出</button>
+      <button v-else @click="togglePopup">登入 / 註冊</button>
+    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -163,13 +188,22 @@ onMounted(() => {
   align-items: center;
 }
 
-.navbar-center {
+/* 桌機選單（大螢幕用） */
+.desktop-menu {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   gap: clamp(1rem, 4vw, 3rem);
   font-size: clamp(16px, 2vw, 26px);
+}
+
+/* 手機漢堡按鈕（小螢幕用） */
+.mobile-menu-button {
+  display: none;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .logo {
@@ -180,6 +214,18 @@ onMounted(() => {
 .menu {
   color: white;
   text-decoration: none;
+  padding: clamp(0.3rem, 0.8vw, 0.5rem) clamp(0.6rem, 1.5vw, 1rem);
+  border: 1px solid #333;
+  border-radius: 12px;
+  background: transparent;
+  font-size: clamp(16px, 2vw, 20px);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.menu:hover {
+  background: #1f2937;
+  color: #60a5fa;
 }
 
 .menu.router-link-exact-active {
@@ -189,11 +235,11 @@ onMounted(() => {
 .signinup {
   background: linear-gradient(90deg, #1f6feb, #a030f9);
   color: white;
-  padding: 0.4rem 1rem;
+  padding: clamp(0.3rem, 1vw, 0.6rem) clamp(0.8rem, 2vw, 1.2rem);
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  font-size: 20px;
+  font-size: clamp(16px, 2vw, 20px);
 }
 
 .popup-overlay {
@@ -210,7 +256,7 @@ onMounted(() => {
 }
 
 .popup-content {
-  position: relative; /* 讓 close-btn 可相對定位 */
+  position: relative;
   background: #111;
   color: white;
   padding: 2rem;
@@ -295,5 +341,84 @@ onMounted(() => {
   color: #f87171;
 }
 
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.3rem;
+}
 
+.hamburger img {
+  height: 28px;
+  width: 28px;
+}
+
+/* 小螢幕：隱藏主選單、顯示漢堡按鈕 */
+@media (max-width: 768px) {
+  .desktop-menu {
+    display: none;
+  }
+
+  .mobile-menu-button {
+    display: flex;
+    justify-content: center;
+    flex: 1;
+  }
+
+  .hamburger {
+    display: block;
+  }
+}
+
+.mobile-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.mobile-menu {
+  background-color: #111;
+  width: 100%;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  color: white;
+
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0%);
+  }
+}
+
+
+.mobile-menu a,
+.mobile-menu button {
+  text-align: center;
+  color: white;
+  background: none;
+  border: none;
+  font-size: 26px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.mobile-menu a:hover,
+.mobile-menu button:hover {
+  color: #60a5fa;
+}
 </style>

@@ -25,7 +25,7 @@ const handleSelect = (item) => {
   text-align: center;
 }
 .title {
-  font-size: clamp(2rem, 5vw, 4rem);
+  font-size: 4rem;
   font-weight: bold;
   background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet, red);
   background-size: 300% auto;
