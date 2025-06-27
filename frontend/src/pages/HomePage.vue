@@ -32,7 +32,8 @@ import Footer from '../components/Footer.vue'
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  margin-top: 80px;
+  margin-top: 20px;
+
 }
 
 .bg-container {

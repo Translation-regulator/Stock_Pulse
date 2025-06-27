@@ -48,15 +48,15 @@ const handleSelect = (item) => {
 
 .subtitle {
   font-size: 2rem;
-  margin-top: 0.5rem;
+  box-sizing: border-box;
+  margin: 0;
   color: #ccc;
 }
 
 .input-group {
-  margin-top: 2rem;
+  margin-top: 20px;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1rem;
 }
 </style>
