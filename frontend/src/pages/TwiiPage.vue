@@ -1,63 +1,70 @@
-<script setup>
-import { ref } from 'vue'
-import TwiiChartSwitcher from '../components/TwiiChartSwitcher.vue'
-import SlideChatDrawer from '../components/SlideChatDrawer.vue'
-
-const showChat = ref(false)
-</script>
-
 <template>
   <div class="twii-page">
-    <!-- 左側圖表區 -->
-    <div class="chart-area">
-      <TwiiChartSwitcher />
+    <div class="chart-area" :class="{ 'half-height': showChat }">
+      <TwiiChartSwitcher @open-chat="showChat = true" />
     </div>
 
-    <!-- 右側聊天室區（可選擇是否顯示） -->
     <SlideChatDrawer
       v-if="showChat"
       :isOpen="true"
       roomId="twii"
       roomName="台灣加權指數"
       @close="showChat = false"
+      class="chat-section"
     />
-
-    <!-- 浮動留言按鈕 -->
-    <button v-if="!showChat" class="chat-toggle-button" @click="showChat = true">
-      留言
-    </button>
   </div>
 </template>
+
+<script setup>
+import { ref } from 'vue'
+import TwiiChartSwitcher from '../components/TwiiChartSwitcher.vue'   // ✅ 正確引用
+import SlideChatDrawer from '../components/SlideChatDrawer.vue'
+
+const showChat = ref(false)
+</script>
 
 <style scoped>
 .twii-page {
   display: flex;
   height: calc(100vh - 60px);
   background-color: #121212;
+  padding: 0 2%;
   position: relative;
-  padding-left: 2%;
-  padding-right: 2%;
 }
 
 .chart-area {
   flex: 1;
   overflow: hidden;
+  transition: height 0.3s ease;
 }
 
-.chat-toggle-button {
-  position: fixed;
-  top: 50%;
-  right: 0;
-  transform: translateY(-50%);
-  writing-mode: vertical-rl;
-  background-color: #2e6b30;
-  color: white;
-  border: none;
-  border-radius: 8px 0 0 8px;
-  padding: 0.5rem 0.3rem;
-  cursor: pointer;
-  z-index: 999;
-  font-size: 0.9rem;
-  opacity: 0.6;
+.chat-section {
+  width: 100%;
+  max-width: 400px;
+  height: 100%;
+  transition: height 0.3s ease;
+}
+
+@media (max-width: 756px) {
+  .twii-page {
+    flex-direction: column;
+  }
+
+  .chart-area {
+    flex: none;
+    height: 100%;
+  }
+
+  .chart-area.half-height {
+    height: 50vh;
+  }
+
+  .chat-section {
+    flex: none;
+    height: 50vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
 }
 </style>

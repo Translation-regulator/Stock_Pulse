@@ -48,4 +48,11 @@ onBeforeUnmount(() => {
 .down {
   color: #43a047;
 }
+
+@media (max-width: 400px) {
+  .twii-realtime {
+  font-size: 10px;
+  padding: 0.5rem 1rem;
+}
+}
 </style>

@@ -1,6 +1,11 @@
 <template>
   <div class="chart">
-    <ChartRenderer v-if="data.length" :candles="data" type="index" />
+    <ChartRenderer
+      v-if="data.length"
+      :candles="data"
+      type="index"
+      @open-chat="$emit('open-chat')"  
+    />
     <div v-if="loading" class="loading-overlay">💸 散財中...</div>
   </div>
 </template>
@@ -10,8 +15,10 @@ import { ref, onMounted } from 'vue'
 import api from '@/api'
 import ChartRenderer from './ChartRenderer.vue'
 
+defineEmits(['open-chat'])  
+
 const data = ref([])
-const loading = ref(true) // 補上 loading 狀態
+const loading = ref(true)
 
 onMounted(async () => {
   try {
@@ -20,10 +27,11 @@ onMounted(async () => {
   } catch (err) {
     console.error('取得大盤資料失敗', err)
   } finally {
-    loading.value = false // 資料抓完就關掉 loading
+    loading.value = false
   }
 })
 </script>
+
 
 <style scoped>
 .loading-overlay {

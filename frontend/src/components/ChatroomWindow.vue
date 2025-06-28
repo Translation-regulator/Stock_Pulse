@@ -28,7 +28,7 @@ function scrollToBottom() {
   })
 }
 
-// ✅ 格式化 UTC 字串為台灣時區的 HH:mm
+// 格式化 UTC 字串為台灣時區的 HH:mm
 function formatTime(utcString) {
   if (!utcString || isNaN(Date.parse(utcString))) return 'Invalid'
   const date = new Date(utcString)
@@ -84,7 +84,7 @@ onMounted(async () => {
       fromSelf: msg.username === username.value,
       username: msg.username,
       content: msg.content,
-      time: formatTime(msg.time)  // ✅ 歷史訊息時間處理
+      time: formatTime(msg.time)  // 歷史訊息時間處理
     }))
     scrollToBottom()
   } catch (e) {

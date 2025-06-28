@@ -60,12 +60,16 @@
 
       <div ref="chartContainer" class="chart"></div>
     </div>
+        <!-- 浮動留言按鈕 -->
+    <button class="chat-toggle-button" @click="$emit('open-chat')">留言</button>
   </div>
 </template>
 
 <script setup>
 import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { createChart, CandlestickSeries, LineSeries, HistogramSeries } from 'lightweight-charts'
+
+defineEmits(['open-chat'])
 
 const props = defineProps({
   candles: { type: Array, required: true },
@@ -249,7 +253,9 @@ onUnmounted(() => {
   height: calc(100vh - 140px);
   display: flex;
   flex-direction: column;
+  position: relative;
 }
+
 .chart-container-outer {
   display: flex;
   flex-direction: column;
@@ -262,6 +268,7 @@ onUnmounted(() => {
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
   overflow: hidden;
 }
+
 .chart {
   flex: 1;
   min-height: 0;
@@ -270,6 +277,7 @@ onUnmounted(() => {
   box-shadow: inset 0 0 0 1px #2c313a;
   position: relative;
 }
+
 .hover-display {
   font-size: 13px;
   color: #e6edf3;
@@ -279,34 +287,70 @@ onUnmounted(() => {
   align-items: flex-start;
   margin-left: 0.2rem;
 }
-.extra-info, .ohlc, .ma-values {
+
+.extra-info,
+.ohlc,
+.ma-values {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
 .hover-display span.up {
   color: #ef5350;
 }
+
 .hover-display span.down {
   color: #26a69a;
 }
+
 .ma-values {
   display: flex;
   gap: 0.5rem;
-  font-size: rem;
+  font-size: 0.9rem;
   user-select: none;
 }
+
 .ma-toggle-label {
   cursor: pointer;
   opacity: 0.6;
   transition: all 0.2s ease;
 }
+
 .ma-toggle-label.active {
   opacity: 1;
   text-decoration: none;
 }
+
 .ma-toggle-label.inactive {
   opacity: 0.3;
   text-decoration: line-through;
 }
+
+.chat-toggle-button {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background-color: #40f907b3;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  z-index: 10;
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+@media (max-width: 756px) {
+  .chat-toggle-button {
+    top: auto;
+    bottom: 12px;
+    right: 12px;
+    border-radius: 999px;
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+  }
+}
 </style>
+
