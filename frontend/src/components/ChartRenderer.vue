@@ -61,7 +61,7 @@
       <div ref="chartContainer" class="chart"></div>
     </div>
         <!-- 浮動留言按鈕 -->
-    <button class="chat-toggle-button" @click="$emit('open-chat')">留言</button>
+    <button v-if="!props.showChat" class="chat-toggle-button" @click="$emit('open-chat')">留言</button>
   </div>
 </template>
 
@@ -73,7 +73,8 @@ defineEmits(['open-chat'])
 
 const props = defineProps({
   candles: { type: Array, required: true },
-  type: { type: String, default: 'stock' }, // 可為 'stock' 或 'index'
+  type: { type: String, default: 'stock' },
+  showChat: { type: Boolean, default: false },
 })
 
 const chartContainer = ref(null)

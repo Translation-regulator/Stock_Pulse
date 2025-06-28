@@ -4,7 +4,8 @@
       v-if="data.length"
       :candles="data"
       type="index"
-      @open-chat="$emit('open-chat')"  
+      :show-chat="showChat"      
+      @open-chat="$emit('open-chat')"
     />
     <div v-if="loading" class="loading-overlay">💸 散財中...</div>
   </div>
@@ -15,7 +16,11 @@ import { ref, onMounted } from 'vue'
 import api from '@/api'
 import ChartRenderer from './ChartRenderer.vue'
 
-defineEmits(['open-chat'])  
+defineEmits(['open-chat'])
+
+const props = defineProps({
+  showChat: { type: Boolean, default: false } 
+})
 
 const data = ref([])
 const loading = ref(true)
@@ -31,7 +36,6 @@ onMounted(async () => {
   }
 })
 </script>
-
 
 <style scoped>
 .loading-overlay {

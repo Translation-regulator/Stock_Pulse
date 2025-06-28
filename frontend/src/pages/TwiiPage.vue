@@ -1,7 +1,10 @@
 <template>
   <div class="twii-page">
     <div class="chart-area" :class="{ 'half-height': showChat }">
-      <TwiiChartSwitcher @open-chat="showChat = true" />
+      <TwiiChartSwitcher
+        :show-chat="showChat"
+        @open-chat="showChat = true"
+      />
     </div>
 
     <SlideChatDrawer

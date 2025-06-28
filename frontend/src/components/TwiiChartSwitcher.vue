@@ -13,13 +13,13 @@
 
     <!-- 圖表顯示 -->
     <div v-show="mode === 'daily'">
-      <TwiiDailyChart @open-chat="emit('open-chat')" />
+      <TwiiDailyChart :show-chat="showChat" @open-chat="emit('open-chat')" />
     </div>
     <div v-show="mode === 'weekly'">
-      <TwiiWeeklyChart @open-chat="emit('open-chat')" />
+      <TwiiWeeklyChart :show-chat="showChat" @open-chat="emit('open-chat')" />
     </div>
     <div v-show="mode === 'monthly'">
-      <TwiiMonthlyChart @open-chat="emit('open-chat')" />
+      <TwiiMonthlyChart :show-chat="showChat" @open-chat="emit('open-chat')" />
     </div>
   </div>
 </template>
@@ -32,7 +32,9 @@ import TwiiMonthlyChart from './TwiiMonthlyChart.vue'
 import TwiiRealtime from './TwiiRealtime.vue'
 
 const emit = defineEmits(['open-chat'])
-
+const props = defineProps({
+  showChat: { type: Boolean, default: false }
+})
 const mode = ref('daily')
 </script>
 
