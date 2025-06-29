@@ -32,9 +32,9 @@
 
     <!-- 分頁控制（桌機版才顯示） -->
     <div class="pagination-controls desktop-only">
-      <button @click="prevPage" :disabled="page === 1">⬅ 上一頁</button>
+      <button @click="prevPage" :disabled="page === 1">上一頁</button>
       <span>第 {{ page }} 頁 / 共 {{ totalPages }} 頁</span>
-      <button @click="nextPage" :disabled="page === totalPages">下一頁 ➡</button>
+      <button @click="nextPage" :disabled="page === totalPages">下一頁</button>
     </div>
   </div>
 </template>
@@ -96,6 +96,7 @@ h4 {
 }
 
 .stock-wrapper {
+  width: 100%;
   display: flex;
   justify-content: center;
 }
@@ -155,7 +156,11 @@ h4 {
 }
 
 .desktop-only {
-  display: block;
+  display: grid;
+}
+
+.pagination-controls {
+  display: flex;
 }
 
 /* 手機 RWD */
