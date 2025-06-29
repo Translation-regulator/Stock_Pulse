@@ -59,15 +59,29 @@ const showChat = ref(false)
   }
 
   .chart-area.half-height {
-    height: 50vh;
+    height: 56vh;
   }
 
   .chat-section {
     flex: none;
-    height: 50vh;
+    width: 100%; 
+    max-width: 100%;            
+    height: 37vh;            
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
+    overflow: hidden;          
+  }
+
+  .chat-section .chat-messages {
+    flex: 1;
+    overflow-y: auto;         
+  }
+
+  .chat-section .chat-input {
+    padding: 0.5rem;
+    border-top: 1px solid #333;
+    background-color: #1e1e1e;
   }
 }
 </style>

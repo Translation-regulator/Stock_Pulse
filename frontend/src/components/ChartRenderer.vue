@@ -1,5 +1,5 @@
 <template>
-  <div class="chart-view-wrapper">
+  <div class="chart-view-wrapper" :class="{ compressed: props.showChat }">
     <div class="chart-container-outer">
       <!-- Hover 資訊 -->
       <div class="hover-display" v-if="hoverData">
@@ -344,6 +344,9 @@ onUnmounted(() => {
 }
 
 @media (max-width: 756px) {
+  .chart-view-wrapper.compressed {
+    height: 48vh;
+  }
   .chat-toggle-button {
     top: auto;
     bottom: 12px;

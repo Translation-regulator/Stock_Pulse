@@ -129,6 +129,7 @@ function formatTime(ts) {
   flex: 1;
   overflow-y: auto;
   padding: 1rem;
+  min-height: 0; 
 }
 
 .chat-message {
@@ -149,6 +150,8 @@ function formatTime(ts) {
   border-top: 1px solid #333;
   display: flex;
   gap: 0.5rem;
+  flex-shrink: 0; 
+  background-color: #1e1e1e;
 }
 
 .chat-input input {
@@ -165,21 +168,53 @@ function formatTime(ts) {
   padding: 0.5rem 1rem;
   border-radius: 4px;
 }
-  .chat-messages::-webkit-scrollbar {
+
+.chat-messages::-webkit-scrollbar {
   width: 8px;
 }
 
 .chat-messages::-webkit-scrollbar-track {
-  background: #2c2c2c; /* 卷軸背景軌道顏色 */
+  background: #2c2c2c;
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-  background-color: #555;       /* 卷軸滑塊顏色 */
+  background-color: #555;
   border-radius: 4px;
-  border: 2px solid #2c2c2c;    /* 加點邊框讓滑塊有空間感 */
+  border: 2px solid #2c2c2c;
 }
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
-  background-color: #888;       /* 滑塊 hover 效果 */
+  background-color: #888;
 }
+
+/* 手機 RWD：滿版寬度、固定高度、不撐爆 */
+@media (max-width: 756px) {
+  .chat-drawer {
+    width: clamp(250px, 90vw, 400px);
+    height: 50vh;
+    margin-left: 0;
+    border-radius: 8px;
+    box-shadow: none;
+  }
+
+  .chat-header,
+  .chat-messages,
+  .chat-input {
+    padding: 0.75rem;
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  .chat-input {
+    flex-shrink: 0;
+    border-top: 1px solid #333;
+    background-color: #1e1e1e;
+  }
+}
+
+
 </style>
