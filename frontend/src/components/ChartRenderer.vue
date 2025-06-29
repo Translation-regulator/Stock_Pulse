@@ -280,7 +280,7 @@ onUnmounted(() => {
 }
 
 .hover-display {
-  font-size: 13px;
+  font-size: clamp(10px, 1.5vw, 20px);
   color: #e6edf3;
   display: flex;
   flex-direction: column;
@@ -308,7 +308,7 @@ onUnmounted(() => {
 .ma-values {
   display: flex;
   gap: 0.5rem;
-  font-size: 0.9rem;
+  font-size: clamp(10px, 1.5vw, 20px);
   user-select: none;
 }
 
