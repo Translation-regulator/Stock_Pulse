@@ -51,7 +51,7 @@ onBeforeUnmount(() => {
 
 @media (max-width: 400px) {
   .twii-realtime {
-  font-size: 10px;
+  font-size: 12px;
   padding: 0.5rem 1rem;
 }
 }

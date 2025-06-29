@@ -66,7 +66,7 @@ const showChat = ref(false)
     flex: none;
     width: 100%; 
     max-width: 100%;            
-    height: 37vh;            
+    height: 37dvh;            
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
