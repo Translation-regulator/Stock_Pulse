@@ -13,7 +13,7 @@
 
     <div v-if="loading" class="loading-overlay">💸 散財中...</div>
     <ChartRenderer v-else-if="ohlc.length" :candles="ohlc" type="stock" />
-    <p v-else>❌ 找不到資料</p>
+    <p v-else>找不到資料</p>
   </div>
 </template>
 

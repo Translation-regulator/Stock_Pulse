@@ -85,7 +85,7 @@ watch(() => route.params.stockId, (newId) => {
 
         <!-- 輸入框絕對置中 -->
         <div class="input-absolute-center">
-          <StockSearchInput @select="handleStockSelect" />
+          <StockSearchInput @select="handleStockSelect" class="wide-input"  />
         </div>
       </div>
 
@@ -134,6 +134,10 @@ watch(() => route.params.stockId, (newId) => {
   color: white;
   padding-left: 2%;
   padding-right: 2%;
+}
+
+.wide-input {
+  width: 200px;
 }
 
 .chart-area {

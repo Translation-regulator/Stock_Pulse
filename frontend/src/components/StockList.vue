@@ -1,7 +1,9 @@
 <template>
   <div v-if="stocks.length">
     <h4>{{ category }}：共 {{ stocks.length }} 檔</h4>
-    <div class="stock-wrapper">
+
+    <!-- 桌機版：按鈕清單 -->
+    <div class="stock-wrapper desktop-only">
       <div class="stock-list">
         <button
           v-for="s in pagedStocks"
@@ -14,15 +16,28 @@
       </div>
     </div>
 
-    <div class="pagination-controls">
+    <!-- 手機版：表單下拉選單 -->
+    <div class="mobile-only mobile-stock-select">
+      <select @change="handleSelect">
+        <option disabled selected>請選擇股票</option>
+        <option
+          v-for="s in stocks"
+          :key="s.stock_id"
+          :value="JSON.stringify(s)"
+        >
+          {{ s.stock_id }} {{ s.stock_name }}
+        </option>
+      </select>
+    </div>
+
+    <!-- 分頁控制（桌機版才顯示） -->
+    <div class="pagination-controls desktop-only">
       <button @click="prevPage" :disabled="page === 1">⬅ 上一頁</button>
       <span>第 {{ page }} 頁 / 共 {{ totalPages }} 頁</span>
       <button @click="nextPage" :disabled="page === totalPages">下一頁 ➡</button>
     </div>
   </div>
 </template>
-
-
 
 <script setup>
 import { ref, watch, computed } from 'vue'
@@ -54,6 +69,16 @@ function prevPage() {
   if (page.value > 1) page.value--
 }
 
+// 用於手機版 select 選擇股票
+function handleSelect(event) {
+  const selected = JSON.parse(event.target.value)
+  if (selected) {
+    emit('select', selected)
+  }
+}
+
+const emit = defineEmits(['select'])
+
 watch(() => props.category, async (newCategory) => {
   if (!newCategory) return
   const res = await api.get('/stocks/industry', {
@@ -62,9 +87,8 @@ watch(() => props.category, async (newCategory) => {
   stocks.value = res.data
   page.value = 1
 })
-
-
 </script>
+
 <style scoped>
 h4 {
   font-size: 20px;
@@ -80,7 +104,7 @@ h4 {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 10px;
-  max-width: 900px;  /* 限制寬度以達成置中 */
+  max-width: 900px;
 }
 
 .stock-btn {
@@ -125,5 +149,38 @@ h4 {
   cursor: not-allowed;
 }
 
+/* 手機版 select 表單 */
+.mobile-only {
+  display: none;
+}
 
+.desktop-only {
+  display: block;
+}
+
+/* 手機 RWD */
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none;
+  }
+
+  .mobile-only {
+    display: block;
+  }
+
+  .mobile-stock-select {
+    width: 100%;
+    margin-top: 1rem;
+    text-align: center;
+  }
+
+  .mobile-stock-select select {
+    width: 80%;
+    padding: 8px;
+    font-size: 16px;
+    border-radius: 6px;
+    background: #222;
+    color: white
+  }
+}
 </style>
