@@ -28,14 +28,7 @@
     <p v-else>找不到資料</p>
   </div>
 
-<!-- 放在外層最底下（ChartRenderer之後） -->
-  <SlideChatDrawer
-    v-if="showChat"
-    :isOpen="true"
-    :roomId="stockId"
-    :roomName="stockName + ' 討論區'"
-    @close="showChat = false"
-  />
+
 </template>
 
 <script setup>
@@ -169,6 +162,11 @@ button.active {
     appearance: none;         
     background-image: none;   
   }
+  
+  .stock-switcher {
+    height: calc(100% - 120px);
+  }
+
 }
 
 </style>

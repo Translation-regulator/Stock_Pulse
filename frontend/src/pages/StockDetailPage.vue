@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import StockChartSwitcher from '../components/StockChartSwitcher.vue'
 import SlideChatDrawer from '../components/SlideChatDrawer.vue'
 import StockSearchInput from '../components/StockSearchInput.vue'
+
 const route = useRoute()
 const router = useRouter()
 
@@ -12,6 +13,10 @@ const stockName = ref('')
 const loading = ref(false)
 const notFound = ref(false)
 const showChat = ref(false)
+
+function handleStockSelect(stockCode) {
+  router.push(`/stock/${stockCode}`)
+}
 
 async function fetchStockInfo(stockCode) {
   loading.value = true
@@ -34,6 +39,7 @@ watch(() => route.params.stockId, (newId) => {
   if (newId) fetchStockInfo(newId)
 }, { immediate: true })
 </script>
+
 
 <template>
   <div class="stock-page">
@@ -95,6 +101,7 @@ watch(() => route.params.stockId, (newId) => {
   display: flex;
   height: 90vh;
   position: relative;
+  transition: all 0.3s ease;
 }
 
 /* 左側圖表區 */
@@ -111,6 +118,7 @@ watch(() => route.params.stockId, (newId) => {
   transition: all 0.3s ease;
 }
 
+/* 返回按鈕 */
 .back-button {
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
@@ -127,9 +135,16 @@ watch(() => route.params.stockId, (newId) => {
   border-color: #555;
 }
 
-
-
+/* 手機版 */
 @media (max-width: 768px) {
+  .stock-page {
+    height: calc(100vh - 60px);
+  }
+
+  .chart-area {
+    margin-top: 0.5rem;
+  }
+
   .top-center-button {
     display: none;
   }
@@ -137,26 +152,32 @@ watch(() => route.params.stockId, (newId) => {
   .main-chart {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 10px); /* 上方 navbar 預留 */
+    height: 100%;
     overflow: hidden;
+    transition: all 0.3s ease;
   }
 
   .chart-panel {
     flex: 1;
-    height: 80%;
+    height: 100%;
+    transition: all 0.3s ease;
     overflow: auto;
   }
 
-  .chat-panel {
-    flex: 1;
+  .with-chat .chart-panel {
     height: 50%;
-    position: relative;
-    z-index: 10;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.4);
+  }
+
+  .chat-panel {
+    height: 0;
+    width: 100%;
+    overflow: hidden;
+    transition: height 0.3s ease;
+  }
+
+  .with-chat .chat-panel {
+    height: 50%;
   }
 }
-
-
 </style>
+

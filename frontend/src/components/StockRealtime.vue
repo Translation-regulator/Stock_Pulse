@@ -1,6 +1,6 @@
 <template>
   <div class="stock-realtime">
-    <span>{{ stockName }}（{{ stockId }}）：</span>
+    <span>股價：</span>
     <strong :class="isUp ? 'up' : 'down'">
       <template v-if="price !== null">
         {{ price.toFixed(2) }}
@@ -94,4 +94,13 @@ onBeforeUnmount(() => { if (socket) socket.close() })
 .down {
   color: #43a047;
 }
+
+@media (max-width: 430px) {
+  .stock-realtime {
+    font-size: 12px;
+  }
+
+  }
+
+
 </style>
