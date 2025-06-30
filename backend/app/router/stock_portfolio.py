@@ -23,7 +23,7 @@ class PortfolioOut(PortfolioCreate):
     profit: Optional[float] = None
 
 
-@router.post("/", response_model=PortfolioOut)
+@router.post("", response_model=PortfolioOut)
 def create_portfolio(p: PortfolioCreate, user=Depends(get_current_user)):
     try:
         print("📥 請求內容:", p)
