@@ -154,16 +154,16 @@ watch(() => route.params.stockId, (newId) => {
 
   
   .chat-panel {
-    height: 60vh;
+    height: 50vh;
     width: 100%;
     overflow: hidden;
-    transition: height 0.3s ease;
+    transition: height 0.5s ease;
     box-sizing: border-box;
     margin-top: 10px;
   }
 
   .main-chart.compressed > .chart-panel {
-    height: 30vh;
+    height: 60vh;
   }
 
   .main-chart.compressed > .chat-panel {
