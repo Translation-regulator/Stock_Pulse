@@ -40,18 +40,17 @@ watch(() => route.params.stockId, (newId) => {
 }, { immediate: true })
 </script>
 
-
 <template>
   <div class="stock-page">
-    <div class="chart-area" :class="{ 'with-chat': showChat }">
+    <div class="chart-area">
       <!-- 返回搜尋 -->
       <div class="top-center-button">
         <button class="back-button" @click="router.push('/stock')">返回搜尋</button>
         <StockSearchInput @select="handleStockSelect" class="wide-input" />
       </div>
 
-      <!-- 圖表 -->
-      <div class="main-chart">
+      <!-- 圖表 + 留言 -->
+      <div class="main-chart" :class="{ compressed: showChat }">
         <div class="chart-panel">
           <StockChartSwitcher
             :stock-id="stockId"
@@ -60,7 +59,6 @@ watch(() => route.params.stockId, (newId) => {
           />
         </div>
 
-        <!-- 留言區 -->
         <SlideChatDrawer
           v-if="showChat"
           class="chat-panel"
@@ -73,7 +71,6 @@ watch(() => route.params.stockId, (newId) => {
     </div>
   </div>
 </template>
-
 
 <style scoped>
 .stock-page {
@@ -104,21 +101,18 @@ watch(() => route.params.stockId, (newId) => {
   transition: all 0.3s ease;
 }
 
-/* 左側圖表區 */
 .chart-panel {
   flex: 1;
   overflow: auto;
   transition: all 0.3s ease;
 }
 
-/* 右側留言板（桌機） */
 .chat-panel {
   width: 400px;
   position: relative;
   transition: all 0.3s ease;
 }
 
-/* 返回按鈕 */
 .back-button {
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
@@ -157,27 +151,22 @@ watch(() => route.params.stockId, (newId) => {
     transition: all 0.3s ease;
   }
 
-  .chart-panel {
-    flex: 1;
-    height: 100%;
-    transition: all 0.3s ease;
-    overflow: auto;
-  }
-
-  .with-chat .chart-panel {
-    height: 50%;
-  }
-
+  
   .chat-panel {
-    height: 0;
+    height: 60vh;
     width: 100%;
     overflow: hidden;
     transition: height 0.3s ease;
+    box-sizing: border-box;
+    margin-top: 10px;
   }
 
-  .with-chat .chat-panel {
-    height: 50%;
+  .main-chart.compressed > .chart-panel {
+    height: 30vh;
+  }
+
+  .main-chart.compressed > .chat-panel {
+    height: 40vh;
   }
 }
 </style>
-

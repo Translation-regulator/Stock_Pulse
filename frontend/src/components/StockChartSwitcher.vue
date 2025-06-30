@@ -3,49 +3,51 @@
     <div class="stock-id-name">{{ stockName }}（{{ stockId }}）</div>
 
     <div class="switch-bar">
-        <div class="switch-buttons desktop-only">
-          <button @click="mode = 'daily'" :class="{ active: mode === 'daily' }">日線</button>
-          <button @click="mode = 'weekly'" :class="{ active: mode === 'weekly' }">週線</button>
-          <button @click="mode = 'monthly'" :class="{ active: mode === 'monthly' }">月線</button>
-        </div>
+      <!-- 桌機版按鈕 -->
+      <div class="switch-buttons desktop-only">
+        <button @click="mode = 'daily'" :class="{ active: mode === 'daily' }">日線</button>
+        <button @click="mode = 'weekly'" :class="{ active: mode === 'weekly' }">週線</button>
+        <button @click="mode = 'monthly'" :class="{ active: mode === 'monthly' }">月線</button>
+      </div>
 
-        <select class="mobile-only mode-select" v-model="mode">
-          <option value="daily">日線</option>
-          <option value="weekly">週線</option>
-          <option value="monthly">月線</option>
-        </select>
+      <!-- 手機版下拉 -->
+      <select class="mobile-only mode-select" v-model="mode">
+        <option value="daily">日線</option>
+        <option value="weekly">週線</option>
+        <option value="monthly">月線</option>
+      </select>
+
       <StockRealtime :stockId="stockId" />
     </div>
 
     <div v-if="loading" class="loading-overlay">💸 散財中...</div>
-        <ChartRenderer
+
+    <ChartRenderer
       v-else-if="ohlc.length"
       :candles="ohlc"
       type="stock"
+      class="chart-renderer"
       @open-chat="emit('open-chat')"
     />
 
     <p v-else>找不到資料</p>
   </div>
-
-
 </template>
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import ChartRenderer from './ChartRenderer.vue'
 import StockRealtime from './StockRealtime.vue'
-import SlideChatDrawer from './SlideChatDrawer.vue'
 import api from '@/api'
 
-const showChat = ref(false)
 const emit = defineEmits(['open-chat'])
+
 const props = defineProps({
   stockId: String,
   stockName: String,
 })
 
-const mode = ref('daily') // 'daily' | 'weekly' | 'monthly'
+const mode = ref('daily')
 const ohlc = ref([])
 const loading = ref(false)
 
@@ -65,7 +67,6 @@ async function fetchData() {
 
 watch(mode, fetchData)
 watch(() => props.stockId, fetchData)
-
 onMounted(fetchData)
 </script>
 
@@ -73,15 +74,19 @@ onMounted(fetchData)
 .stock-switcher {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 170px); /* 依頁面做調整 */
-  padding: 1rem;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem;
   background-color: #0d1117;
   border-radius: 12px;
   border: 1px solid #30363d;
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
-  overflow: hidden; /* 防止內部溢出 */
+  overflow: hidden;
 }
 
+.chart-renderer {
+  height: 100%;
+}
 
 .stock-id-name {
   color: #e6edf3;
@@ -95,7 +100,6 @@ onMounted(fetchData)
   align-items: center;
   margin-bottom: 1.0rem;
 }
-
 
 .switch-buttons {
   display: flex;
@@ -126,16 +130,16 @@ button.active {
   animation: bounce 1s infinite;
 }
 
-/* 簡單跳動動畫 */
 @keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
 }
-/* 桌機顯示，手機隱藏 */
+
+.chart-renderer {
+  flex: 1;
+  height: 100%; 
+}
+
 .desktop-only {
   display: flex;
 }
@@ -143,6 +147,7 @@ button.active {
   display: none;
 }
 
+/* 手機樣式 */
 @media (max-width: 756px) {
   .desktop-only {
     display: none;
@@ -158,15 +163,13 @@ button.active {
     color: white;
     border: 1px solid #444;
     border-radius: 6px;
-    -webkit-appearance: none; 
-    appearance: none;         
-    background-image: none;   
-  }
-  
-  .stock-switcher {
-    height: calc(100% - 120px);
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: none;
   }
 
+  .chart-renderer {
+    height: 75%;
+  }
 }
-
 </style>
