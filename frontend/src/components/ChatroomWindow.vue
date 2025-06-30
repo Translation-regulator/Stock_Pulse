@@ -56,7 +56,7 @@ const connectSocket = () => {
         fromSelf: msg.username === username.value,
         username: msg.username,
         content: msg.content,
-        time: formatTime(msg.time)  // ✅ WebSocket 時間處理
+        time: formatTime(msg.time)  // WebSocket 時間處理
       })
       scrollToBottom()
     } catch (e) {
@@ -102,28 +102,31 @@ onMounted(async () => {
     { immediate: true, flush: 'post' }
   )
 
-  // 拖曳 + 初始位置
   const el = chatroomRef.value
-  el.style.left = `${100 + Math.random() * 200}px`
-  el.style.top = `${100 + Math.random() * 100}px`
 
-  let isDragging = false
-  let offsetX = 0, offsetY = 0
-  el.addEventListener('mousedown', (e) => {
-    isDragging = true
-    offsetX = e.clientX - el.offsetLeft
-    offsetY = e.clientY - el.offsetTop
-    document.body.style.userSelect = 'none'
-  })
-  document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return
-    el.style.left = `${e.clientX - offsetX}px`
-    el.style.top = `${e.clientY - offsetY}px`
-  })
-  document.addEventListener('mouseup', () => {
-    isDragging = false
-    document.body.style.userSelect = ''
-  })
+  // 僅桌機可拖曳
+  if (window.innerWidth >= 756) {
+    el.style.left = `${100 + Math.random() * 200}px`
+    el.style.top = `${100 + Math.random() * 100}px`
+
+    let isDragging = false
+    let offsetX = 0, offsetY = 0
+    el.addEventListener('mousedown', (e) => {
+      isDragging = true
+      offsetX = e.clientX - el.offsetLeft
+      offsetY = e.clientY - el.offsetTop
+      document.body.style.userSelect = 'none'
+    })
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return
+      el.style.left = `${e.clientX - offsetX}px`
+      el.style.top = `${e.clientY - offsetY}px`
+    })
+    document.addEventListener('mouseup', () => {
+      isDragging = false
+      document.body.style.userSelect = ''
+    })
+  }
 })
 
 onBeforeUnmount(() => {
@@ -164,12 +167,15 @@ function sendMessage() {
       </div>
     </div>
 
-    <input
-      v-model="input"
-      @keyup.enter="sendMessage"
-      placeholder="輸入訊息並按 Enter"
-      class="chat-input"
-    />
+      <div class="chat-input-row">
+        <input
+          v-model="input"
+          @keyup.enter="sendMessage"
+          placeholder="輸入訊息並按送出"
+          class="chat-input"
+        />
+        <button class="chat-send mobile-only" @click="sendMessage">送出</button>
+      </div>
   </div>
 </template>
 
@@ -296,5 +302,81 @@ function sendMessage() {
 .chatbox::-webkit-scrollbar-thumb:hover {
   background: #666;
 }
+
+.chat-input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chat-send {
+  padding: 10px 16px;
+  font-size: 14px;
+  border: none;
+  border-radius: 6px;
+  background: #3b82f6;
+  color: white;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+@media (max-width: 755px) {
+  h2 {
+    font-size: 20px;
+  }
+
+  .chatroom-container {
+    position: fixed;
+    width: 95vw;
+    height: 80vh;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%);
+    cursor: default;
+    padding: 1rem;
+    border-radius: 12px;
+    background: #1e1e1e;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chatbox {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid #444;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    background-color: #121212;
+    border-radius: 6px;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .chat-input {
+    font-size: 14px;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    background: #1a1a1a;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 6px;
+  }
+
+    .mobile-only {
+    display: inline-block;
+  }
+
+  .chat-input-row {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .chat-input {
+    flex: 1;
+  }
+}
+
 
 </style>

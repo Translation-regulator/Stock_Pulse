@@ -72,36 +72,47 @@ function closeChatroom(roomId) {
 
 <template>
   <div class="chatroom-layout">
-    <aside class="channel-list">
+    <!-- 桌機版：側邊欄 -->
+    <aside class="channel-list desktop-only">
       <h2>聊天室頻道</h2>
-
-      <div v-if="!isLoggedIn" class="guest-warning">
-        請先登入以使用聊天室功能
-      </div>
-
+      <div v-if="!isLoggedIn" class="guest-warning">請先登入以使用聊天室功能</div>
       <template v-else>
-        <input
-          v-model="searchQuery"
-          @input="hasSearched = true"
-          placeholder="搜尋股票代號或名稱"
-          class="search-input"
-        />
+        <input v-model="searchQuery" @input="hasSearched = true" placeholder="搜尋股票代號或名稱" class="search-input" />
         <ul>
-          <li>
-            <button @click="openChatroom('Twii')">大盤聊天室</button>
-          </li>
+          <li><button @click="openChatroom('Twii')">大盤聊天室</button></li>
           <li v-for="stock in filteredStocks" :key="stock.stock_id">
             <button @click="openChatroom(stock.stock_id)">
               {{ stock.stock_id }}（{{ stock.stock_name }}）聊天室
             </button>
           </li>
         </ul>
-        <div v-if="hasSearched && filteredStocks.length === 0" class="no-result">
-          查無相關股票
-        </div>
+        <div v-if="hasSearched && filteredStocks.length === 0" class="no-result">查無相關股票</div>
       </template>
     </aside>
 
+    <!-- 手機版 -->
+      <div class="mobile-only mobile-panel">
+        <input
+          v-model="searchQuery"
+          @input="hasSearched = true"
+          placeholder="搜尋股票代號或名稱"
+          class="search-input mobile-search"
+        />
+        <ul class="mobile-stock-list">
+          <li><button @click="openChatroom('Twii')">大盤聊天室</button></li>
+          <li v-for="stock in filteredStocks" :key="stock.stock_id">
+            <button @click="openChatroom(stock.stock_id)">
+              {{ stock.stock_id }}（{{ stock.stock_name }}）聊天室
+            </button>
+          </li>
+          <li v-if="hasSearched && filteredStocks.length === 0" class="no-result">
+            查無相關股票
+          </li>
+        </ul>
+      </div>
+
+
+    <!-- 所有聊天室視窗 -->
     <Teleport to="body">
       <ChatroomWindow
         v-for="win in openWindows"
@@ -113,6 +124,7 @@ function closeChatroom(roomId) {
     </Teleport>
   </div>
 </template>
+
 
 <style scoped>
 .chatroom-layout {
@@ -184,4 +196,79 @@ function closeChatroom(roomId) {
   margin-top: 1rem;
   text-align: center;
 }
+@media (max-width: 755px) {
+  .desktop-only {
+    display: none;
+  }
+
+  .mobile-only {
+    display: block;
+    margin: 0 auto;
+  }
+
+  .channel-list {
+    background-color: transparent;
+    border-right: none;
+  }
+
+  .mobile-panel {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .mobile-search {
+    width: 100%;
+    max-width: 360px;
+    padding: 6px 10px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: white;
+    margin-bottom: 1rem;
+  }
+
+  .mobile-stock-list {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+  }
+
+  .mobile-stock-list li {
+    margin: 0.5rem 0;
+  }
+
+  .mobile-stock-list button {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    color: #94a3b8;
+    background-color: #1f2937;
+    border-radius: 6px;
+  }
+
+  .mobile-stock-list button:hover {
+    background-color: #334155;
+    color: white;
+  }
+
+  .no-result {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 13px;
+    margin-top: 0.5rem;
+  }
+}
+
+@media (min-width: 756px) {
+  .mobile-only {
+    display: none;
+  }
+}
+
 </style>
