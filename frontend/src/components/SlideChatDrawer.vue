@@ -195,6 +195,7 @@ function formatTime(ts) {
     margin-left: 0;
     border-radius: 8px;
     box-shadow: none;
+    margin-top: 10px;
   }
 
   .chat-header,

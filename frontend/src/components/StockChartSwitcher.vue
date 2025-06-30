@@ -21,16 +21,14 @@
     </div>
 
     <div v-if="loading" class="loading-overlay">💸 散財中...</div>
-
-    <ChartRenderer
-      v-else-if="ohlc.length"
-      :candles="ohlc"
-      type="stock"
-      class="chart-renderer"
-      @open-chat="emit('open-chat')"
-    />
-
-    <p v-else>找不到資料</p>
+      <ChartRenderer
+        v-if="ohlc.length"
+        :candles="ohlc"
+        type="stock"
+        :show-chat="props.showChat"
+        class="chart-renderer"
+        @open-chat="emit('open-chat')"
+      />
   </div>
 </template>
 
@@ -41,10 +39,12 @@ import StockRealtime from './StockRealtime.vue'
 import api from '@/api'
 
 const emit = defineEmits(['open-chat'])
+const showChatButton = ref(true)
 
 const props = defineProps({
   stockId: String,
   stockName: String,
+  showChat: Boolean
 })
 
 const mode = ref('daily')
@@ -170,6 +170,14 @@ button.active {
 
   .chart-renderer {
     height: 75%;
+  }
+
+  .stock-id-name {
+    margin-bottom: 0;
+  }
+
+  .switch-bar {
+    margin-bottom: 0;
   }
 }
 </style>

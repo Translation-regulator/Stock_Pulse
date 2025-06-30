@@ -55,16 +55,17 @@ watch(() => route.params.stockId, (newId) => {
           <StockChartSwitcher
             :stock-id="stockId"
             :stock-name="stockName"
+            :show-chat="showChat"     
             @open-chat="showChat = true"
           />
         </div>
 
         <SlideChatDrawer
-          v-if="showChat"
+          v-show="showChat"
           class="chat-panel"
           :isOpen="true"
           :roomId="stockId"
-          :roomName="stockName + ' 討論區'"
+          :roomName="stockName"
           @close="showChat = false"
         />
       </div>
