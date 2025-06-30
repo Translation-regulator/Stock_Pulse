@@ -3,26 +3,50 @@
     <div class="stock-id-name">{{ stockName }}（{{ stockId }}）</div>
 
     <div class="switch-bar">
-      <div class="switch-buttons">
-        <button @click="mode = 'daily'" :class="{ active: mode === 'daily' }">日線</button>
-        <button @click="mode = 'weekly'" :class="{ active: mode === 'weekly' }">週線</button>
-        <button @click="mode = 'monthly'" :class="{ active: mode === 'monthly' }">月線</button>
-      </div>
+        <div class="switch-buttons desktop-only">
+          <button @click="mode = 'daily'" :class="{ active: mode === 'daily' }">日線</button>
+          <button @click="mode = 'weekly'" :class="{ active: mode === 'weekly' }">週線</button>
+          <button @click="mode = 'monthly'" :class="{ active: mode === 'monthly' }">月線</button>
+        </div>
+
+        <select class="mobile-only mode-select" v-model="mode">
+          <option value="daily">日線</option>
+          <option value="weekly">週線</option>
+          <option value="monthly">月線</option>
+        </select>
       <StockRealtime :stockId="stockId" />
     </div>
 
     <div v-if="loading" class="loading-overlay">💸 散財中...</div>
-    <ChartRenderer v-else-if="ohlc.length" :candles="ohlc" type="stock" />
+        <ChartRenderer
+      v-else-if="ohlc.length"
+      :candles="ohlc"
+      type="stock"
+      @open-chat="emit('open-chat')"
+    />
+
     <p v-else>找不到資料</p>
   </div>
+
+<!-- 放在外層最底下（ChartRenderer之後） -->
+  <SlideChatDrawer
+    v-if="showChat"
+    :isOpen="true"
+    :roomId="stockId"
+    :roomName="stockName + ' 討論區'"
+    @close="showChat = false"
+  />
 </template>
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import ChartRenderer from './ChartRenderer.vue'
 import StockRealtime from './StockRealtime.vue'
+import SlideChatDrawer from './SlideChatDrawer.vue'
 import api from '@/api'
 
+const showChat = ref(false)
+const emit = defineEmits(['open-chat'])
 const props = defineProps({
   stockId: String,
   stockName: String,
@@ -62,7 +86,6 @@ onMounted(fetchData)
   border-radius: 12px;
   border: 1px solid #30363d;
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
-  margin-top: 0.5rem;
   overflow: hidden; /* 防止內部溢出 */
 }
 
@@ -117,6 +140,34 @@ button.active {
   }
   50% {
     transform: translateY(-5px);
+  }
+}
+/* 桌機顯示，手機隱藏 */
+.desktop-only {
+  display: flex;
+}
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 756px) {
+  .desktop-only {
+    display: none;
+  }
+  .mobile-only {
+    display: block;
+  }
+
+  .mode-select {
+    padding: 0.5rem;
+    font-size: 1rem;
+    background-color: #1f2937;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 6px;
+    -webkit-appearance: none; 
+    appearance: none;         
+    background-image: none;   
   }
 }
 
