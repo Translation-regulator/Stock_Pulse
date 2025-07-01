@@ -35,15 +35,16 @@ def main():
     today = datetime.today().date()
     first_day_this_month = today.replace(day=1)
     last_date_in_db = get_last_date_in_db()
-    last_date = max(last_date_in_db, first_day_this_month)
+
+    start_date = max(last_date_in_db + timedelta(days=1), first_day_this_month)
 
     print("開始執行每日更新作業")
     print(f"當前時間：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("\n===== 大盤指數補抓開始 =====")
     print(f"最後一筆資料日期：{last_date_in_db}")
-    print(f"補抓區間：{last_date + timedelta(days=1)} ～ {today}")
+    print(f"補抓區間：{start_date} ～ {today}")
 
-    workdays = get_workdays(last_date + timedelta(days=1), today, check_db=True)
+    workdays = get_workdays(start_date, today, check_db=True)
     if not workdays:
         print("資料已是最新，無需補抓。")
         return
@@ -70,14 +71,14 @@ def main():
         if data_for_day:
             inserted_dates = insert_twii_data(data_for_day)
             if inserted_dates:
-                print(f"✅ 寫入 {target_day} 成功")
+                print(f"寫入 {target_day} 成功")
                 total += 1
             else:
                 print(f"{target_day} 已存在，略過")
         else:
             print(f"{target_day} 沒有在 API 回傳中，可能休市")
 
-    print(f"\n📈 補抓完成，共新增 {total} 筆 TWII 資料")
+    print(f"\n補抓完成，共新增 {total} 筆 TWII 資料")
 
 if __name__ == "__main__":
     main()
