@@ -109,7 +109,6 @@ StockPulse is deployed on AWS using Docker and CI/CD automation.
 
 ### Real-Time Chatroom
 - Real-time chatroom with instant messaging and searchable stock channel list
-
 ![chatroom](./README_image/chartroom_page.PNG)
 ![chatroom.gif](./README_image/chatroompage.gif)
 
