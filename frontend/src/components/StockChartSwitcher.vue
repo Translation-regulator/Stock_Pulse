@@ -169,7 +169,7 @@ button.active {
   }
 
   .chart-renderer {
-    height: 70%;
+    height: 80%;
   }
 
   .stock-id-name {

@@ -163,11 +163,11 @@ watch(() => route.params.stockId, (newId) => {
   }
 
   .main-chart.compressed > .chart-panel {
-    height: 60vh;
+    height: 70vh;
   }
 
   .main-chart.compressed > .chat-panel {
-    height: 40vh;
+    height: 30vh;
   }
 }
 </style>
