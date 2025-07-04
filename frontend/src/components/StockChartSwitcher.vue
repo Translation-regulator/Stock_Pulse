@@ -74,7 +74,7 @@ onMounted(fetchData)
 .stock-switcher {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: calc(100vh - 150px);
   box-sizing: border-box;
   padding: 0.5rem;
   background-color: #0d1117;
@@ -149,6 +149,9 @@ button.active {
 
 /* 手機樣式 */
 @media (max-width: 756px) {
+  .stock-switcher{
+    height: calc(100vh - 80px);
+  }
   .desktop-only {
     display: none;
   }

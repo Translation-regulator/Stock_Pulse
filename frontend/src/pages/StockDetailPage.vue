@@ -51,14 +51,14 @@ watch(() => route.params.stockId, (newId) => {
 
       <!-- 圖表 + 留言 -->
       <div class="main-chart" :class="{ compressed: showChat }">
-        <div class="chart-panel">
           <StockChartSwitcher
             :stock-id="stockId"
             :stock-name="stockName"
             :show-chat="showChat"     
             @open-chat="showChat = true"
+            class="chart-panel"
           />
-        </div>
+        
 
         <SlideChatDrawer
           v-show="showChat"
@@ -76,7 +76,7 @@ watch(() => route.params.stockId, (newId) => {
 <style scoped>
 .stock-page {
   display: flex;
-  height: 100vh;
+  height: 93vh;
   background-color: #121212;
   color: white;
   padding: 0 2%;
@@ -163,7 +163,7 @@ watch(() => route.params.stockId, (newId) => {
   }
 
   .main-chart.compressed > .chart-panel {
-    height: 70vh;
+    height: 50vh;
   }
 
   .main-chart.compressed > .chat-panel {
