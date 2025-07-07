@@ -1,45 +1,49 @@
 <template>
-  <div class="chart">
-    <ChartRenderer
-      v-if="data.length"
-      :candles="data"
-      type="index"
-      :show-chat="showChat"      
-      @open-chat="$emit('open-chat')"
-    />
-    <div v-if="loading" class="loading-overlay">
+  <ChartRenderer
+    v-if="ohlc.length"
+    :candles="ohlc"
+    type="stock"
+    :show-chat="showChat"
+    @open-chat="emit('open-chat')"
+    class="chart-renderer"
+  />
+     <div v-if="loading" class="loading-overlay">
   <div class="spinner"></div>
   <span style="margin-left: 0.8rem;">散財中...</span>
 </div>
-  </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import api from '@/api'
+import { ref, watch, onMounted } from 'vue'
 import ChartRenderer from './ChartRenderer.vue'
-
-defineEmits(['open-chat'])
+import api from '@/api'
 
 const props = defineProps({
-  showChat: { type: Boolean, default: false } 
+  stockId: String,
+  showChat: Boolean,
 })
 
-const data = ref([])
-const loading = ref(true)
+const emit = defineEmits(['open-chat'])
 
-onMounted(async () => {
+const ohlc = ref([])
+const loading = ref(false)
+
+async function fetchData() {
+  if (!props.stockId) return
+  loading.value = true
   try {
-    const res = await api.get('/twii/daily')
-    data.value = res.data
+    const res = await api.get(`/stocks/${props.stockId}/daily`)
+    ohlc.value = res.data
   } catch (err) {
-    console.error('取得大盤資料失敗', err)
+    ohlc.value = []
+    console.error('日線資料載入失敗', err)
   } finally {
     loading.value = false
   }
-})
-</script>
+}
 
+watch(() => props.stockId, fetchData, { immediate: true })
+</script>
 <style scoped>
 .loading-overlay {
   position: absolute;
@@ -73,12 +77,4 @@ onMounted(async () => {
   }
 }
 
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-}
 </style>

@@ -2,16 +2,13 @@
   <div class="stock-switcher">
     <div class="stock-id-name">{{ stockName }}（{{ stockId }}）</div>
 
-
     <div class="switch-bar">
-      <!-- 桌機版按鈕 -->
       <div class="switch-buttons desktop-only">
         <button @click="mode = 'daily'" :class="{ active: mode === 'daily' }">日線</button>
         <button @click="mode = 'weekly'" :class="{ active: mode === 'weekly' }">週線</button>
         <button @click="mode = 'monthly'" :class="{ active: mode === 'monthly' }">月線</button>
       </div>
 
-      <!-- 手機版下拉 -->
       <select class="mobile-only mode-select" v-model="mode">
         <option value="daily">日線</option>
         <option value="weekly">週線</option>
@@ -21,53 +18,35 @@
       <StockRealtime :stockId="stockId" />
     </div>
 
-    <ChartRenderer
-      v-if="ohlc.length"
-      :candles="ohlc"
-      type="stock"
-      :show-chat="props.showChat"
-      class="chart-renderer"
-      @open-chat="emit('open-chat')"
-    />
+    <!-- 三種圖表 -->
+    <div v-show="mode === 'daily'">
+      <StockDailyChart :stock-id="stockId" :show-chat="showChat" @open-chat="emit('open-chat')" />
+    </div>
+    <div v-show="mode === 'weekly'">
+      <StockWeeklyChart :stock-id="stockId" :show-chat="showChat" @open-chat="emit('open-chat')" />
+    </div>
+    <div v-show="mode === 'monthly'">
+      <StockMonthlyChart :stock-id="stockId" :show-chat="showChat" @open-chat="emit('open-chat')" />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
-import ChartRenderer from './ChartRenderer.vue'
+import { ref } from 'vue'
 import StockRealtime from './StockRealtime.vue'
-import api from '@/api'
+import StockDailyChart from './StockDailyChart.vue'
+import StockWeeklyChart from './StockWeeklyChart.vue'
+import StockMonthlyChart from './StockMonthlyChart.vue'
 
 const emit = defineEmits(['open-chat'])
-const showChatButton = ref(true)
 
 const props = defineProps({
   stockId: String,
   stockName: String,
-  showChat: Boolean
+  showChat: Boolean,
 })
 
 const mode = ref('daily')
-const ohlc = ref([])
-const loading = ref(false)
-
-async function fetchData() {
-  if (!props.stockId) return
-  loading.value = true
-  try {
-    const res = await api.get(`/stocks/${props.stockId}/${mode.value}`)
-    ohlc.value = res.data
-  } catch (err) {
-    console.error('取得個股資料失敗', err)
-    ohlc.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
-watch(mode, fetchData)
-watch(() => props.stockId, fetchData)
-onMounted(fetchData)
 </script>
 
 <style scoped>
@@ -77,10 +56,39 @@ onMounted(fetchData)
   box-sizing: border-box;
   padding: 0.5rem;
   background-color: #0d1117;
-  border-radius: 12px;
-  border: 1px solid #30363d;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
   overflow: hidden;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  background-color: rgba(0, 0, 0, 0.5); /* 半透明遮罩 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #facc15;
+  pointer-events: none;
+  backdrop-filter: blur(1px);
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #facc15;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .chart-renderer {
@@ -92,7 +100,7 @@ onMounted(fetchData)
 .stock-id-name {
   color: #e6edf3;
   margin-bottom: 0.5rem;
-  font-size: 20px;
+  font-size: 30px;
 }
 
 .switch-bar {
