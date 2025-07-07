@@ -80,6 +80,7 @@ watch(() => route.params.stockId, (newId) => {
   flex: 1;
   box-sizing: border-box;
   margin-top: 1rem;
+  margin-bottom: 1rem;
   overflow: hidden;
 }
 

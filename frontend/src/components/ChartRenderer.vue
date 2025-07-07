@@ -241,6 +241,9 @@ onMounted(async () => {
     }
   })
   resizeObserver.observe(chartContainer.value)
+    watch([showMA5, showMA20, showMA60], () => {
+    updateMAVisibility()
+  })
   watch(() => props.candles, (newCandles) => {
   if (!chart || !newCandles?.length) return
 
