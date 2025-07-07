@@ -2,18 +2,19 @@
   <div class="stock-switcher">
     <!-- 桌機版 -->
     <div class="desktop-row desktop-only">
-      <div class="stock-id-name">{{ stockName }}（{{ stockId }}）</div>
-
-      <div class="switch-buttons">
-        <button @click="mode = 'daily'" :class="{ active: mode === 'daily' }">日線</button>
-        <button @click="mode = 'weekly'" :class="{ active: mode === 'weekly' }">週線</button>
-        <button @click="mode = 'monthly'" :class="{ active: mode === 'monthly' }">月線</button>
+      <div class="left-block">
+        <div class="stock-id-name">{{ stockName }}（{{ stockId }}）</div>
+        <div class="switch-buttons">
+          <button @click="mode = 'daily'" :class="{ active: mode === 'daily' }">日線</button>
+          <button @click="mode = 'weekly'" :class="{ active: mode === 'weekly' }">週線</button>
+          <button @click="mode = 'monthly'" :class="{ active: mode === 'monthly' }">月線</button>
+        </div>
       </div>
-
       <div class="stock-realtime">
         <StockRealtime :stockId="stockId" />
       </div>
     </div>
+
 
     <!-- 手機版 -->
     <div class="mobile-row mobile-only">
@@ -72,16 +73,28 @@ const mode = ref('daily')
 /* 桌機版列排法 */
 .desktop-row {
   display: flex;
+  justify-content: space-between; /* 左右分開 */
   align-items: center;
-  justify-content: space-between;
   flex-wrap: wrap;
   margin-bottom: 1rem;
+}
+
+.left-block {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* 控制 stock name 和按鈕間距 */
 }
 
 .switch-buttons {
   display: flex;
   gap: 10px;
 }
+
+.switch-buttons {
+  display: flex;
+  gap: 10px;
+}
+
 
 button {
   padding: 0.5rem 1rem;
@@ -153,13 +166,11 @@ button.active {
     border-radius: 6px;
     color: white;
     white-space: nowrap;
-    font-size: 1rem;  
     box-sizing: border-box;
     text-align: center;
   }
 
   .stock-id-name-mobile {
-    font-size: 0.85rem;
     color: #e6edf3;
   }
 
