@@ -141,9 +141,12 @@ watch(() => route.params.stockId, (newId) => {
   .main-chart {
     display: flex;
     flex-direction: column;
+    flex: none ;
     height: 100%;
     overflow: hidden;
     transition: all 0.3s ease;
+    box-sizing: border-box;
+    margin-bottom: 30px;
   }
 
   
@@ -153,15 +156,15 @@ watch(() => route.params.stockId, (newId) => {
     overflow: hidden;
     transition: height 0.5s ease;
     box-sizing: border-box;
-    margin-top: 10px;
+    flex: none ;
   }
 
   .main-chart.compressed > .chart-panel {
-    height: 50vh;
+    height: 40vh;
   }
 
   .main-chart.compressed > .chat-panel {
-    height: 30vh;
+    height: 35vh;
   }
 }
 </style>

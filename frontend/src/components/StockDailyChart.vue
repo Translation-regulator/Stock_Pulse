@@ -80,4 +80,6 @@ watch(() => props.stockId, fetchData, { immediate: true })
 .chart-renderer {
   height: 82vh;
 }
+
+
 </style>
