@@ -14,8 +14,8 @@ const loading = ref(false)
 const notFound = ref(false)
 const showChat = ref(false)
 
-function handleStockSelect(stockCode) {
-  router.push(`/stock/${stockCode}`)
+function handleStockSelect(stock) {
+  router.push(`/stock/${stock.stock_id}`)
 }
 
 async function fetchStockInfo(stockCode) {
