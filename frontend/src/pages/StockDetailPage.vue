@@ -3,7 +3,6 @@ import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import StockChartSwitcher from '../components/StockChartSwitcher.vue'
 import SlideChatDrawer from '../components/SlideChatDrawer.vue'
-import StockSearchInput from '../components/StockSearchInput.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -99,9 +98,8 @@ watch(() => route.params.stockId, (newId) => {
 }
 
 .chart-panel {
-  flex: 1 1 auto;
-  overflow: auto;
-  transition: all 0.3s ease;
+  flex: auto;
+  overflow: hidden; 
 }
 
 .chat-panel {

@@ -7,7 +7,10 @@
     @open-chat="emit('open-chat')"
     class="chart-renderer"
   />
-  <div v-if="loading" class="loading-overlay">📅 載入月線資料中...</div>
+  <div v-if="loading" class="loading-overlay">
+  <div class="spinner"></div>
+  <span style="margin-left: 0.8rem;">散財中...</span>
+  </div>
 </template>
 
 <script setup>
@@ -41,3 +44,40 @@ async function fetchData() {
 
 watch(() => props.stockId, fetchData, { immediate: true })
 </script>
+<style scoped>
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  background-color: rgba(0, 0, 0, 0.5); /* 半透明遮罩 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #facc15;
+  pointer-events: none;
+  backdrop-filter: blur(1px);
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #facc15;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.chart-renderer {
+  height: 82vh;
+}
+</style>

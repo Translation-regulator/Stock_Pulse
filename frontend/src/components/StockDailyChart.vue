@@ -7,10 +7,10 @@
     @open-chat="emit('open-chat')"
     class="chart-renderer"
   />
-     <div v-if="loading" class="loading-overlay">
+  <div v-if="loading" class="loading-overlay">
   <div class="spinner"></div>
   <span style="margin-left: 0.8rem;">散財中...</span>
-</div>
+  </div>
 </template>
 
 <script setup>
@@ -77,4 +77,7 @@ watch(() => props.stockId, fetchData, { immediate: true })
   }
 }
 
+.chart-renderer {
+  height: 82vh;
+}
 </style>
