@@ -2,6 +2,7 @@
   <div class="stock-switcher">
     <div class="stock-id-name">{{ stockName }}（{{ stockId }}）</div>
 
+
     <div class="switch-bar">
       <!-- 桌機版按鈕 -->
       <div class="switch-buttons desktop-only">
@@ -20,15 +21,14 @@
       <StockRealtime :stockId="stockId" />
     </div>
 
-    <div v-if="loading" class="loading-overlay">💸 散財中...</div>
-      <ChartRenderer
-        v-if="ohlc.length"
-        :candles="ohlc"
-        type="stock"
-        :show-chat="props.showChat"
-        class="chart-renderer"
-        @open-chat="emit('open-chat')"
-      />
+    <ChartRenderer
+      v-if="ohlc.length"
+      :candles="ohlc"
+      type="stock"
+      :show-chat="props.showChat"
+      class="chart-renderer"
+      @open-chat="emit('open-chat')"
+    />
   </div>
 </template>
 
@@ -74,7 +74,6 @@ onMounted(fetchData)
 .stock-switcher {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 150px);
   box-sizing: border-box;
   padding: 0.5rem;
   background-color: #0d1117;
@@ -85,7 +84,9 @@ onMounted(fetchData)
 }
 
 .chart-renderer {
+  flex: 1;
   height: 100%;
+  overflow: auto;
 }
 
 .stock-id-name {

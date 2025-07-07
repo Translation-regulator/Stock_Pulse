@@ -43,12 +43,6 @@ watch(() => route.params.stockId, (newId) => {
 <template>
   <div class="stock-page">
     <div class="chart-area">
-      <!-- 返回搜尋 -->
-      <div class="top-center-button">
-        <button class="back-button" @click="router.push('/stock')">返回搜尋</button>
-        <StockSearchInput @select="handleStockSelect" class="wide-input" />
-      </div>
-
       <!-- 圖表 + 留言 -->
       <div class="main-chart" :class="{ compressed: showChat }">
           <StockChartSwitcher
@@ -76,7 +70,7 @@ watch(() => route.params.stockId, (newId) => {
 <style scoped>
 .stock-page {
   display: flex;
-  height: 93vh;
+  height: 100%;
   background-color: #121212;
   color: white;
   padding: 0 2%;
@@ -97,22 +91,23 @@ watch(() => route.params.stockId, (newId) => {
 
 .main-chart {
   display: flex;
-  height: 90vh;
+  height: calc(100vh - 90px);
   position: relative;
   transition: all 0.3s ease;
+  min-width: 0;
 }
 
 .chart-panel {
-  flex: 1;
+  flex: 1 1 auto;
   overflow: auto;
   transition: all 0.3s ease;
 }
 
 .chat-panel {
-  width: 400px;
-  position: relative;
+  flex: 0 0 400px;
   transition: all 0.3s ease;
 }
+
 
 .back-button {
   padding: 0.5rem 1rem;

@@ -241,7 +241,32 @@ onMounted(async () => {
     }
   })
   resizeObserver.observe(chartContainer.value)
-  watch([showMA5, showMA20, showMA60], updateMAVisibility)
+  watch(() => props.candles, (newCandles) => {
+  if (!chart || !newCandles?.length) return
+
+  // 更新主 K 線圖
+  candleSeries.setData(newCandles)
+
+  // 更新成交量
+  volumeSeries.setData(newCandles.map(c => ({
+    time: c.time,
+    value: c.volume || 0,
+    color: c.close >= c.open ? '#ef5350' : '#26a69a',
+  })))
+
+  // 更新移動平均線
+  ma5Series.setData(newCandles.filter(c => c.ma5).map(c => ({ time: c.time, value: c.ma5 })))
+  ma20Series.setData(newCandles.filter(c => c.ma20).map(c => ({ time: c.time, value: c.ma20 })))
+  ma60Series.setData(newCandles.filter(c => c.ma60).map(c => ({ time: c.time, value: c.ma60 })))
+
+  // Scroll 到最右邊
+  chart.timeScale().scrollToPosition(newCandles.length - 1, false)
+
+  // 更新 Hover 顯示
+  const latest = newCandles.at(-1)
+  if (latest) updateHoverData({ ...latest, time: latest.time })
+})
+
 })
 
 onUnmounted(() => {
