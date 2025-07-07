@@ -1,3 +1,25 @@
+<template>
+  <div class="stock-page">
+    <div class="chart-area" :class="{ 'half-height': showChat }">
+      <StockChartSwitcher
+        :stock-id="stockId"
+        :stock-name="stockName"
+        :show-chat="showChat"
+        @open-chat="showChat = true"
+      />
+    </div>
+
+    <SlideChatDrawer
+      v-if="showChat"
+      :isOpen="true"
+      :roomId="stockId"
+      :roomName="stockName"
+      @close="showChat = false"
+      class="chat-section"
+    />
+  </div>
+</template>
+
 <script setup>
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -39,132 +61,62 @@ watch(() => route.params.stockId, (newId) => {
 }, { immediate: true })
 </script>
 
-<template>
-  <div class="stock-page">
-    <div class="chart-area">
-      <!-- 圖表 + 留言 -->
-      <div class="main-chart" :class="{ compressed: showChat }">
-          <StockChartSwitcher
-            :stock-id="stockId"
-            :stock-name="stockName"
-            :show-chat="showChat"     
-            @open-chat="showChat = true"
-            class="chart-panel"
-          />
-        
-
-        <SlideChatDrawer
-          v-show="showChat"
-          class="chat-panel"
-          :isOpen="true"
-          :roomId="stockId"
-          :roomName="stockName"
-          @close="showChat = false"
-        />
-      </div>
-    </div>
-  </div>
-</template>
-
 <style scoped>
 .stock-page {
   display: flex;
-  height: 100%;
+  height: calc(100vh - 60px);
   background-color: #121212;
-  color: white;
   padding: 0 2%;
+  position: relative;
 }
 
 .chart-area {
   flex: 1;
-  box-sizing: border-box;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
   overflow: hidden;
+  transition: height 0.3s ease;
 }
 
-.top-center-button {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1rem;
+.chat-section {
+  width: 100%;
+  max-width: 400px;
+  height: 100%;
+  transition: height 0.3s ease;
 }
 
-.main-chart {
-  display: flex;
-  height: calc(100vh - 90px);
-  position: relative;
-  transition: all 0.3s ease;
-  min-width: 0;
-}
-
-.chart-panel {
-  flex: auto;
-  overflow: hidden; 
-}
-
-.chat-panel {
-  flex: 0 0 400px;
-  transition: all 0.3s ease;
-}
-
-
-.back-button {
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  background-color: #121212;
-  color: white;
-  border: 1px solid #333;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-.back-button:hover {
-  background-color: #1e1e1e;
-  border-color: #555;
-}
-
-/* 手機版 */
-@media (max-width: 768px) {
+@media (max-width: 756px) {
   .stock-page {
-    height: calc(100vh - 60px);
+    flex-direction: column;
   }
 
   .chart-area {
-    margin-top: 0.5rem;
+    flex: none;
+    height: 100%;
   }
 
-  .top-center-button {
-    display: none;
+  .chart-area.half-height {
+    height: 56vh;
   }
 
-  .main-chart {
+  .chat-section {
+    flex: none;
+    width: 100%;
+    max-width: 100%;
+    height: 37dvh;
     display: flex;
     flex-direction: column;
-    flex: none ;
-    height: 100%;
+    justify-content: flex-start;
     overflow: hidden;
-    transition: all 0.3s ease;
-    box-sizing: border-box;
-    margin-bottom: 30px;
   }
 
-  
-  .chat-panel {
-    height: 50vh;
-    width: 100%;
-    overflow: hidden;
-    transition: height 0.5s ease;
-    box-sizing: border-box;
-    flex: none ;
+  .chat-section .chat-messages {
+    flex: 1;
+    overflow-y: auto;
   }
 
-  .main-chart.compressed > .chart-panel {
-    height: 40vh;
-  }
-
-  .main-chart.compressed > .chat-panel {
-    height: 35vh;
+  .chat-section .chat-input {
+    padding: 0.5rem;
+    border-top: 1px solid #333;
+    background-color: #1e1e1e;
   }
 }
 </style>

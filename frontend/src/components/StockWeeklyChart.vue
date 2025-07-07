@@ -1,31 +1,32 @@
 <template>
-  <ChartRenderer
-    v-if="ohlc.length"
-    :candles="ohlc"
-    type="stock"
-    :show-chat="showChat"
-    @open-chat="emit('open-chat')"
-    class="chart-renderer"
-  />
-  <div v-if="loading" class="loading-overlay">
-  <div class="spinner"></div>
-  <span style="margin-left: 0.8rem;">散財中...</span>
+  <div class="chart">
+    <ChartRenderer
+      v-if="data.length"
+      :candles="data"
+      type="stock"
+      :show-chat="showChat"
+      @open-chat="$emit('open-chat')"
+    />
+    <div v-if="loading" class="loading-overlay">
+      <div class="spinner"></div>
+      <span style="margin-left: 0.8rem;">散財中...</span>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import ChartRenderer from './ChartRenderer.vue'
 import api from '@/api'
+
+defineEmits(['open-chat'])
 
 const props = defineProps({
   stockId: String,
   showChat: Boolean,
 })
 
-const emit = defineEmits(['open-chat'])
-
-const ohlc = ref([])
+const data = ref([])
 const loading = ref(false)
 
 async function fetchData() {
@@ -33,10 +34,10 @@ async function fetchData() {
   loading.value = true
   try {
     const res = await api.get(`/stocks/${props.stockId}/weekly`)
-    ohlc.value = res.data
+    data.value = res.data
   } catch (err) {
-    ohlc.value = []
     console.error('週線資料載入失敗', err)
+    data.value = []
   } finally {
     loading.value = false
   }
@@ -44,6 +45,7 @@ async function fetchData() {
 
 watch(() => props.stockId, fetchData, { immediate: true })
 </script>
+
 <style scoped>
 .loading-overlay {
   position: absolute;
@@ -52,7 +54,7 @@ watch(() => props.stockId, fetchData, { immediate: true })
   right: 0;
   bottom: 0;
   z-index: 20;
-  background-color: rgba(0, 0, 0, 0.5); /* 半透明遮罩 */
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -75,9 +77,5 @@ watch(() => props.stockId, fetchData, { immediate: true })
   to {
     transform: rotate(360deg);
   }
-}
-
-.chart-renderer {
-  height: 82vh;
 }
 </style>
