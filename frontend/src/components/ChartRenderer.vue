@@ -134,7 +134,7 @@ const initChart = () => {
       rightOffset: 5,
       barSpacing: 14,
       fixRightEdge: true,
-      fixLeftEdge: true, // 加這行防止左邊滑出空白
+      fixLeftEdge: true,
     },
     crosshair: {
       mode: 0,
@@ -143,6 +143,7 @@ const initChart = () => {
     },
   })
 
+  // 建立空資料圖層
   candleSeries = chart.addSeries(CandlestickSeries, {
     upColor: '#ef5350',
     downColor: '#26a69a',
@@ -150,23 +151,19 @@ const initChart = () => {
     wickUpColor: '#ef5350',
     wickDownColor: '#26a69a',
   })
-  candleSeries.setData(props.candles)
+  candleSeries.setData([]) // 空的先上
 
   volumeSeries = chart.addSeries(HistogramSeries, {
     priceScaleId: 'volume',
     priceFormat: {
       type: 'custom',
-      formatter: () => '', // 不顯示任何數字
+      formatter: () => '',
     },
-    lastValueVisible: false, // 隱藏紅色標籤數字
+    lastValueVisible: false,
     scaleMargins: { top: 0.8, bottom: 0 },
   })
+  volumeSeries.setData([])
 
-  volumeSeries.setData(props.candles.map(c => ({
-    time: c.time,
-    value: c.volume || 0,
-    color: c.close >= c.open ? '#ef5350' : '#26a69a',
-  })))
   chart.priceScale('volume').applyOptions({
     scaleMargins: { top: 0.84, bottom: 0 },
     borderVisible: false,
@@ -187,11 +184,25 @@ const initChart = () => {
   ma20Series = chart.addSeries(LineSeries, { color: '#a855f7', visible: showMA20.value, ...maCommon })
   ma60Series = chart.addSeries(LineSeries, { color: '#f97316', visible: showMA60.value, ...maCommon })
 
-  ma5Series.setData(props.candles.filter(c => c.ma5).map(c => ({ time: c.time, value: c.ma5 })))
-  ma20Series.setData(props.candles.filter(c => c.ma20).map(c => ({ time: c.time, value: c.ma20 })))
-  ma60Series.setData(props.candles.filter(c => c.ma60).map(c => ({ time: c.time, value: c.ma60 })))
+  // 延遲真正 setData，以減少初始卡頓
+  setTimeout(() => {
+    candleSeries.setData(props.candles)
 
-  chart.timeScale().scrollToPosition(props.candles.length - 1, false)
+    volumeSeries.setData(props.candles.map(c => ({
+      time: c.time,
+      value: c.volume || 0,
+      color: c.close >= c.open ? '#ef5350' : '#26a69a',
+    })))
+
+    ma5Series.setData(props.candles.filter(c => c.ma5).map(c => ({ time: c.time, value: c.ma5 })))
+    ma20Series.setData(props.candles.filter(c => c.ma20).map(c => ({ time: c.time, value: c.ma20 })))
+    ma60Series.setData(props.candles.filter(c => c.ma60).map(c => ({ time: c.time, value: c.ma60 })))
+
+    chart.timeScale().scrollToPosition(props.candles.length - 1, false)
+  }, 100) 
+
+  // CrosshairHover 優化：改用 Map 快速索引
+  const timeMap = new Map(props.candles.map((c, i) => [c.time, i]))
 
   chart.subscribeCrosshairMove(param => {
     const point = param?.point
@@ -202,10 +213,12 @@ const initChart = () => {
       if (latest) updateHoverData({ ...latest, time: latest.time })
       return
     }
+
     isHovering.value = true
-    const index = props.candles.findIndex(c => c.time === param.time)
+    const index = timeMap.get(param.time)
     const current = props.candles[index]
     if (!current) return
+
     updateHoverData({
       time: param.time,
       open: ohlc.open,
@@ -222,6 +235,7 @@ const initChart = () => {
     })
   })
 }
+
 
 onMounted(async () => {
   await nextTick()
