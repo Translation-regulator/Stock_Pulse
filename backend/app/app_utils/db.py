@@ -41,3 +41,4 @@ def get_cursor(dictionary=True):
     finally:
         cursor.close()
         conn.close()
+
