@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse  
 from router import (
     auth, stock_router, stock_ohlc, twii_ohlc, stock_portfolio,
     comments, chatroom, chatroom_api, stock_ws, twii_ws
@@ -32,6 +33,10 @@ app.include_router(chatroom_api.router, prefix="/api/chat", tags=["chatroom"])
 app.include_router(chatroom.router, tags=["chatroom_ws"])
 app.include_router(twii_ws.router, prefix="/ws", tags=["twii_ws"])
 app.include_router(stock_ws.router, prefix="/ws", tags=["stock_ws"])
+
+@app.get("/")
+def root():
+    return JSONResponse(content={"status": "ok"})
 
 # 執行主程式
 if __name__ == "__main__":
