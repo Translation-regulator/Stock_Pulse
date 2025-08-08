@@ -20,6 +20,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # API 路由區塊（有 prefix & tag）
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(stock_router.router, prefix="/api/stocks", tags=["industry"])
